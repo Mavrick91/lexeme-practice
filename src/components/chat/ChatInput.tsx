@@ -1,21 +1,49 @@
-import { useState, type KeyboardEvent } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFocusManager } from "@/hooks/useFocusManager";
 
 type ChatInputProps = {
   onSendMessage: (message: string) => void;
   isDisabled?: boolean;
   className?: string;
+  autoFocus?: boolean;
 };
 
-export function ChatInput({ onSendMessage, isDisabled, className }: ChatInputProps) {
+export function ChatInput({
+  onSendMessage,
+  isDisabled,
+  className,
+  autoFocus = true,
+}: ChatInputProps) {
   const [input, setInput] = useState("");
+  const { ref: textareaRef, focus, maintainFocus } = useFocusManager();
+
+  // Initial focus when component mounts or autoFocus changes
+  useEffect(() => {
+    if (autoFocus) {
+      // Delay focus to allow sheet animation to complete
+      const timer = setTimeout(() => {
+        focus();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus, focus]);
+
+  // Maintain focus when disabled state changes
+  useEffect(() => {
+    if (!isDisabled && autoFocus) {
+      maintainFocus();
+    }
+  }, [isDisabled, autoFocus, maintainFocus]);
 
   const handleSend = () => {
     if (input.trim() && !isDisabled) {
       onSendMessage(input.trim());
       setInput("");
+      // Maintain focus after sending
+      maintainFocus();
     }
   };
 
@@ -29,6 +57,7 @@ export function ChatInput({ onSendMessage, isDisabled, className }: ChatInputPro
   return (
     <div className={cn("flex gap-2 items-end", className)}>
       <textarea
+        ref={textareaRef}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}

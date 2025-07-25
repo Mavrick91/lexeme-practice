@@ -20,7 +20,8 @@ type ChatDrawerProps = {
 };
 
 export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const systemPrompt = item
     ? `You are an AI language tutor. The student is asking about the word "${
@@ -37,13 +38,18 @@ export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
     if (item && systemPrompt) {
       reset(systemPrompt);
     }
-  }, [item?.id, systemPrompt, reset]);
+  }, [item?.id, systemPrompt, reset, item]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    // Small delay to ensure DOM has updated
+    const timer = setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [messages]);
 
   if (!item) return null;
@@ -56,8 +62,8 @@ export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
           <SheetDescription>{item.translation.join(", ")}</SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 flex h-full flex-col">
-          <ScrollArea className="-mr-4 flex-1 pr-4" ref={scrollRef}>
+        <div className="mt-4 flex h-0 grow flex-col">
+          <ScrollArea className="-mr-4 flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-4 pb-4">
               {messages.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
@@ -74,11 +80,13 @@ export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
                   </div>
                 </div>
               )}
+              {/* Invisible element to scroll to */}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
           <div className="border-t pt-4">
-            <ChatInput onSendMessage={sendMessage} isDisabled={isSending} />
+            <ChatInput onSendMessage={sendMessage} isDisabled={isSending} autoFocus={open} />
           </div>
         </div>
       </SheetContent>

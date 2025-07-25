@@ -46,6 +46,7 @@ export default [
         KeyboardEvent: "readonly",
         React: "readonly",
         setTimeout: "readonly",
+        clearTimeout: "readonly",
         requestAnimationFrame: "readonly",
         cancelAnimationFrame: "readonly",
         fetch: "readonly",
