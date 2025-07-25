@@ -1,7 +1,7 @@
 import type { Lexeme } from "@/types";
 import type { HintData, HintCache } from "@/types/hint";
 import { HINT_CONFIG } from "@/config/hint";
-import { generateHintSentence } from "./openai";
+import { generateRelatedWords } from "./openai";
 
 // Module-level state
 let memoryCache: Map<string, HintData> = new Map();
@@ -60,22 +60,29 @@ const checkRateLimit = (): void => {
 };
 
 // Generate fallback hint
-const generateFallbackHint = (lexeme: Lexeme): string => {
-  const word = lexeme.text;
-  const firstLetter = word[0].toUpperCase();
+const generateFallbackHint = (lexeme: Lexeme): string[] => {
+  // Generate generic related words based on common categories
+  const genericRelatedWords: Record<string, string[]> = {
+    // Common nouns
+    default_noun: ["object", "thing", "item", "place", "concept"],
+    // Common verbs
+    default_verb: ["action", "movement", "activity", "doing", "process"],
+    // Common adjectives
+    default_adj: ["quality", "characteristic", "description", "property", "attribute"],
+  };
 
-  // Simple Indonesian template-based fallbacks
-  const templates = [
-    `Kata yang dimulai dengan ${firstLetter} ini adalah ___.`,
-    `Dia ___ dari universitas tahun lalu.`, // Good for "lulus" (graduated)
-    `Saya ___ bahasa Indonesia.`, // Generic for verbs
-    `Hari ini cuaca sangat ___.`, // Generic for adjectives
-    `___ adalah kata yang penting.`, // Generic fallback
-  ];
+  // Try to guess the word type and return appropriate fallback
+  const word = lexeme.text.toLowerCase();
 
-  // Pick a random template
-  const template = templates[Math.floor(Math.random() * templates.length)];
-  return template;
+  // Simple heuristics for Indonesian word patterns
+  if (word.startsWith("ber") || word.startsWith("me")) {
+    return genericRelatedWords.default_verb;
+  } else if (word.endsWith("an") || word.endsWith("nya")) {
+    return genericRelatedWords.default_noun;
+  } else {
+    // Default fallback
+    return genericRelatedWords.default_noun;
+  }
 };
 
 // Ensure cache is loaded
@@ -100,14 +107,14 @@ const getHint = async (lexeme: Lexeme): Promise<HintData> => {
     checkRateLimit();
 
     // Generate hint with GPT
-    const sentence = await generateHintSentence(lexeme.text);
+    const relatedWords = await generateRelatedWords(lexeme.text);
 
-    if (!sentence || !sentence.includes("___")) {
+    if (!relatedWords || relatedWords.length === 0) {
       throw new Error("Invalid hint format");
     }
 
     const hint: HintData = {
-      sentence,
+      relatedWords,
       timestamp: Date.now(),
       source: "gpt",
     };
@@ -122,7 +129,7 @@ const getHint = async (lexeme: Lexeme): Promise<HintData> => {
 
     // Generate fallback
     const hint: HintData = {
-      sentence: generateFallbackHint(lexeme),
+      relatedWords: generateFallbackHint(lexeme),
       timestamp: Date.now(),
       source: "fallback",
     };

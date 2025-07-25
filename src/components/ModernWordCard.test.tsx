@@ -259,7 +259,7 @@ describe("ModernWordCard", () => {
 
       // After clicking, mock returns the hint
       (useHint as jest.Mock).mockReturnValue({
-        hint: { sentence: "Saya tinggal di rumah besar", source: "generated" },
+        hint: { relatedWords: ["building", "family", "shelter", "rooms", "door"], source: "gpt" },
         status: "ready",
         error: null,
         loadHint: mockLoadHint,
@@ -277,11 +277,13 @@ describe("ModernWordCard", () => {
         />
       );
 
-      expect(screen.getByText(/Saya tinggal di rumah besar/)).toBeInTheDocument();
+      expect(screen.getByText("building")).toBeInTheDocument();
+      expect(screen.getByText("family")).toBeInTheDocument();
+      expect(screen.getByText("shelter")).toBeInTheDocument();
 
       // Hide hint
       await user.click(screen.getByRole("button", { name: /hide hint/i }));
-      expect(screen.queryByText(/Saya tinggal di rumah besar/)).not.toBeInTheDocument();
+      expect(screen.queryByText("building")).not.toBeInTheDocument();
     });
 
     it("shows hint with Ctrl+H keyboard shortcut", () => {

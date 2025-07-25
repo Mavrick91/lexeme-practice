@@ -372,14 +372,21 @@ export const ModernWordCard = ({
                         {hintStatus === "ready" && hint && (
                           <div className="space-y-2">
                             <p className="text-xs font-medium text-muted-foreground/70">
-                              Indonesian context:
+                              Related words:
                             </p>
-                            <p className="text-sm italic text-muted-foreground">
-                              💡 {hint.sentence}
-                              {hint.source === "fallback" && (
-                                <span className="ml-2 text-xs opacity-60">(offline)</span>
-                              )}
-                            </p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                              {hint.relatedWords.map((word, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium"
+                                >
+                                  {word}
+                                </span>
+                              ))}
+                            </div>
+                            {hint.source === "fallback" && (
+                              <p className="mt-2 text-center text-xs opacity-60">(offline hint)</p>
+                            )}
                           </div>
                         )}
                         {hintStatus === "error" && (

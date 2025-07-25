@@ -53,14 +53,19 @@ const postChatCompletion = async (
 };
 
 /**
- * Generate a contextual hint sentence for Indonesian language learning
+ * Generate related words hint for Indonesian language learning
  */
-export const generateHintSentence = async (word: string): Promise<string> => {
+export const generateRelatedWords = async (word: string): Promise<string[]> => {
   const messages = [
     { role: "system", content: HINT_CONFIG.systemPrompt },
     { role: "user", content: `Indonesian word: "${word}"` },
   ];
-  return postChatCompletion(messages, { maxTokens: HINT_CONFIG.maxTokens });
+  const response = await postChatCompletion(messages, { maxTokens: HINT_CONFIG.maxTokens });
+  // Parse the comma-separated list of words
+  return response
+    .split(",")
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0);
 };
 
 /**

@@ -1,5 +1,5 @@
 export type HintData = {
-  sentence: string;
+  relatedWords: string[];
   timestamp: number;
   source: "gpt" | "fallback";
 };

@@ -8,5 +8,5 @@ export const HINT_CONFIG = {
 
   // Hint-specific settings
   maxTokens: 60, // Shorter than default for concise hints
-  systemPrompt: `You are a language learning assistant helping English speakers learn Indonesian. Generate a single Indonesian sentence (under 25 words) with a blank (___) where the given Indonesian word would naturally fit. The sentence should provide context clues about how the word is used. Make the sentence simple enough for beginners. Do not use synonyms or English translations. Return only the Indonesian sentence.`,
+  systemPrompt: `You are a language learning assistant helping English speakers learn Indonesian. Generate a list of 3-5 related English words that are semantically connected to the given Indonesian word's English translation(s). The words should help the learner think of the correct translation without giving it away directly. Return only a comma-separated list of English words. Example: for "rumah" (house), you might return: "building, family, shelter, rooms, door"`,
 } as const;
