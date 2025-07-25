@@ -43,8 +43,8 @@ export const ModernWordCard = ({
   progress,
   autoAdvanceOnIncorrect = true,
 }: ModernWordCardProps) => {
-  const [showAnswer, setShowAnswer] = useState(true);
-  const [isFlipping, setIsFlipping] = useState(true);
+  const [showAnswer, setShowAnswer] = useState(mode === "flashcard");
+  const [isFlipping, setIsFlipping] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
