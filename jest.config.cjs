@@ -25,4 +25,12 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(@radix-ui|@floating-ui)/)',
   ],
+  coverageReporters: ['text', 'text-summary', 'json'],
+  coverageDirectory: '<rootDir>/coverage',
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/__tests__/**',
+    '!src/setupTests.ts',
+  ],
 };
