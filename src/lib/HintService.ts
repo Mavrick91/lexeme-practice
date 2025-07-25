@@ -8,6 +8,21 @@ let memoryCache: Map<string, HintData> = new Map();
 let requestTimestamps: number[] = [];
 let isLoaded = false;
 
+// Migrate legacy hint data
+const migrateLegacyHint = (hint: any): HintData | null => {
+  // If it's already in the new format, return as is
+  if (hint.relatedWords && Array.isArray(hint.relatedWords)) {
+    return hint as HintData;
+  }
+
+  // If it's legacy format with sentence, return null to skip it
+  if (hint.sentence && typeof hint.sentence === "string") {
+    return null; // Legacy data, skip it
+  }
+
+  return null;
+};
+
 // Load cache from localStorage
 const loadFromStorage = (): void => {
   try {
@@ -15,7 +30,10 @@ const loadFromStorage = (): void => {
     if (stored) {
       const cache: HintCache = JSON.parse(stored);
       Object.entries(cache).forEach(([key, value]) => {
-        memoryCache.set(key, value);
+        const migrated = migrateLegacyHint(value);
+        if (migrated) {
+          memoryCache.set(key, migrated);
+        }
       });
     }
     isLoaded = true;
