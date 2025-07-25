@@ -71,7 +71,7 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
           <ScrollArea className="-mr-4 flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-4 pb-4">
               {isLoading ? (
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-8" data-testid="chat-loading">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : messages.length === 0 ? (
@@ -83,7 +83,7 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
                 messages.map((message) => <ChatMessage key={message.id} message={message} />)
               )}
               {isSending && (
-                <div className="flex justify-start">
+                <div className="flex justify-start" data-testid="chat-sending">
                   <div className="rounded-lg bg-muted px-4 py-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>

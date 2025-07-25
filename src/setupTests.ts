@@ -13,3 +13,21 @@ global.matchMedia = jest.fn().mockImplementation((query) => ({
   removeEventListener: jest.fn(),
   dispatchEvent: jest.fn(),
 }));
+
+// Mock modules that use import.meta
+jest.mock("@/lib/openai", () => ({
+  chatCompletion: jest.fn().mockResolvedValue({
+    choices: [
+      {
+        message: {
+          content: "Mocked response",
+        },
+      },
+    ],
+  }),
+}));
+
+jest.mock("@/db", () => ({
+  getChatConversation: jest.fn().mockResolvedValue(null),
+  saveChatConversation: jest.fn().mockResolvedValue(undefined),
+}));
