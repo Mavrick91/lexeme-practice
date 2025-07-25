@@ -4,7 +4,7 @@ import { ModernWordCard } from "./components/ModernWordCard";
 import { PracticeHistory } from "./components/PracticeHistory";
 import { Button } from "./components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import { BookOpen, PenTool, Shuffle, Brain, Zap } from "lucide-react";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
@@ -232,6 +232,8 @@ function AppContent() {
           <PracticeHistory history={practiceHistory} onClear={handleClearHistory} />
         </aside>
       </div>
+
+      <Toaster position="top-right" />
     </Layout>
   );
 }
