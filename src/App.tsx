@@ -122,7 +122,6 @@ const AppContent = () => {
 
     // Record answer with response time for SM-2 algorithm
     recordAnswer(currentLexeme, true, responseTime);
-    handleNext();
   };
 
   const handleMarkIncorrect = async () => {
@@ -152,7 +151,6 @@ const AppContent = () => {
 
     // Record answer with response time for SM-2 algorithm
     recordAnswer(currentLexeme, false, responseTime);
-    handleNext();
   };
 
   const handleReset = () => {

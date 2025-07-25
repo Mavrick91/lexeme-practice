@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -22,6 +22,7 @@ type ChatDrawerProps = {
 export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<{ focus: () => void }>(null);
 
   const systemPrompt = item
     ? `You are an AI language tutor. The student is asking about the word "${
@@ -43,22 +44,24 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
   }, [item?.id]); // Only depend on item ID to avoid resetting during initial load
 
   // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    // Small delay to ensure DOM has updated
-    const timer = setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
+  useLayoutEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
   }, [messages]);
 
   if (!item) return null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md lg:max-w-lg">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md lg:max-w-lg"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }}
+      >
         <SheetHeader>
           <SheetTitle>Ask about "{item.word}"</SheetTitle>
           <SheetDescription>{item.translation.join(", ")}</SheetDescription>
@@ -92,7 +95,12 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
           </ScrollArea>
 
           <div className="border-t pt-4">
-            <ChatInput onSendMessage={sendMessage} isDisabled={isSending} autoFocus={open} />
+            <ChatInput
+              ref={inputRef}
+              onSendMessage={sendMessage}
+              isDisabled={isSending}
+              autoFocus={false}
+            />
           </div>
         </div>
       </SheetContent>

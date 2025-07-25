@@ -12,9 +12,8 @@ export const useFocusManager = () => {
 
   const maintainFocus = useCallback(() => {
     shouldFocusRef.current = true;
-    // Use multiple strategies to ensure focus is maintained
+    // Use requestAnimationFrame for next-tick focusing
     requestAnimationFrame(focus);
-    setTimeout(focus, 0);
   }, [focus]);
 
   const releaseFocus = useCallback(() => {

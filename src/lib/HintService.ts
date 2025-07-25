@@ -79,17 +79,15 @@ const generateFallbackHint = (lexeme: Lexeme): string => {
 };
 
 // Ensure cache is loaded
-const ensureLoaded = async (): Promise<void> => {
+const ensureLoaded = () => {
   if (!isLoaded) {
     loadFromStorage();
-    // Small delay to ensure async operations complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 };
 
 // Main function to get hint
 const getHint = async (lexeme: Lexeme): Promise<HintData> => {
-  await ensureLoaded();
+  ensureLoaded();
 
   // Check cache first
   const cached = memoryCache.get(lexeme.text);

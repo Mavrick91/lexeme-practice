@@ -20,8 +20,10 @@ import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useHint } from "@/hooks/useHint";
+import { useDelayedAction } from "@/hooks/useDelayedAction";
 import type { Lexeme, LexemeProgress } from "@/types";
 import { isDue, formatNextDue } from "@/lib/scheduler";
+import { ADVANCE_DELAY_MS } from "@/constants/durations";
 
 type ModernWordCardProps = {
   lexeme: Lexeme;
@@ -50,6 +52,8 @@ export const ModernWordCard = ({
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const scheduleAdvance = useDelayedAction(ADVANCE_DELAY_MS);
+
   useEffect(() => {
     // Reset state when lexeme changes
     setShowAnswer(true);
@@ -62,8 +66,8 @@ export const ModernWordCard = ({
 
   const handleCorrect = useCallback(() => {
     onCorrect();
-    setTimeout(onNext, 800);
-  }, [onCorrect, onNext]);
+    scheduleAdvance(onNext);
+  }, [onCorrect, onNext, scheduleAdvance]);
 
   const handleIncorrect = useCallback(() => {
     onIncorrect();
@@ -118,10 +122,13 @@ export const ModernWordCard = ({
 
   const handleReveal = () => {
     setIsFlipping(true);
-    setTimeout(() => {
+  };
+
+  const handleTransitionEnd = () => {
+    if (isFlipping) {
       setShowAnswer(true);
       setIsFlipping(false);
-    }, 150);
+    }
   };
 
   const normalizeAnswer = (text: string): string => {
@@ -159,12 +166,9 @@ export const ModernWordCard = ({
     });
 
     if (correct) {
-      onCorrect();
-      setTimeout(() => {
-        onNext();
-      }, 1500);
+      handleCorrect();
     } else {
-      onIncorrect();
+      handleIncorrect();
     }
   };
 
@@ -199,10 +203,11 @@ export const ModernWordCard = ({
       {/* Main Card */}
       <Card
         className={cn(
-          "relative overflow-hidden transition-all duration-300",
+          "relative overflow-hidden transition-all duration-200",
           isFlipping && "scale-95",
           animations.fadeIn
         )}
+        onTransitionEnd={handleTransitionEnd}
       >
         {/* Decorative Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
