@@ -1,8 +1,10 @@
-import { CheckCircle2, XCircle, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, XCircle, Trash2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { PracticeHistoryItem } from "@/types";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 
 type PracticeHistoryProps = {
   history: PracticeHistoryItem[];
@@ -10,6 +12,9 @@ type PracticeHistoryProps = {
 };
 
 export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
+  const [selectedItem, setSelectedItem] = useState<PracticeHistoryItem | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
   const correctCount = history.filter((item) => item.isCorrect).length;
   const accuracy = history.length > 0 ? Math.round((correctCount / history.length) * 100) : 0;
 
@@ -78,6 +83,18 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
                       {item.translation.join(", ")}
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="ml-auto h-8 w-8 shrink-0"
+                    onClick={() => {
+                      setSelectedItem(item);
+                      setChatOpen(true);
+                    }}
+                    title="Ask AI about this word"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -100,6 +117,9 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
           </div>
         </div>
       )}
+
+      {/* Chat Drawer */}
+      <ChatDrawer open={chatOpen} onOpenChange={setChatOpen} item={selectedItem} />
     </div>
   );
 }

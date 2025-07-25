@@ -2,11 +2,21 @@
 
 # Run lint-staged for formatting and linting
 npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "\n❌ Pre-commit hook failed: Linting/formatting errors!"
+  exit 1
+fi
+
+# Run TypeScript type checking
+npm run type-check
+if [ $? -ne 0 ]; then
+  echo "\n❌ Pre-commit hook failed: TypeScript type errors!"
+  echo "💡 Please fix the type errors listed above before committing.\n"
+  exit 1
+fi
 
 # Check for unused exports
 npm run check-exports
-
-# If check-exports fails, show a helpful message
 if [ $? -ne 0 ]; then
   echo "\n❌ Pre-commit hook failed: Found unused exports!"
   echo "💡 Please remove the unused exports listed above before committing.\n"
