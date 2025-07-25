@@ -14,11 +14,11 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
   const accuracy = history.length > 0 ? Math.round((correctCount / history.length) * 100) : 0;
 
   return (
-    <div className="h-full flex flex-col bg-background border-l">
+    <div className="flex h-full flex-col border-l bg-background">
       {/* Header */}
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-lg">Practice History</h3>
+      <div className="border-b p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Practice History</h3>
           {history.length > 0 && (
             <Button
               variant="ghost"
@@ -35,11 +35,11 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
         {/* Stats */}
         {history.length > 0 && (
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="bg-muted rounded-md p-2 text-center">
+            <div className="rounded-md bg-muted p-2 text-center">
               <div className="font-medium">{history.length}</div>
               <div className="text-xs text-muted-foreground">Total</div>
             </div>
-            <div className="bg-muted rounded-md p-2 text-center">
+            <div className="rounded-md bg-muted p-2 text-center">
               <div className="font-medium">{accuracy}%</div>
               <div className="text-xs text-muted-foreground">Accuracy</div>
             </div>
@@ -52,10 +52,10 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
         {history.length === 0 ? (
           <div className="p-4 text-center text-muted-foreground">
             <p className="text-sm">No words practiced yet</p>
-            <p className="text-xs mt-1">Your practice history will appear here</p>
+            <p className="mt-1 text-xs">Your practice history will appear here</p>
           </div>
         ) : (
-          <div className="p-2 space-y-2">
+          <div className="space-y-2 p-2">
             {history.map((item) => (
               <div
                 key={item.id}
@@ -68,13 +68,13 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
               >
                 <div className="flex items-start gap-2">
                   {item.isCorrect ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm break-words">{item.word}</div>
-                    <div className="text-xs text-muted-foreground mt-1 break-words">
+                  <div className="min-w-0 flex-1">
+                    <div className="break-words text-sm font-medium">{item.word}</div>
+                    <div className="mt-1 break-words text-xs text-muted-foreground">
                       {item.translation.join(", ")}
                     </div>
                   </div>
@@ -87,7 +87,7 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
 
       {/* Footer */}
       {history.length > 0 && (
-        <div className="p-4 border-t bg-muted/30">
+        <div className="border-t bg-muted/30 p-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600" />

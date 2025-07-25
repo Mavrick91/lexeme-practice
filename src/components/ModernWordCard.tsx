@@ -151,10 +151,10 @@ export function ModernWordCard({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       {/* Progress Indicator */}
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
+        <div className="mb-2 flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
             Word {currentIndex + 1} of {totalWords}
           </span>
@@ -163,9 +163,9 @@ export function ModernWordCard({
             Space to reveal
           </Badge>
         </div>
-        <div className="w-full bg-secondary rounded-full h-2">
+        <div className="h-2 w-full rounded-full bg-secondary">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
+            className="h-2 rounded-full bg-primary transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
           />
         </div>
@@ -185,8 +185,8 @@ export function ModernWordCard({
         {/* Card Content */}
         <div className="relative p-8 md:p-12">
           {/* Word Section */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-4 mb-4">
+          <div className="mb-8 text-center">
+            <div className="mb-4 inline-flex items-center gap-4">
               {lexeme.isNew && (
                 <Badge variant="default" className="gap-1">
                   <Sparkles className="h-3 w-3" />
@@ -196,20 +196,20 @@ export function ModernWordCard({
               <Button
                 size="icon"
                 variant="outline"
-                className="rounded-full h-12 w-12 hover:scale-110 transition-transform"
+                className="h-12 w-12 rounded-full transition-transform hover:scale-110"
                 onClick={playAudio}
               >
                 <Volume2 className="h-6 w-6" />
               </Button>
             </div>
 
-            <h2 className="text-4xl md:text-5xl font-bold h-16 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h2 className="h-16 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
               {lexeme.text}
             </h2>
 
             {/* Phonetic if available */}
             {lexeme.phonetic && (
-              <p className="text-lg text-muted-foreground italic">/{lexeme.phonetic}/</p>
+              <p className="text-lg italic text-muted-foreground">/{lexeme.phonetic}/</p>
             )}
           </div>
 
@@ -224,18 +224,18 @@ export function ModernWordCard({
               // Flashcard Mode
               !showAnswer ? (
                 <div className="text-center">
-                  <Button size="lg" onClick={handleReveal} className="gap-2 text-lg px-8">
+                  <Button size="lg" onClick={handleReveal} className="gap-2 px-8 text-lg">
                     <Eye className="h-5 w-5" />
                     Reveal Answer
                   </Button>
                 </div>
               ) : (
                 <div className={cn("space-y-4", animations.slideInFromBottom)}>
-                  <div className="text-center space-y-2">
+                  <div className="space-y-2 text-center">
                     {lexeme.translations.map((translation, index) => (
                       <div
                         key={index}
-                        className="text-xl md:text-2xl font-medium bg-secondary/30 rounded-lg px-4 py-2 inline-block"
+                        className="inline-block rounded-lg bg-secondary/30 px-4 py-2 text-xl font-medium md:text-2xl"
                       >
                         {translation}
                       </div>
@@ -244,14 +244,14 @@ export function ModernWordCard({
 
                   {/* Example sentence if available */}
                   {lexeme.example && (
-                    <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                      <p className="text-sm font-medium mb-1">Example:</p>
-                      <p className="text-muted-foreground italic">{lexeme.example}</p>
+                    <div className="mt-6 rounded-lg bg-muted/30 p-4">
+                      <p className="mb-1 text-sm font-medium">Example:</p>
+                      <p className="italic text-muted-foreground">{lexeme.example}</p>
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3 justify-center mt-8">
+                  <div className="mt-8 flex justify-center gap-3">
                     <Button
                       size="lg"
                       variant="destructive"
@@ -277,7 +277,7 @@ export function ModernWordCard({
               <div className="space-y-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="text-center">
-                    <p className="text-lg text-muted-foreground mb-4">
+                    <p className="mb-4 text-lg text-muted-foreground">
                       Type the English translation:
                     </p>
                     <Input
@@ -293,7 +293,7 @@ export function ModernWordCard({
                     />
                   </div>
 
-                  <div className="flex gap-3 justify-center">
+                  <div className="flex justify-center gap-3">
                     <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
                       Check Answer
                     </Button>
@@ -303,7 +303,7 @@ export function ModernWordCard({
                       size="lg"
                       onClick={() => setShowHint(!showHint)}
                     >
-                      <Lightbulb className="h-5 w-5 mr-2" />
+                      <Lightbulb className="mr-2 h-5 w-5" />
                       {showHint ? "Hide Hint" : "Show Hint"}
                     </Button>
                   </div>
@@ -342,14 +342,14 @@ export function ModernWordCard({
       <div className="mt-4 text-center text-xs text-muted-foreground">
         {mode === "flashcard" ? (
           <>
-            Press <kbd className="px-2 py-1 bg-muted rounded">Space</kbd> to reveal,
-            <kbd className="mx-1 px-2 py-1 bg-muted rounded">1</kbd> for incorrect,
-            <kbd className="mx-1 px-2 py-1 bg-muted rounded">2</kbd> for correct
+            Press <kbd className="rounded bg-muted px-2 py-1">Space</kbd> to reveal,
+            <kbd className="mx-1 rounded bg-muted px-2 py-1">1</kbd> for incorrect,
+            <kbd className="mx-1 rounded bg-muted px-2 py-1">2</kbd> for correct
           </>
         ) : (
           <>
-            Press <kbd className="px-2 py-1 bg-muted rounded">Enter</kbd> to check answer,
-            <kbd className="mx-1 px-2 py-1 bg-muted rounded">Ctrl+H</kbd> for hint
+            Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
+            <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+H</kbd> for hint
           </>
         )}
       </div>

@@ -48,7 +48,7 @@ export function Layout({ children, currentPage = "practice" }: LayoutProps) {
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
                 size="sm"
-                className="flex flex-col gap-1 h-auto py-2"
+                className="flex h-auto flex-col gap-1 py-2"
               >
                 <Icon className="h-5 w-5" />
                 <span className="text-xs">{item.label}</span>

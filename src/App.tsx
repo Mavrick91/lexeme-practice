@@ -95,12 +95,12 @@ function AppContent() {
   };
 
   if (isLoading) {
-    return <div className="text-center text-xl text-gray-600 mt-16">Loading lexemes...</div>;
+    return <div className="mt-16 text-center text-xl text-gray-600">Loading lexemes...</div>;
   }
 
   if (lexemes.length === 0) {
     return (
-      <div className="text-center text-xl text-gray-600 mt-16">
+      <div className="mt-16 text-center text-xl text-gray-600">
         No lexemes found for the selected mode.
       </div>
     );
@@ -113,9 +113,9 @@ function AppContent() {
       <div className="flex h-[calc(100vh-4rem)]">
         {/* Main Content Area */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="mx-auto max-w-4xl">
             {/* Mode Selection */}
-            <div className="flex flex-wrap gap-4 justify-center mb-8">
+            <div className="mb-8 flex flex-wrap justify-center gap-4">
               <ToggleGroup
                 type="single"
                 value={learningMode}
@@ -180,7 +180,7 @@ function AppContent() {
         </div>
 
         {/* History Sidebar - Hidden on mobile */}
-        <aside className="hidden lg:block w-80 h-full">
+        <aside className="hidden h-full w-80 lg:block">
           <PracticeHistory history={practiceHistory} onClear={handleClearHistory} />
         </aside>
       </div>
