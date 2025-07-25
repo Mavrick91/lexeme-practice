@@ -19,7 +19,7 @@ const DAY_MS = 24 * HOUR_MS;
 const RECENCY_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 
 // Calculate quality score based on user response
-export function calculateQuality(isCorrect: boolean, responseTimeMs?: number): number {
+export const calculateQuality = (isCorrect: boolean, responseTimeMs?: number): number => {
   if (!isCorrect) return 2; // Incorrect answer
 
   // For correct answers, consider response time if available
@@ -34,20 +34,20 @@ export function calculateQuality(isCorrect: boolean, responseTimeMs?: number): n
 
   // Default quality for correct answer
   return 4;
-}
+};
 
 // Update easiness factor based on quality
-export function updateEasinessFactor(currentEF: number, quality: number): number {
+export const updateEasinessFactor = (currentEF: number, quality: number): number => {
   const newEF = currentEF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
   return Math.max(MIN_EASINESS_FACTOR, Math.min(MAX_EASINESS_FACTOR, newEF));
-}
+};
 
 // Calculate next interval based on SM-2 algorithm
-export function calculateNextInterval(
+export const calculateNextInterval = (
   quality: number,
   previousInterval: number,
   easinessFactor: number
-): number {
+): number => {
   if (quality < 3) {
     // Failed - reset to 1 day
     return 1;
@@ -63,14 +63,14 @@ export function calculateNextInterval(
     // Subsequent reviews
     return Math.round(previousInterval * easinessFactor);
   }
-}
+};
 
 // Calculate priority score for a lexeme
-export function scoreLexeme(
+export const scoreLexeme = (
   lexeme: Lexeme,
   progress: LexemeProgress | undefined,
   now: number = Date.now()
-): number {
+): number => {
   // Default progress for new words
   if (!progress) {
     return WEIGHTS.newWord * 10; // High priority for completely new words
@@ -104,15 +104,15 @@ export function scoreLexeme(
   }
 
   return score;
-}
+};
 
 // Select the next lexemes to practice based on priority scores
-export function selectNextLexemes(
+export const selectNextLexemes = (
   allLexemes: Lexeme[],
   progressMap: Map<string, LexemeProgress>,
   count: number = 50,
   recentlySeenWords: Set<string> = new Set()
-): Lexeme[] {
+): Lexeme[] => {
   const now = Date.now();
 
   // Score all lexemes
@@ -126,10 +126,10 @@ export function selectNextLexemes(
 
   // Take the top scored lexemes
   return scoredLexemes.slice(0, count).map((item) => item.lexeme);
-}
+};
 
 // Get statistics about due words
-export function getDueStatistics(
+export const getDueStatistics = (
   allLexemes: Lexeme[],
   progressMap: Map<string, LexemeProgress>,
   now: number = Date.now()
@@ -139,7 +139,7 @@ export function getDueStatistics(
   newWords: number;
   mastered: number;
   totalWords: number;
-} {
+} => {
   let dueNow = 0;
   let dueSoon = 0;
   let newWords = 0;
@@ -170,16 +170,16 @@ export function getDueStatistics(
     mastered,
     totalWords: allLexemes.length,
   };
-}
+};
 
 // Helper to determine if a word is due
-export function isDue(progress: LexemeProgress | undefined, now: number = Date.now()): boolean {
+export const isDue = (progress: LexemeProgress | undefined, now: number = Date.now()): boolean => {
   if (!progress) return true; // New words are always "due"
   return progress.nextDue <= now;
-}
+};
 
 // Helper to format next due time as human-readable string
-export function formatNextDue(nextDue: number, now: number = Date.now()): string {
+export const formatNextDue = (nextDue: number, now: number = Date.now()): string => {
   const diff = nextDue - now;
   const absDiff = Math.abs(diff);
 
@@ -207,4 +207,4 @@ export function formatNextDue(nextDue: number, now: number = Date.now()): string
       return `Due in ${days}d`;
     }
   }
-}
+};

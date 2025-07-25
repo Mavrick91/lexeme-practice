@@ -15,7 +15,7 @@ import {
   getDueStatistics,
 } from "../lib/scheduler";
 
-export function useProgress() {
+export const useProgress = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [progressMap, setProgressMap] = useState<Map<string, LexemeProgress>>(new Map());
 
@@ -135,4 +135,4 @@ export function useProgress() {
     getDueLexemes,
     getStatistics,
   };
-}
+};

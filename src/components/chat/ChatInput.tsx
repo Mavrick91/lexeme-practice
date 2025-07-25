@@ -11,12 +11,12 @@ type ChatInputProps = {
   autoFocus?: boolean;
 };
 
-export function ChatInput({
+export const ChatInput = ({
   onSendMessage,
   isDisabled,
   className,
   autoFocus = true,
-}: ChatInputProps) {
+}: ChatInputProps) => {
   const [input, setInput] = useState("");
   const { ref: textareaRef, focus, maintainFocus } = useFocusManager();
 
@@ -77,4 +77,4 @@ export function ChatInput({
       </Button>
     </div>
   );
-}
+};

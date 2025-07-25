@@ -11,7 +11,7 @@ type PracticeHistoryProps = {
   onClear: () => void;
 };
 
-export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
+export const PracticeHistory = ({ history, onClear }: PracticeHistoryProps) => {
   const [selectedItem, setSelectedItem] = useState<PracticeHistoryItem | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -122,4 +122,4 @@ export function PracticeHistory({ history, onClear }: PracticeHistoryProps) {
       <ChatDrawer open={chatOpen} onOpenChange={setChatOpen} item={selectedItem} />
     </div>
   );
-}
+};

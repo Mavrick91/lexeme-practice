@@ -10,7 +10,7 @@ type DashboardStatsProps = {
   accuracy?: number;
 };
 
-export function DashboardStats({ allLexemes, progressMap, accuracy = 0 }: DashboardStatsProps) {
+export const DashboardStats = ({ allLexemes, progressMap, accuracy = 0 }: DashboardStatsProps) => {
   const stats = getDueStatistics(allLexemes, progressMap);
   const practiceRate = Math.round((progressMap.size / stats.totalWords) * 100);
 
@@ -106,4 +106,4 @@ export function DashboardStats({ allLexemes, progressMap, accuracy = 0 }: Dashbo
       )}
     </div>
   );
-}
+};

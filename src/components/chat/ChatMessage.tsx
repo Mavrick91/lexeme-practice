@@ -5,7 +5,7 @@ type ChatMessageProps = {
   message: ChatMessageType;
 };
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export const ChatMessage = ({ message }: ChatMessageProps) => {
   const isUser = message.role === "user";
 
   return (
@@ -20,4 +20,4 @@ export function ChatMessage({ message }: ChatMessageProps) {
       </div>
     </div>
   );
-}
+};

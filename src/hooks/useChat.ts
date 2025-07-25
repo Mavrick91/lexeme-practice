@@ -5,7 +5,7 @@ import { tryCatch } from "@/lib/tryCatch";
 import { toast } from "sonner";
 import { getChatConversation, saveChatConversation } from "@/db";
 
-export function useChat(initialSystemPrompt: string, historyItemId?: string) {
+export const useChat = (initialSystemPrompt: string, historyItemId?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: crypto.randomUUID(),
@@ -120,4 +120,4 @@ export function useChat(initialSystemPrompt: string, historyItemId?: string) {
     sendMessage,
     reset,
   };
-}
+};

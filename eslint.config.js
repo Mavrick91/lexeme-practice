@@ -51,6 +51,8 @@ export default [
         cancelAnimationFrame: "readonly",
         fetch: "readonly",
         crypto: "readonly",
+        AbortController: "readonly",
+        AbortSignal: "readonly",
         // Node
         process: "readonly",
       },
@@ -80,14 +82,25 @@ export default [
 
       // TypeScript
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
-      "@typescript-eslint/no-unused-vars": [
+      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-explicit-any": "warn",
+
+      // Disallow classes - prefer functions and objects
+      "no-restricted-syntax": [
         "error",
         {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
+          selector: "ClassDeclaration",
+          message: "Classes are not allowed. Use functions and objects instead.",
+        },
+        {
+          selector: "ClassExpression",
+          message: "Classes are not allowed. Use functions and objects instead.",
         },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
+
+      // Prefer arrow functions
+      "prefer-arrow-callback": "error",
+      "func-style": ["error", "expression", { allowArrowFunctions: true }],
 
       // React
       "react/react-in-jsx-scope": "off",

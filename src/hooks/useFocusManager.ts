@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect } from "react";
 
-export function useFocusManager() {
+export const useFocusManager = () => {
   const elementRef = useRef<HTMLTextAreaElement>(null);
   const shouldFocusRef = useRef(true);
 
@@ -49,4 +49,4 @@ export function useFocusManager() {
     maintainFocus,
     releaseFocus,
   };
-}
+};

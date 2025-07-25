@@ -20,7 +20,7 @@ import {
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
 
-function AppContent() {
+const AppContent = () => {
   const [lexemes, setLexemes] = useState<Lexeme[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
@@ -298,14 +298,14 @@ function AppContent() {
       <Toaster position="top-right" />
     </Layout>
   );
-}
+};
 
-function App() {
+const App = () => {
   return (
     <ThemeProvider>
       <AppContent />
     </ThemeProvider>
   );
-}
+};
 
 export default App;

@@ -17,7 +17,7 @@ type MobileStatsSheetProps = {
   accuracy?: number;
 };
 
-export function MobileStatsSheet({ allLexemes, progressMap, accuracy }: MobileStatsSheetProps) {
+export const MobileStatsSheet = ({ allLexemes, progressMap, accuracy }: MobileStatsSheetProps) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -41,4 +41,4 @@ export function MobileStatsSheet({ allLexemes, progressMap, accuracy }: MobileSt
       </SheetContent>
     </Sheet>
   );
-}
+};

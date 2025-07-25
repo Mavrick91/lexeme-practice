@@ -7,7 +7,7 @@ type DashboardSidebarProps = {
   accuracy?: number;
 };
 
-export function DashboardSidebar({ allLexemes, progressMap, accuracy }: DashboardSidebarProps) {
+export const DashboardSidebar = ({ allLexemes, progressMap, accuracy }: DashboardSidebarProps) => {
   return (
     <aside className="hidden w-96 overflow-y-auto border-r bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:block">
       <div className="sticky top-0">
@@ -16,4 +16,4 @@ export function DashboardSidebar({ allLexemes, progressMap, accuracy }: Dashboar
       </div>
     </aside>
   );
-}
+};

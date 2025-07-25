@@ -19,7 +19,7 @@ type ChatDrawerProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
+export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -98,4 +98,4 @@ export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
       </SheetContent>
     </Sheet>
   );
-}
+};

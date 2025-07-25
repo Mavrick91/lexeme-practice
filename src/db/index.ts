@@ -45,28 +45,28 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 4, {
   },
 });
 
-export async function getLexemeProgress(text: string): Promise<LexemeProgress | undefined> {
+export const getLexemeProgress = async (text: string): Promise<LexemeProgress | undefined> => {
   return (await dbPromise).get("lexemeProgress", text);
-}
+};
 
-export async function putLexemeProgress(record: LexemeProgress): Promise<void> {
+export const putLexemeProgress = async (record: LexemeProgress): Promise<void> => {
   await (await dbPromise).put("lexemeProgress", record);
-}
+};
 
-export async function getAllLexemeProgress(): Promise<LexemeProgress[]> {
+export const getAllLexemeProgress = async (): Promise<LexemeProgress[]> => {
   return (await dbPromise).getAll("lexemeProgress");
-}
+};
 
-export async function getUserStats(): Promise<UserStats | undefined> {
+export const getUserStats = async (): Promise<UserStats | undefined> => {
   return (await dbPromise).get("userStats", "overall");
-}
+};
 
-export async function putUserStats(stats: UserStats): Promise<void> {
+export const putUserStats = async (stats: UserStats): Promise<void> => {
   await (await dbPromise).put("userStats", stats, "overall");
-}
+};
 
 // Practice History functions
-export async function getPracticeHistory(limit = 100): Promise<PracticeHistoryItem[]> {
+export const getPracticeHistory = async (limit = 100): Promise<PracticeHistoryItem[]> => {
   const db = await dbPromise;
   const tx = db.transaction("practiceHistory", "readonly");
   const index = tx.store.index("by-timestamp");
@@ -81,35 +81,35 @@ export async function getPracticeHistory(limit = 100): Promise<PracticeHistoryIt
   }
 
   return items;
-}
+};
 
-export async function addPracticeHistoryItem(item: PracticeHistoryItem): Promise<void> {
+export const addPracticeHistoryItem = async (item: PracticeHistoryItem): Promise<void> => {
   await (await dbPromise).add("practiceHistory", item);
-}
+};
 
-export async function clearPracticeHistory(): Promise<void> {
+export const clearPracticeHistory = async (): Promise<void> => {
   const db = await dbPromise;
   const tx = db.transaction("practiceHistory", "readwrite");
   await tx.store.clear();
-}
+};
 
 // Chat Conversation functions
-export async function getChatConversation(
+export const getChatConversation = async (
   historyItemId: string
-): Promise<ChatConversation | undefined> {
+): Promise<ChatConversation | undefined> => {
   return (await dbPromise).get("chatConversations", historyItemId);
-}
+};
 
-export async function saveChatConversation(conversation: ChatConversation): Promise<void> {
+export const saveChatConversation = async (conversation: ChatConversation): Promise<void> => {
   await (await dbPromise).put("chatConversations", conversation);
-}
+};
 
-export async function deleteChatConversation(historyItemId: string): Promise<void> {
+export const deleteChatConversation = async (historyItemId: string): Promise<void> => {
   await (await dbPromise).delete("chatConversations", historyItemId);
-}
+};
 
-export async function clearAllChatConversations(): Promise<void> {
+export const clearAllChatConversations = async (): Promise<void> => {
   const db = await dbPromise;
   const tx = db.transaction("chatConversations", "readwrite");
   await tx.store.clear();
-}
+};

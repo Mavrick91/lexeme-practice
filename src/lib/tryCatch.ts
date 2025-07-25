@@ -3,7 +3,7 @@ type Failure<E> = [null, E];
 
 type Result<T, E = Error> = Success<T> | Failure<E>;
 
-export async function tryCatch<T, E = Error>(fn: () => Promise<T>): Promise<Result<T, E>> {
+export const tryCatch = async <T, E = Error>(fn: () => Promise<T>): Promise<Result<T, E>> => {
   try {
     const data = await fn();
     return [data, null];
@@ -12,4 +12,4 @@ export async function tryCatch<T, E = Error>(fn: () => Promise<T>): Promise<Resu
     // Consider adding more specific error handling or logging here if needed.
     return [null, error as E];
   }
-}
+};

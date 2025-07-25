@@ -7,11 +7,11 @@ import { useLayoutEffect, type MutableRefObject, type DependencyList } from "rea
  * @param shouldFocus - Whether the element should be focused
  * @param deps - Additional dependencies that should trigger re-focus
  */
-export function useAutoFocus<T extends HTMLElement>(
+export const useAutoFocus = <T extends HTMLElement>(
   ref: MutableRefObject<T | null>,
   shouldFocus: boolean,
   deps: DependencyList = []
-) {
+) => {
   useLayoutEffect(() => {
     if (!shouldFocus) return;
 
@@ -31,4 +31,4 @@ export function useAutoFocus<T extends HTMLElement>(
     focusElement();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldFocus, ref, ...deps]);
-}
+};
