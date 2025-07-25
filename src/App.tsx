@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Layout } from "./components/Layout";
 import { ModernWordCard } from "./components/ModernWordCard";
 import { PracticeHistory } from "./components/PracticeHistory";
+import { DashboardSidebar } from "./components/DashboardSidebar";
+import { MobileStatsSheet } from "./components/MobileStatsSheet";
 import { Button } from "./components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
 import { toast, Toaster } from "sonner";
-import { BookOpen, PenTool, Shuffle, Brain, Zap } from "lucide-react";
+import { BookOpen, PenTool, Brain, Zap } from "lucide-react";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
@@ -14,6 +16,7 @@ import {
   getPracticeHistory,
   addPracticeHistoryItem,
   clearPracticeHistory as clearDBHistory,
+  clearAllChatConversations,
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
 
@@ -22,12 +25,14 @@ function AppContent() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalAnswers, setTotalAnswers] = useState(0);
-  const [practiceMode, setPracticeMode] = useState<"all" | "new" | "random">("random");
+  const [practiceMode, setPracticeMode] = useState<"smart" | "new" | "all">("smart");
   const [learningMode, setLearningMode] = useState<"flashcard" | "writing">("writing");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
+  const [sessionHistory, setSessionHistory] = useState<Set<string>>(new Set());
+  const [responseStartTime, setResponseStartTime] = useState<number>(Date.now());
 
-  const { recordAnswer } = useProgress();
+  const { recordAnswer, getDueLexemes, getProgress, progressMap } = useProgress();
 
   // Load practice history from IndexedDB on mount
   useEffect(() => {
@@ -48,27 +53,51 @@ function AppContent() {
 
   useEffect(() => {
     const data = lexemesData as LexemesData;
-    let filteredLexemes = data.learnedLexemes;
+    let filteredLexemes: Lexeme[] = [];
 
-    if (practiceMode === "new") {
+    if (practiceMode === "smart") {
+      // Use smart selection with spaced repetition
+      filteredLexemes = getDueLexemes(data.learnedLexemes, 100, sessionHistory);
+    } else if (practiceMode === "new") {
+      // Only new words
       filteredLexemes = data.learnedLexemes.filter((l) => l.isNew);
-    } else if (practiceMode === "random") {
-      filteredLexemes = [...data.learnedLexemes].sort(() => Math.random() - 0.5);
+    } else if (practiceMode === "all") {
+      // All words in order
+      filteredLexemes = [...data.learnedLexemes];
     }
 
     setLexemes(filteredLexemes);
     setIsLoading(false);
     setCurrentIndex(0);
-  }, [practiceMode]);
+    setResponseStartTime(Date.now());
+  }, [practiceMode, getDueLexemes, sessionHistory]);
 
   const handleNext = () => {
     if (currentIndex < lexemes.length - 1) {
+      // Add current word to session history
+      const currentWord = lexemes[currentIndex].text;
+      setSessionHistory((prev) => {
+        const newHistory = new Set(prev);
+        newHistory.add(currentWord);
+        // Keep only last 10 words
+        if (newHistory.size > 10) {
+          const firstItem = newHistory.values().next().value;
+          if (firstItem) {
+            newHistory.delete(firstItem);
+          }
+        }
+        return newHistory;
+      });
+
       setCurrentIndex(currentIndex + 1);
+      setResponseStartTime(Date.now()); // Reset timer for next word
     }
   };
 
   const handleMarkCorrect = async () => {
     const currentLexeme = lexemes[currentIndex];
+    const responseTime = Date.now() - responseStartTime;
+
     setCorrectAnswers(correctAnswers + 1);
     setTotalAnswers(totalAnswers + 1);
 
@@ -91,12 +120,15 @@ function AppContent() {
     // Always update local state
     setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
 
-    recordAnswer(currentLexeme, true);
+    // Record answer with response time for SM-2 algorithm
+    recordAnswer(currentLexeme, true, responseTime);
     handleNext();
   };
 
   const handleMarkIncorrect = async () => {
     const currentLexeme = lexemes[currentIndex];
+    const responseTime = Date.now() - responseStartTime;
+
     setTotalAnswers(totalAnswers + 1);
 
     // Add to practice history
@@ -118,7 +150,8 @@ function AppContent() {
     // Always update local state
     setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
 
-    recordAnswer(currentLexeme, false);
+    // Record answer with response time for SM-2 algorithm
+    recordAnswer(currentLexeme, false, responseTime);
     handleNext();
   };
 
@@ -130,12 +163,21 @@ function AppContent() {
   };
 
   const handleClearHistory = async () => {
-    const [, error] = await tryCatch(() => clearDBHistory());
+    // Clear practice history
+    const [, historyError] = await tryCatch(() => clearDBHistory());
 
-    if (error) {
-      console.error("Failed to clear practice history:", error);
+    if (historyError) {
+      console.error("Failed to clear practice history:", historyError);
       toast.error("Failed to clear practice history");
       return;
+    }
+
+    // Clear chat conversations
+    const [, chatError] = await tryCatch(() => clearAllChatConversations());
+
+    if (chatError) {
+      console.error("Failed to clear chat conversations:", chatError);
+      // Don't show error to user, just log it
     }
 
     setPracticeHistory([]);
@@ -157,13 +199,20 @@ function AppContent() {
   const currentLexeme = lexemes[currentIndex];
 
   return (
-    <Layout currentPage="practice">
+    <Layout>
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-4xl">
-            {/* Mode Selection */}
-            <div className="mb-8 flex flex-wrap justify-center gap-4">
+        {/* Stats Sidebar - Desktop only */}
+        <DashboardSidebar
+          allLexemes={(lexemesData as LexemesData).learnedLexemes}
+          progressMap={progressMap}
+          accuracy={totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0}
+        />
+
+        {/* Main Center Area */}
+        <div className="relative flex-1 overflow-auto">
+          {/* Mode Selection - Fixed at top */}
+          <div className="sticky top-0 z-10 border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex flex-wrap justify-center gap-4">
               <ToggleGroup
                 type="single"
                 value={learningMode}
@@ -186,44 +235,50 @@ function AppContent() {
                 type="single"
                 value={practiceMode}
                 onValueChange={(value) =>
-                  value && setPracticeMode(value as "all" | "new" | "random")
+                  value && setPracticeMode(value as "smart" | "new" | "all")
                 }
                 className="gap-2"
               >
-                <ToggleGroupItem value="all" className="gap-2">
+                <ToggleGroupItem value="smart" className="gap-2">
                   <Brain className="h-4 w-4" />
-                  All Words
+                  Smart Review
                 </ToggleGroupItem>
                 <ToggleGroupItem value="new" className="gap-2">
                   <Zap className="h-4 w-4" />
                   New Only
                 </ToggleGroupItem>
-                <ToggleGroupItem value="random" className="gap-2">
-                  <Shuffle className="h-4 w-4" />
-                  Random
+                <ToggleGroupItem value="all" className="gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  All Words
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
+          </div>
 
-            {/* Main Card */}
-            <ModernWordCard
-              lexeme={currentLexeme}
-              mode={learningMode}
-              onCorrect={handleMarkCorrect}
-              onIncorrect={handleMarkIncorrect}
-              onNext={handleNext}
-              currentIndex={currentIndex}
-              totalWords={lexemes.length}
-            />
+          {/* Card Container - Centered in remaining space */}
+          <div className="flex flex-1 items-center justify-center p-6">
+            <div className="w-full max-w-2xl">
+              {/* Main Card */}
+              <ModernWordCard
+                lexeme={currentLexeme}
+                mode={learningMode}
+                onCorrect={handleMarkCorrect}
+                onIncorrect={handleMarkIncorrect}
+                onNext={handleNext}
+                currentIndex={currentIndex}
+                totalWords={lexemes.length}
+                progress={getProgress(currentLexeme.text)}
+              />
 
-            {/* Session Stats */}
-            {totalAnswers > 0 && (
-              <div className="mt-8 flex justify-center">
-                <Button onClick={handleReset} variant="outline" size="sm">
-                  Reset Session
-                </Button>
-              </div>
-            )}
+              {/* Session Stats */}
+              {totalAnswers > 0 && (
+                <div className="mt-8 flex justify-center">
+                  <Button onClick={handleReset} variant="outline" size="sm">
+                    Reset Session
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -232,6 +287,13 @@ function AppContent() {
           <PracticeHistory history={practiceHistory} onClear={handleClearHistory} />
         </aside>
       </div>
+
+      {/* Mobile Stats Sheet - Only on mobile/tablet */}
+      <MobileStatsSheet
+        allLexemes={(lexemesData as LexemesData).learnedLexemes}
+        progressMap={progressMap}
+        accuracy={totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0}
+      />
 
       <Toaster position="top-right" />
     </Layout>

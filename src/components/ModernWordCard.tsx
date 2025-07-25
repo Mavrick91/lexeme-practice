@@ -3,11 +3,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Volume2, Eye, EyeOff, Sparkles, ChevronRight, Keyboard, Lightbulb } from "lucide-react";
+import {
+  Volume2,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ChevronRight,
+  Keyboard,
+  Lightbulb,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
-import type { Lexeme } from "@/types";
+import type { Lexeme, LexemeProgress } from "@/types";
+import { isDue, formatNextDue } from "@/lib/scheduler";
 
 type ModernWordCardProps = {
   lexeme: Lexeme;
@@ -17,6 +28,7 @@ type ModernWordCardProps = {
   onNext: () => void;
   currentIndex: number;
   totalWords: number;
+  progress?: LexemeProgress;
 };
 
 export function ModernWordCard({
@@ -27,6 +39,7 @@ export function ModernWordCard({
   onNext,
   currentIndex,
   totalWords,
+  progress,
 }: ModernWordCardProps) {
   const [showAnswer, setShowAnswer] = useState(true);
   const [isFlipping, setIsFlipping] = useState(true);
@@ -187,12 +200,39 @@ export function ModernWordCard({
           {/* Word Section */}
           <div className="mb-8 text-center">
             <div className="mb-4 inline-flex items-center gap-4">
-              {lexeme.isNew && (
+              {/* Due Status Badge */}
+              {progress && (
+                <Badge variant={isDue(progress) ? "destructive" : "secondary"} className="gap-1">
+                  {isDue(progress) ? (
+                    <>
+                      <AlertCircle className="h-3 w-3" />
+                      {formatNextDue(progress.nextDue)}
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-3 w-3" />
+                      {formatNextDue(progress.nextDue)}
+                    </>
+                  )}
+                </Badge>
+              )}
+
+              {/* New Word Badge */}
+              {lexeme.isNew && !progress && (
                 <Badge variant="default" className="gap-1">
                   <Sparkles className="h-3 w-3" />
                   NEW
                 </Badge>
               )}
+
+              {/* Mastery Badge */}
+              {progress?.mastered && (
+                <Badge variant="default" className="gap-1 bg-green-600">
+                  <Sparkles className="h-3 w-3" />
+                  MASTERED
+                </Badge>
+              )}
+
               <Button
                 size="icon"
                 variant="outline"

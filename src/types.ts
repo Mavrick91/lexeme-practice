@@ -17,6 +17,11 @@ export type LexemeProgress = {
   timesCorrect: number;
   lastPracticedAt: number; // epoch ms
   mastered: boolean;
+  // SM-2 algorithm fields
+  easinessFactor: number; // default 2.5, range [1.3, 2.6]
+  intervalDays: number; // days until next review (1, 6, 14, ...)
+  nextDue: number; // epoch ms when word is due for review
+  consecutiveCorrect: number; // current success streak
 };
 
 export type UserStats = {

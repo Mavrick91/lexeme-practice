@@ -31,14 +31,16 @@ export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
       )}). Answer in a concise, friendly way with examples. Help them understand usage, pronunciation, grammar, and provide context.`
     : "";
 
-  const { messages, isSending, sendMessage, reset } = useChat(systemPrompt);
+  const { messages, isSending, isLoading, sendMessage, reset } = useChat(systemPrompt, item?.id);
 
-  // Reset chat when item changes
+  // Reset chat when item changes (but not during initial load)
   useEffect(() => {
-    if (item && systemPrompt) {
+    if (item && systemPrompt && !isLoading) {
+      // Only reset if we're switching to a different item
       reset(systemPrompt);
     }
-  }, [item?.id, systemPrompt, reset, item]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id]); // Only depend on item ID to avoid resetting during initial load
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -65,7 +67,11 @@ export function ChatDrawer({ open, item, onOpenChange }: ChatDrawerProps) {
         <div className="mt-4 flex h-0 grow flex-col">
           <ScrollArea className="-mr-4 flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-4 pb-4">
-              {messages.length === 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
                   Ask me anything about this word! I can help with usage, examples, grammar,
                   pronunciation, and more.

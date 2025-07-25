@@ -1,6 +1,7 @@
 import { openDB } from "idb";
 import type { DBSchema } from "idb";
 import type { LexemeProgress, UserStats, PracticeHistoryItem } from "../types";
+import type { ChatConversation } from "../types/chat";
 
 type LexemePracticeDB = {
   lexemeProgress: {
@@ -16,9 +17,14 @@ type LexemePracticeDB = {
     value: PracticeHistoryItem;
     indexes: { "by-timestamp": number };
   };
+  chatConversations: {
+    key: string; // historyItemId
+    value: ChatConversation;
+    indexes: { "by-lastUpdated": number };
+  };
 } & DBSchema;
 
-const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 2, {
+const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 4, {
   upgrade(db, oldVersion) {
     if (oldVersion < 1) {
       db.createObjectStore("lexemeProgress", { keyPath: "text" });
@@ -27,6 +33,14 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 2, {
     if (oldVersion < 2) {
       const historyStore = db.createObjectStore("practiceHistory", { keyPath: "id" });
       historyStore.createIndex("by-timestamp", "timestamp");
+    }
+    if (oldVersion < 3) {
+      const chatStore = db.createObjectStore("chatConversations", { keyPath: "historyItemId" });
+      chatStore.createIndex("by-lastUpdated", "lastUpdated");
+    }
+    if (oldVersion < 4) {
+      // SM-2 fields migration happens automatically on first access due to default values in the code
+      // No explicit migration needed here
     }
   },
 });
@@ -76,5 +90,26 @@ export async function addPracticeHistoryItem(item: PracticeHistoryItem): Promise
 export async function clearPracticeHistory(): Promise<void> {
   const db = await dbPromise;
   const tx = db.transaction("practiceHistory", "readwrite");
+  await tx.store.clear();
+}
+
+// Chat Conversation functions
+export async function getChatConversation(
+  historyItemId: string
+): Promise<ChatConversation | undefined> {
+  return (await dbPromise).get("chatConversations", historyItemId);
+}
+
+export async function saveChatConversation(conversation: ChatConversation): Promise<void> {
+  await (await dbPromise).put("chatConversations", conversation);
+}
+
+export async function deleteChatConversation(historyItemId: string): Promise<void> {
+  await (await dbPromise).delete("chatConversations", historyItemId);
+}
+
+export async function clearAllChatConversations(): Promise<void> {
+  const db = await dbPromise;
+  const tx = db.transaction("chatConversations", "readwrite");
   await tx.store.clear();
 }

@@ -6,3 +6,10 @@ export type ChatMessage = {
   content: string;
   timestamp: number;
 };
+
+export type ChatConversation = {
+  id: string; // Same as PracticeHistoryItem id
+  historyItemId: string; // Reference to PracticeHistoryItem
+  messages: ChatMessage[];
+  lastUpdated: number;
+};
