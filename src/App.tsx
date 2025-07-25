@@ -34,7 +34,6 @@ const AppContent = () => {
   const [learningMode, setLearningMode] = useState<"flashcard" | "writing">("writing");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
-  const [responseStartTime, setResponseStartTime] = useState<number>(Date.now());
 
   const { recordAnswer, getDueLexemes, getProgress, progressMap } = useProgress();
 
@@ -137,7 +136,6 @@ const AppContent = () => {
     // Clear globalSeen when mode changes
     setGlobalSeen(new Set());
     setCurrentIndex(0);
-    setResponseStartTime(Date.now());
 
     // Call fillQueue with empty set
     fillQueue(new Set());
@@ -180,13 +178,10 @@ const AppContent = () => {
       // Otherwise just increment
       setCurrentIndex(currentIndex + 1);
     }
-
-    setResponseStartTime(Date.now()); // Reset timer for next word
   };
 
   const handleMarkCorrect = async () => {
     const currentLexeme = practiceQueue[currentIndex];
-    const responseTime = Date.now() - responseStartTime;
 
     setCorrectAnswers(correctAnswers + 1);
     setTotalAnswers(totalAnswers + 1);
@@ -211,12 +206,11 @@ const AppContent = () => {
     setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
 
     // Record answer with response time for SM-2 algorithm
-    recordAnswer(currentLexeme, true, responseTime);
+    recordAnswer(currentLexeme, true);
   };
 
   const handleMarkIncorrect = async () => {
     const currentLexeme = practiceQueue[currentIndex];
-    const responseTime = Date.now() - responseStartTime;
 
     setTotalAnswers(totalAnswers + 1);
 
@@ -240,7 +234,7 @@ const AppContent = () => {
     setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
 
     // Record answer with response time for SM-2 algorithm
-    recordAnswer(currentLexeme, false, responseTime);
+    recordAnswer(currentLexeme, false);
   };
 
   const handleReset = () => {
