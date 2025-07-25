@@ -1,44 +1,50 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Clock, AlertCircle, Sparkles, Trophy, Target, TrendingUp } from "lucide-react";
+import { Sparkles, Trophy, Target, TrendingUp } from "lucide-react";
 import type { Lexeme, LexemeProgress } from "@/types";
-import { getDueStatistics } from "@/lib/scheduler";
 
 type DashboardStatsProps = {
   allLexemes: Lexeme[];
   progressMap: Map<string, LexemeProgress>;
   accuracy?: number;
+  sessionWordsSeen?: number;
+  currentQueueSize?: number;
 };
 
-export const DashboardStats = ({ allLexemes, progressMap, accuracy = 0 }: DashboardStatsProps) => {
-  const stats = getDueStatistics(allLexemes, progressMap);
-  const practiceRate = Math.round((progressMap.size / stats.totalWords) * 100);
+export const DashboardStats = ({
+  allLexemes,
+  progressMap,
+  accuracy = 0,
+  sessionWordsSeen = 0,
+  currentQueueSize = 0,
+}: DashboardStatsProps) => {
+  const totalWords = allLexemes.length;
+  const practiceRate = Math.round((progressMap.size / totalWords) * 100);
+
+  // Calculate statistics
+  let newWords = 0;
+  let mastered = 0;
+
+  allLexemes.forEach((lexeme) => {
+    const progress = progressMap.get(lexeme.text);
+    if (!progress && lexeme.isNew) {
+      newWords++;
+    } else if (progress?.mastered) {
+      mastered++;
+    }
+  });
 
   const statCards = [
     {
-      label: "Due Now",
-      value: stats.dueNow,
-      icon: AlertCircle,
-      color: "text-red-600",
-      bgColor: "bg-red-50 dark:bg-red-950/20",
-    },
-    {
-      label: "Due Soon",
-      value: stats.dueSoon,
-      icon: Clock,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50 dark:bg-orange-950/20",
-    },
-    {
       label: "New Words",
-      value: stats.newWords,
+      value: newWords,
       icon: Sparkles,
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-950/20",
     },
     {
       label: "Mastered",
-      value: stats.mastered,
+      value: mastered,
       icon: Trophy,
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-950/20",
@@ -47,15 +53,33 @@ export const DashboardStats = ({ allLexemes, progressMap, accuracy = 0 }: Dashbo
 
   return (
     <div className="space-y-4">
+      {/* Session Progress */}
+      {sessionWordsSeen > 0 && (
+        <Card className="border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium">Current Session</span>
+            </div>
+            <span className="text-sm font-medium text-blue-600">{sessionWordsSeen} words seen</span>
+          </div>
+          {currentQueueSize > 0 && (
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              {currentQueueSize} words remaining in queue
+            </p>
+          )}
+        </Card>
+      )}
+
       {/* Progress Overview */}
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Target className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">Practice Progress</span>
+            <span className="text-sm font-medium">Overall Progress</span>
           </div>
           <span className="text-sm text-muted-foreground">
-            {progressMap.size} / {stats.totalWords} words
+            {progressMap.size} / {totalWords} words
           </span>
         </div>
         <Progress value={practiceRate} className="h-2" />
@@ -87,23 +111,6 @@ export const DashboardStats = ({ allLexemes, progressMap, accuracy = 0 }: Dashbo
           );
         })}
       </div>
-
-      {/* Learning Tips */}
-      {stats.dueNow > 20 && (
-        <Card className="border-orange-200 bg-orange-50 p-4 dark:border-orange-900 dark:bg-orange-950/20">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-4 w-4 text-orange-600" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
-                You have {stats.dueNow} words due for review!
-              </p>
-              <p className="text-xs text-orange-700 dark:text-orange-200">
-                Regular reviews help strengthen your memory. Try to review due words daily.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };

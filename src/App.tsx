@@ -20,8 +20,13 @@ import {
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
 
+// Constants for queue management
+const QUEUE_SIZE = 50; // Number of words to fetch at once
+const RECENT_LIMIT = 200; // Max words to track as "seen" before recycling
+
 const AppContent = () => {
-  const [lexemes, setLexemes] = useState<Lexeme[]>([]);
+  const [practiceQueue, setPracticeQueue] = useState<Lexeme[]>([]);
+  const [globalSeen, setGlobalSeen] = useState<Set<string>>(new Set());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalAnswers, setTotalAnswers] = useState(0);
@@ -29,7 +34,6 @@ const AppContent = () => {
   const [learningMode, setLearningMode] = useState<"flashcard" | "writing">("writing");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
-  const [sessionHistory, setSessionHistory] = useState<Set<string>>(new Set());
   const [responseStartTime, setResponseStartTime] = useState<number>(Date.now());
 
   const { recordAnswer, getDueLexemes, getProgress, progressMap } = useProgress();
@@ -51,51 +55,137 @@ const AppContent = () => {
     loadHistory();
   }, []);
 
-  useEffect(() => {
+  // Function to fill the practice queue
+  const fillQueue = async (excludeSet: Set<string>): Promise<boolean> => {
     const data = lexemesData as LexemesData;
-    let filteredLexemes: Lexeme[] = [];
+    let newLexemes: Lexeme[] = [];
 
     if (practiceMode === "smart") {
       // Use smart selection with spaced repetition
-      filteredLexemes = getDueLexemes(data.learnedLexemes, 100, sessionHistory);
+      newLexemes = getDueLexemes(data.learnedLexemes, QUEUE_SIZE, excludeSet);
+
+      // If no lexemes returned and excludeSet is not empty, clear excludeSet and retry
+      if (newLexemes.length === 0 && excludeSet.size > 0) {
+        newLexemes = getDueLexemes(data.learnedLexemes, QUEUE_SIZE, new Set());
+      }
+
+      // Show appropriate feedback if still no words
+      if (newLexemes.length === 0) {
+        toast("All words reviewed! 🎉", {
+          description:
+            "Great job! All your words are up to date. Try practicing new words or switch to 'All Words' mode.",
+          duration: 5000,
+        });
+      }
     } else if (practiceMode === "new") {
       // Only new words
-      filteredLexemes = data.learnedLexemes.filter((l) => l.isNew);
+      const allNewWords = data.learnedLexemes.filter((l) => l.isNew);
+      // Filter out seen words
+      newLexemes = allNewWords.filter((l) => !excludeSet.has(l.text)).slice(0, QUEUE_SIZE);
+
+      // If not enough words and excludeSet is not empty, include some seen words
+      if (newLexemes.length < QUEUE_SIZE && excludeSet.size > 0) {
+        const additionalWords = allNewWords.slice(0, QUEUE_SIZE - newLexemes.length);
+        newLexemes = [...newLexemes, ...additionalWords];
+      }
+
+      // Show feedback if no new words available
+      if (newLexemes.length === 0 && allNewWords.length === 0) {
+        toast("No new words available", {
+          description:
+            "You've already seen all the new words. Try 'Smart Review' or 'All Words' mode to continue practicing.",
+          duration: 5000,
+        });
+      } else if (newLexemes.length === 0 && excludeSet.size > 0) {
+        toast("All new words in this session completed!", {
+          description: "Restarting with the new words from the beginning.",
+          duration: 3000,
+        });
+      }
     } else if (practiceMode === "all") {
       // All words in order
-      filteredLexemes = [...data.learnedLexemes];
+      const allWords = [...data.learnedLexemes];
+      // Filter out seen words
+      newLexemes = allWords.filter((l) => !excludeSet.has(l.text)).slice(0, QUEUE_SIZE);
+
+      // If not enough words and excludeSet is not empty, include some seen words
+      if (newLexemes.length < QUEUE_SIZE && excludeSet.size > 0) {
+        const additionalWords = allWords.slice(0, QUEUE_SIZE - newLexemes.length);
+        newLexemes = [...newLexemes, ...additionalWords];
+      }
+
+      // Show feedback when all words have been seen
+      if (newLexemes.length === 0 && excludeSet.size >= allWords.length) {
+        toast("All words practiced! 🎉", {
+          description:
+            "Excellent work! You've gone through all available words. Starting over from the beginning.",
+          duration: 5000,
+        });
+      }
     }
 
-    setLexemes(filteredLexemes);
+    // Update practice queue
+    setPracticeQueue(newLexemes);
     setIsLoading(false);
+
+    // Return false if no lexemes available even after retry
+    return newLexemes.length > 0;
+  };
+
+  // Handle mode changes
+  useEffect(() => {
+    // Clear globalSeen when mode changes
+    setGlobalSeen(new Set());
     setCurrentIndex(0);
     setResponseStartTime(Date.now());
-  }, [practiceMode, getDueLexemes, sessionHistory]);
 
-  const handleNext = () => {
-    if (currentIndex < lexemes.length - 1) {
-      // Add current word to session history
-      const currentWord = lexemes[currentIndex].text;
-      setSessionHistory((prev) => {
-        const newHistory = new Set(prev);
-        newHistory.add(currentWord);
-        // Keep only last 10 words
-        if (newHistory.size > 10) {
-          const firstItem = newHistory.values().next().value;
-          if (firstItem) {
-            newHistory.delete(firstItem);
-          }
-        }
-        return newHistory;
-      });
+    // Call fillQueue with empty set
+    fillQueue(new Set());
+  }, [practiceMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleNext = async () => {
+    // Add current word to globalSeen
+    const currentWord = practiceQueue[currentIndex].text;
+    setGlobalSeen((prev) => {
+      const newSeen = new Set(prev);
+      newSeen.add(currentWord);
+
+      // If globalSeen.size > RECENT_LIMIT, remove oldest entries
+      if (newSeen.size > RECENT_LIMIT) {
+        const seenArray = Array.from(newSeen);
+        const toRemove = seenArray.slice(0, newSeen.size - RECENT_LIMIT);
+        toRemove.forEach((word) => newSeen.delete(word));
+      }
+
+      return newSeen;
+    });
+
+    // If at the end of queue, try to fill more
+    if (currentIndex >= practiceQueue.length - 1) {
+      const hasMore = await fillQueue(globalSeen);
+
+      if (!hasMore) {
+        // No more words available, but keep the last word displayed
+        toast("Session complete! 🎉", {
+          description:
+            "You've completed all available words for this mode. Switch modes to continue practicing or take a well-deserved break!",
+          duration: 6000,
+        });
+        return;
+      }
+
+      // Reset to beginning of new queue
+      setCurrentIndex(0);
+    } else {
+      // Otherwise just increment
       setCurrentIndex(currentIndex + 1);
-      setResponseStartTime(Date.now()); // Reset timer for next word
     }
+
+    setResponseStartTime(Date.now()); // Reset timer for next word
   };
 
   const handleMarkCorrect = async () => {
-    const currentLexeme = lexemes[currentIndex];
+    const currentLexeme = practiceQueue[currentIndex];
     const responseTime = Date.now() - responseStartTime;
 
     setCorrectAnswers(correctAnswers + 1);
@@ -125,7 +215,7 @@ const AppContent = () => {
   };
 
   const handleMarkIncorrect = async () => {
-    const currentLexeme = lexemes[currentIndex];
+    const currentLexeme = practiceQueue[currentIndex];
     const responseTime = Date.now() - responseStartTime;
 
     setTotalAnswers(totalAnswers + 1);
@@ -186,15 +276,26 @@ const AppContent = () => {
     return <div className="mt-16 text-center text-xl text-gray-600">Loading lexemes...</div>;
   }
 
-  if (lexemes.length === 0) {
+  if (practiceQueue.length === 0) {
     return (
-      <div className="mt-16 text-center text-xl text-gray-600">
-        No lexemes found for the selected mode.
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="max-w-md space-y-4 text-center">
+          <h2 className="text-2xl font-semibold text-gray-700">No words available</h2>
+          <p className="text-gray-600">
+            {practiceMode === "smart" &&
+              "All your words are up to date! Great job keeping up with your reviews."}
+            {practiceMode === "new" && "You've already seen all the new words. Well done!"}
+            {practiceMode === "all" && "Something went wrong loading the words."}
+          </p>
+          <p className="text-sm text-gray-500">
+            Try switching to a different practice mode using the buttons above.
+          </p>
+        </div>
       </div>
     );
   }
 
-  const currentLexeme = lexemes[currentIndex];
+  const currentLexeme = practiceQueue[currentIndex];
 
   return (
     <Layout>
@@ -204,6 +305,8 @@ const AppContent = () => {
           allLexemes={(lexemesData as LexemesData).learnedLexemes}
           progressMap={progressMap}
           accuracy={totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0}
+          sessionWordsSeen={globalSeen.size}
+          currentQueueSize={practiceQueue.length - currentIndex - 1}
         />
 
         {/* Main Center Area */}
@@ -264,7 +367,7 @@ const AppContent = () => {
                 onIncorrect={handleMarkIncorrect}
                 onNext={handleNext}
                 currentIndex={currentIndex}
-                totalWords={lexemes.length}
+                totalWords={practiceQueue.length}
                 progress={getProgress(currentLexeme.text)}
               />
 
@@ -291,6 +394,8 @@ const AppContent = () => {
         allLexemes={(lexemesData as LexemesData).learnedLexemes}
         progressMap={progressMap}
         accuracy={totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0}
+        sessionWordsSeen={globalSeen.size}
+        currentQueueSize={practiceQueue.length - currentIndex - 1}
       />
 
       <Toaster position="top-right" />

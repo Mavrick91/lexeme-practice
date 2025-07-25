@@ -15,9 +15,17 @@ type MobileStatsSheetProps = {
   allLexemes: Lexeme[];
   progressMap: Map<string, LexemeProgress>;
   accuracy?: number;
+  sessionWordsSeen?: number;
+  currentQueueSize?: number;
 };
 
-export const MobileStatsSheet = ({ allLexemes, progressMap, accuracy }: MobileStatsSheetProps) => {
+export const MobileStatsSheet = ({
+  allLexemes,
+  progressMap,
+  accuracy,
+  sessionWordsSeen = 0,
+  currentQueueSize = 0,
+}: MobileStatsSheetProps) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -36,7 +44,13 @@ export const MobileStatsSheet = ({ allLexemes, progressMap, accuracy }: MobileSt
           <SheetDescription>Track your learning progress and statistics</SheetDescription>
         </SheetHeader>
         <div className="mt-6">
-          <DashboardStats allLexemes={allLexemes} progressMap={progressMap} accuracy={accuracy} />
+          <DashboardStats
+            allLexemes={allLexemes}
+            progressMap={progressMap}
+            accuracy={accuracy}
+            sessionWordsSeen={sessionWordsSeen}
+            currentQueueSize={currentQueueSize}
+          />
         </div>
       </SheetContent>
     </Sheet>

@@ -7,13 +7,7 @@ import {
   getAllLexemeProgress,
 } from "../db";
 import type { Lexeme, LexemeProgress, UserStats } from "../types";
-import {
-  calculateQuality,
-  updateEasinessFactor,
-  calculateNextInterval,
-  selectNextLexemes,
-  getDueStatistics,
-} from "../lib/scheduler";
+import { selectNextLexemes } from "../lib/scheduler";
 
 export const useProgress = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
@@ -33,78 +27,55 @@ export const useProgress = () => {
     loadData();
   }, []);
 
-  const recordAnswer = useCallback(
-    async (lexeme: Lexeme, isCorrect: boolean, responseTimeMs?: number) => {
-      const now = Date.now();
+  const recordAnswer = useCallback(async (lexeme: Lexeme, isCorrect: boolean) => {
+    const now = Date.now();
 
-      // Update per-lexeme progress
-      const prev = await getLexemeProgress(lexeme.text);
+    // Update per-lexeme progress
+    const prev = await getLexemeProgress(lexeme.text);
 
-      // Calculate quality score for SM-2 algorithm
-      const quality = calculateQuality(isCorrect, responseTimeMs);
+    // Get current progress or create default
+    const currentProgress: LexemeProgress = prev ?? {
+      text: lexeme.text,
+      timesSeen: 0,
+      timesCorrect: 0,
+      lastPracticedAt: now,
+      mastered: false,
+    };
 
-      // Get current progress or create default
-      const currentProgress: LexemeProgress = prev ?? {
-        text: lexeme.text,
-        timesSeen: 0,
-        timesCorrect: 0,
-        lastPracticedAt: now,
-        mastered: false,
-        easinessFactor: 2.5,
-        intervalDays: 0,
-        nextDue: now,
-        consecutiveCorrect: 0,
-      };
+    // Simple mastery: 3+ times correct with 80%+ accuracy
+    const newTimesSeen = currentProgress.timesSeen + 1;
+    const newTimesCorrect = currentProgress.timesCorrect + (isCorrect ? 1 : 0);
+    const accuracy = newTimesCorrect / newTimesSeen;
+    const isMastered = newTimesCorrect >= 3 && accuracy >= 0.8;
 
-      // Update SM-2 fields
-      const newEasinessFactor = updateEasinessFactor(currentProgress.easinessFactor, quality);
-      const newInterval = calculateNextInterval(
-        quality,
-        currentProgress.intervalDays,
-        newEasinessFactor
-      );
-      const newConsecutiveCorrect = isCorrect ? currentProgress.consecutiveCorrect + 1 : 0;
+    const updated: LexemeProgress = {
+      text: lexeme.text,
+      timesSeen: newTimesSeen,
+      timesCorrect: newTimesCorrect,
+      lastPracticedAt: now,
+      mastered: isMastered,
+    };
 
-      // Calculate next due date
-      const nextDue = now + newInterval * 24 * 60 * 60 * 1000;
+    await putLexemeProgress(updated);
+    setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
 
-      // Determine if word is mastered (3+ consecutive correct with EF > 2.0)
-      const isMastered = newConsecutiveCorrect >= 3 && newEasinessFactor > 2.0;
+    // Update overall stats
+    const prevStats = await getUserStats();
+    const stats: UserStats = prevStats ?? {
+      totalSeen: 0,
+      totalCorrect: 0,
+      lastPracticedAt: now,
+    };
 
-      const updated: LexemeProgress = {
-        ...currentProgress,
-        timesSeen: currentProgress.timesSeen + 1,
-        timesCorrect: currentProgress.timesCorrect + (isCorrect ? 1 : 0),
-        lastPracticedAt: now,
-        mastered: isMastered,
-        easinessFactor: newEasinessFactor,
-        intervalDays: newInterval,
-        nextDue: nextDue,
-        consecutiveCorrect: newConsecutiveCorrect,
-      };
+    const updatedStats: UserStats = {
+      totalSeen: stats.totalSeen + 1,
+      totalCorrect: stats.totalCorrect + (isCorrect ? 1 : 0),
+      lastPracticedAt: now,
+    };
 
-      await putLexemeProgress(updated);
-      setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
-
-      // Update overall stats
-      const prevStats = await getUserStats();
-      const stats: UserStats = prevStats ?? {
-        totalSeen: 0,
-        totalCorrect: 0,
-        lastPracticedAt: now,
-      };
-
-      const updatedStats: UserStats = {
-        totalSeen: stats.totalSeen + 1,
-        totalCorrect: stats.totalCorrect + (isCorrect ? 1 : 0),
-        lastPracticedAt: now,
-      };
-
-      await putUserStats(updatedStats);
-      setUserStats(updatedStats);
-    },
-    []
-  );
+    await putUserStats(updatedStats);
+    setUserStats(updatedStats);
+  }, []);
 
   const getProgress = useCallback(
     (text: string): LexemeProgress | undefined => {
@@ -114,15 +85,8 @@ export const useProgress = () => {
   );
 
   const getDueLexemes = useCallback(
-    (allLexemes: Lexeme[], count: number = 50, recentlySeenWords?: Set<string>) => {
-      return selectNextLexemes(allLexemes, progressMap, count, recentlySeenWords);
-    },
-    [progressMap]
-  );
-
-  const getStatistics = useCallback(
-    (allLexemes: Lexeme[]) => {
-      return getDueStatistics(allLexemes, progressMap);
+    (allLexemes: Lexeme[], count: number = 50, excludeSet: Set<string> = new Set()) => {
+      return selectNextLexemes(allLexemes, progressMap, count, excludeSet);
     },
     [progressMap]
   );
@@ -133,6 +97,5 @@ export const useProgress = () => {
     getProgress,
     progressMap,
     getDueLexemes,
-    getStatistics,
   };
 };
