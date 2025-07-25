@@ -17,6 +17,7 @@ import {
   addPracticeHistoryItem,
   clearPracticeHistory as clearDBHistory,
   clearAllChatConversations,
+  getReadyDB,
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
 
@@ -40,6 +41,9 @@ const AppContent = () => {
   // Load practice history from IndexedDB on mount
   useEffect(() => {
     const loadHistory = async () => {
+      // Wait for database to be ready before loading history
+      await getReadyDB();
+
       const [history, error] = await tryCatch(() => getPracticeHistory());
 
       if (error) {

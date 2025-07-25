@@ -343,7 +343,7 @@ export const ModernWordCard = ({
                           setUserAnswer(e.target.value)
                         }
                         placeholder="Type your answer..."
-                        className={cn("w-full max-w-md mx-auto text-xl text-center h-14")}
+                        className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
                         autoFocus
                       />
                     </div>

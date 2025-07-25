@@ -1,5 +1,5 @@
 import { openDB } from "idb";
-import type { DBSchema } from "idb";
+import type { DBSchema, IDBPDatabase } from "idb";
 import type { LexemeProgress, UserStats, PracticeHistoryItem } from "../types";
 import type { ChatConversation } from "../types/chat";
 
@@ -24,8 +24,23 @@ type LexemePracticeDB = {
   };
 } & DBSchema;
 
+// Helper function to check if a store exists
+const storeExists = (
+  db: IDBPDatabase<LexemePracticeDB>,
+  storeName: keyof LexemePracticeDB
+): boolean => {
+  // Check if the store name exists in the database
+  for (let i = 0; i < db.objectStoreNames.length; i++) {
+    if (db.objectStoreNames.item(i) === storeName) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Create and export the database promise
 const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
-  upgrade(db, oldVersion) {
+  async upgrade(db, oldVersion, _newVersion, transaction) {
     if (oldVersion < 1) {
       db.createObjectStore("lexemeProgress", { keyPath: "text" });
       db.createObjectStore("userStats");
@@ -44,10 +59,11 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
     }
     if (oldVersion < 5) {
       // Migrate existing progress records to include mistake tracking fields
-      const tx = db.transaction("lexemeProgress", "readwrite");
-      const store = tx.objectStore("lexemeProgress");
+      // Use the existing transaction from the upgrade process
+      const store = transaction.objectStore("lexemeProgress");
 
-      store.openCursor().then(function processCursor(cursor): Promise<void> | void {
+      // Use await to ensure migration completes before upgrade finishes
+      await store.openCursor().then(function processCursor(cursor): Promise<void> | void {
         if (!cursor) return;
 
         const progress = cursor.value;
@@ -65,6 +81,9 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
     }
   },
 });
+
+// Export a function to get the ready database
+export const getReadyDB = () => dbPromise;
 
 export const getLexemeProgress = async (text: string): Promise<LexemeProgress | undefined> => {
   return (await dbPromise).get("lexemeProgress", text);
@@ -89,8 +108,21 @@ export const putUserStats = async (stats: UserStats): Promise<void> => {
 // Practice History functions
 export const getPracticeHistory = async (limit = 100): Promise<PracticeHistoryItem[]> => {
   const db = await dbPromise;
+
+  // Check if store exists (for first-time users)
+  if (!storeExists(db, "practiceHistory")) {
+    return [];
+  }
+
   const tx = db.transaction("practiceHistory", "readonly");
-  const index = tx.store.index("by-timestamp");
+  const store = tx.store;
+
+  // Check if index exists
+  if (!store.indexNames.contains("by-timestamp")) {
+    return [];
+  }
+
+  const index = store.index("by-timestamp");
 
   // Get all items sorted by timestamp (newest first)
   const items = [];
@@ -105,11 +137,25 @@ export const getPracticeHistory = async (limit = 100): Promise<PracticeHistoryIt
 };
 
 export const addPracticeHistoryItem = async (item: PracticeHistoryItem): Promise<void> => {
-  await (await dbPromise).add("practiceHistory", item);
+  const db = await dbPromise;
+
+  // Check if store exists
+  if (!storeExists(db, "practiceHistory")) {
+    console.warn("Practice history store not yet created");
+    return;
+  }
+
+  await db.add("practiceHistory", item);
 };
 
 export const clearPracticeHistory = async (): Promise<void> => {
   const db = await dbPromise;
+
+  // Check if store exists
+  if (!storeExists(db, "practiceHistory")) {
+    return;
+  }
+
   const tx = db.transaction("practiceHistory", "readwrite");
   await tx.store.clear();
 };
