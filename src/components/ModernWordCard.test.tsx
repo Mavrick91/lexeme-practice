@@ -61,7 +61,6 @@ describe("ModernWordCard", () => {
   const renderCard = (props: Partial<Parameters<typeof ModernWordCard>[0]> = {}) => {
     const defaultProps = {
       lexeme: baseLexeme,
-      mode: "flashcard" as const,
       onCorrect: mockOnCorrect,
       onIncorrect: mockOnIncorrect,
       onNext: mockOnNext,
@@ -79,20 +78,8 @@ describe("ModernWordCard", () => {
   });
 
   describe("Rendering", () => {
-    it("renders flashcard UI correctly", () => {
-      renderCard({ mode: "flashcard" });
-
-      expect(screen.getByText("rumah")).toBeInTheDocument();
-      expect(screen.getByText("/roo-mah/")).toBeInTheDocument();
-      // In flashcard mode, it shows the answer immediately
-      expect(screen.getByText("house")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /didn't know/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /got it/i })).toBeInTheDocument();
-      expect(screen.queryByPlaceholderText("Type your answer...")).not.toBeInTheDocument();
-    });
-
     it("renders writing mode UI correctly", () => {
-      renderCard({ mode: "writing" });
+      renderCard();
 
       expect(screen.getByText("rumah")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
@@ -135,7 +122,6 @@ describe("ModernWordCard", () => {
       rerender(
         <ModernWordCard
           lexeme={newLexeme}
-          mode="writing"
           onCorrect={mockOnCorrect}
           onIncorrect={mockOnIncorrect}
           onNext={mockOnNext}
@@ -147,45 +133,6 @@ describe("ModernWordCard", () => {
       // Input should be cleared
       const newInput = screen.getByPlaceholderText("Type your answer...");
       expect(newInput).toHaveValue("");
-    });
-  });
-
-  describe("Flashcard mode interactions", () => {
-    it("shows translations immediately in flashcard mode", () => {
-      renderCard({ mode: "flashcard" });
-
-      // Answer is shown immediately
-      expect(screen.getByText("house")).toBeInTheDocument();
-      expect(screen.getByText("home")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /didn't know/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /got it/i })).toBeInTheDocument();
-    });
-
-    it("handles incorrect response with keyboard shortcut 1", () => {
-      renderCard({ mode: "flashcard" });
-
-      // Press 1 for incorrect
-      fireEvent.keyDown(window, { key: "1" });
-
-      expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
-      expect(mockOnNext).toHaveBeenCalledTimes(1);
-    });
-
-    it("handles correct response with keyboard shortcut 2", () => {
-      renderCard({ mode: "flashcard" });
-
-      // Press 2 for correct
-      fireEvent.keyDown(window, { key: "2" });
-
-      expect(mockOnCorrect).toHaveBeenCalledTimes(1);
-      expect(mockOnNext).toHaveBeenCalledTimes(1);
-    });
-
-    it("shows example sentence when available", () => {
-      renderCard({ mode: "flashcard" });
-
-      expect(screen.getByText("Example:")).toBeInTheDocument();
-      expect(screen.getByText("Ini adalah rumah saya")).toBeInTheDocument();
     });
   });
 
@@ -359,20 +306,8 @@ describe("ModernWordCard", () => {
   });
 
   describe("UI details", () => {
-    it("shows correct keyboard shortcuts for flashcard mode", () => {
-      renderCard({ mode: "flashcard" });
-
-      // Find the keyboard shortcut elements
-      const kbdElements = screen.getAllByText((_, element) => element?.tagName === "KBD");
-
-      const kbdTexts = kbdElements.map((el) => el.textContent);
-      expect(kbdTexts).toContain("Space");
-      expect(kbdTexts).toContain("1");
-      expect(kbdTexts).toContain("2");
-    });
-
     it("shows correct keyboard shortcuts for writing mode", () => {
-      renderCard({ mode: "writing" });
+      renderCard();
 
       expect(screen.getByText(/Enter/)).toBeInTheDocument();
       expect(screen.getByText(/Ctrl\+H/)).toBeInTheDocument();

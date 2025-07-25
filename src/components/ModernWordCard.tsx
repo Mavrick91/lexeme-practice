@@ -4,16 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Volume2,
-  Eye,
-  EyeOff,
-  Sparkles,
-  ChevronRight,
-  Keyboard,
-  Lightbulb,
-  RefreshCw,
-} from "lucide-react";
+import { Volume2, Sparkles, ChevronRight, Keyboard, Lightbulb, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -22,7 +13,6 @@ import type { Lexeme, LexemeProgress } from "@/types";
 
 type ModernWordCardProps = {
   lexeme: Lexeme;
-  mode: "flashcard" | "writing";
   onCorrect: () => void;
   onIncorrect: (userAnswer?: string) => void;
   onNext: () => void;
@@ -34,7 +24,6 @@ type ModernWordCardProps = {
 
 export const ModernWordCard = ({
   lexeme,
-  mode,
   onCorrect,
   onIncorrect,
   onNext,
@@ -43,37 +32,25 @@ export const ModernWordCard = ({
   progress,
   autoAdvanceOnIncorrect = true,
 }: ModernWordCardProps) => {
-  // Force flashcard mode for struggling words
-  const effectiveMode = progress?.easingLevel === 0 ? "flashcard" : mode;
-
-  const [showAnswer, setShowAnswer] = useState(effectiveMode === "flashcard");
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Reset state when lexeme changes
-    const newEffectiveMode = progress?.easingLevel === 0 ? "flashcard" : mode;
-    setShowAnswer(newEffectiveMode === "flashcard");
+    setShowAnswer(false);
     setUserAnswer("");
     setShowHint(false);
-  }, [lexeme, mode, progress?.easingLevel]);
+  }, [lexeme]);
 
   // Use the auto-focus hook for reliable input focusing in writing mode
-  useAutoFocus(inputRef, effectiveMode === "writing", [lexeme]);
+  useAutoFocus(inputRef, true, [lexeme]);
 
   const handleCorrect = useCallback(() => {
     onCorrect();
     onNext();
   }, [onCorrect, onNext]);
-
-  const handleIncorrect = useCallback(() => {
-    onIncorrect();
-    if (autoAdvanceOnIncorrect) {
-      onNext();
-    }
-  }, [onIncorrect, autoAdvanceOnIncorrect, onNext]);
 
   // Use the new hint system
   const {
@@ -96,41 +73,19 @@ export const ModernWordCard = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (effectiveMode === "flashcard") {
-        if (e.code === "Space" && !showAnswer) {
-          e.preventDefault();
-          handleReveal();
-        } else if (e.key === "1" && showAnswer) {
-          handleIncorrect();
-        } else if (e.key === "2" && showAnswer) {
-          handleCorrect();
-        }
-      } else if (effectiveMode === "writing") {
-        if ((e.ctrlKey || e.metaKey) && e.key === "h") {
-          e.preventDefault();
-          handleHintClick();
-        }
+      if ((e.ctrlKey || e.metaKey) && e.key === "h") {
+        e.preventDefault();
+        handleHintClick();
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleCorrect, handleIncorrect, effectiveMode, showAnswer, showHint, handleHintClick]);
+  }, [handleHintClick]);
 
   const playAudio = () => {
     const audio = new Audio(lexeme.audioURL);
     audio.play();
-  };
-
-  const handleReveal = () => {
-    setIsFlipping(true);
-  };
-
-  const handleTransitionEnd = () => {
-    if (isFlipping) {
-      setShowAnswer(true);
-      setIsFlipping(false);
-    }
   };
 
   const normalizeAnswer = (text: string): string => {
@@ -208,12 +163,7 @@ export const ModernWordCard = ({
 
       {/* Main Card */}
       <Card
-        className={cn(
-          "relative overflow-hidden transition-all duration-200",
-          isFlipping && "scale-95",
-          animations.fadeIn
-        )}
-        onTransitionEnd={handleTransitionEnd}
+        className={cn("relative overflow-hidden transition-all duration-200", animations.fadeIn)}
       >
         {/* Decorative Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
@@ -268,189 +218,126 @@ export const ModernWordCard = ({
           </div>
 
           {/* Answer Section */}
-          <div
-            className={cn(
-              "min-h-[120px] transition-all duration-300",
-              effectiveMode === "flashcard" && !showAnswer && "flex items-center justify-center"
-            )}
-          >
-            {effectiveMode === "flashcard" ? (
-              // Flashcard Mode
-              !showAnswer ? (
-                <div className="text-center">
-                  <Button size="lg" onClick={handleReveal} className="gap-2 px-8 text-lg">
-                    <Eye className="h-5 w-5" />
-                    Reveal Answer
-                  </Button>
-                </div>
+          <div className="min-h-[120px] transition-all duration-300">
+            {/* Writing Mode */}
+            <div className="space-y-4">
+              {!showAnswer ? (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="text-center">
+                    <p className="mb-4 text-lg text-muted-foreground">
+                      Type the English translation:
+                    </p>
+                    <Input
+                      ref={inputRef}
+                      type="text"
+                      value={userAnswer}
+                      onChange={(e) => setUserAnswer(e.target.value)}
+                      placeholder="Type your answer..."
+                      className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
+                      autoFocus
+                    />
+                  </div>
+
+                  <div className="flex justify-center gap-3">
+                    <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
+                      Check Answer
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="lg"
+                      onClick={handleHintClick}
+                      disabled={hintStatus === "loading"}
+                    >
+                      {hintStatus === "loading" ? (
+                        <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                      ) : (
+                        <Lightbulb className="mr-2 h-5 w-5" />
+                      )}
+                      {showHint ? "Hide Hint" : "Show Hint"}
+                    </Button>
+                  </div>
+
+                  {showHint && (
+                    <div
+                      className={cn(
+                        "bg-secondary/50 rounded-lg p-4 max-w-md mx-auto",
+                        animations.slideInFromTop
+                      )}
+                    >
+                      {hintStatus === "loading" && (
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                        </div>
+                      )}
+                      {hintStatus === "ready" &&
+                        hint &&
+                        hint.relatedWords &&
+                        Array.isArray(hint.relatedWords) && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-muted-foreground/70">
+                              Related words:
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                              {hint.relatedWords.map((word, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium"
+                                >
+                                  {word}
+                                </span>
+                              ))}
+                            </div>
+                            {hint.source === "fallback" && (
+                              <p className="mt-2 text-center text-xs opacity-60">(offline hint)</p>
+                            )}
+                          </div>
+                        )}
+                      {hintStatus === "error" && (
+                        <p className="text-sm text-destructive">
+                          ⚠️ {hintError || "Failed to generate hint"}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </form>
               ) : (
+                // Show correct answer after incorrect response
                 <div className={cn("space-y-4", animations.slideInFromBottom)}>
-                  <div className="space-y-2 text-center">
-                    {lexeme.translations.map((translation, index) => (
-                      <div
-                        key={index}
-                        className="inline-block rounded-lg bg-secondary/30 px-4 py-2 text-xl font-medium md:text-2xl"
-                      >
-                        {translation}
-                      </div>
-                    ))}
+                  <div className="text-center">
+                    <p className="mb-4 text-lg text-destructive">
+                      Incorrect! The correct answer is:
+                    </p>
+                    <div className="space-y-2">
+                      {lexeme.translations.map((translation, index) => (
+                        <div
+                          key={index}
+                          className="inline-block rounded-lg bg-secondary/30 px-4 py-2 text-xl font-medium md:text-2xl"
+                        >
+                          {translation}
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Example sentence if available */}
                   {lexeme.example && (
-                    <div className="mt-6 rounded-lg bg-muted/30 p-4">
+                    <div className="mx-auto mt-6 max-w-md rounded-lg bg-muted/30 p-4">
                       <p className="mb-1 text-sm font-medium">Example:</p>
                       <p className="italic text-muted-foreground">{lexeme.example}</p>
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="mt-8 flex justify-center gap-3">
-                    <Button
-                      size="lg"
-                      variant="destructive"
-                      onClick={handleIncorrect}
-                      className="gap-2"
-                    >
-                      <EyeOff className="h-5 w-5" />
-                      Didn't Know
-                    </Button>
-                    <Button
-                      size="lg"
-                      className="gap-2 bg-green-600 hover:bg-green-700"
-                      onClick={handleCorrect}
-                    >
-                      <Eye className="h-5 w-5" />
-                      Got It!
-                    </Button>
-                  </div>
+                  {/* Auto-advancing message */}
+                  {autoAdvanceOnIncorrect && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      Auto-advancing to next word...
+                    </p>
+                  )}
                 </div>
-              )
-            ) : (
-              // Writing Mode
-              <div className="space-y-4">
-                {!showAnswer ? (
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="text-center">
-                      <p className="mb-4 text-lg text-muted-foreground">
-                        Type the English translation:
-                      </p>
-                      <Input
-                        ref={inputRef}
-                        type="text"
-                        value={userAnswer}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setUserAnswer(e.target.value)
-                        }
-                        placeholder="Type your answer..."
-                        className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
-                        autoFocus
-                      />
-                    </div>
-
-                    <div className="flex justify-center gap-3">
-                      <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
-                        Check Answer
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="lg"
-                        onClick={handleHintClick}
-                        disabled={hintStatus === "loading"}
-                      >
-                        {hintStatus === "loading" ? (
-                          <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                        ) : (
-                          <Lightbulb className="mr-2 h-5 w-5" />
-                        )}
-                        {showHint ? "Hide Hint" : "Show Hint"}
-                      </Button>
-                    </div>
-
-                    {showHint && (
-                      <div
-                        className={cn(
-                          "bg-secondary/50 rounded-lg p-4 max-w-md mx-auto",
-                          animations.slideInFromTop
-                        )}
-                      >
-                        {hintStatus === "loading" && (
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
-                          </div>
-                        )}
-                        {hintStatus === "ready" &&
-                          hint &&
-                          hint.relatedWords &&
-                          Array.isArray(hint.relatedWords) && (
-                            <div className="space-y-2">
-                              <p className="text-xs font-medium text-muted-foreground/70">
-                                Related words:
-                              </p>
-                              <div className="flex flex-wrap justify-center gap-2">
-                                {hint.relatedWords.map((word, index) => (
-                                  <span
-                                    key={index}
-                                    className="inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium"
-                                  >
-                                    {word}
-                                  </span>
-                                ))}
-                              </div>
-                              {hint.source === "fallback" && (
-                                <p className="mt-2 text-center text-xs opacity-60">
-                                  (offline hint)
-                                </p>
-                              )}
-                            </div>
-                          )}
-                        {hintStatus === "error" && (
-                          <p className="text-sm text-destructive">
-                            ⚠️ {hintError || "Failed to generate hint"}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </form>
-                ) : (
-                  // Show correct answer after incorrect response
-                  <div className={cn("space-y-4", animations.slideInFromBottom)}>
-                    <div className="text-center">
-                      <p className="mb-4 text-lg text-destructive">
-                        Incorrect! The correct answer is:
-                      </p>
-                      <div className="space-y-2">
-                        {lexeme.translations.map((translation, index) => (
-                          <div
-                            key={index}
-                            className="inline-block rounded-lg bg-secondary/30 px-4 py-2 text-xl font-medium md:text-2xl"
-                          >
-                            {translation}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Example sentence if available */}
-                    {lexeme.example && (
-                      <div className="mx-auto mt-6 max-w-md rounded-lg bg-muted/30 p-4">
-                        <p className="mb-1 text-sm font-medium">Example:</p>
-                        <p className="italic text-muted-foreground">{lexeme.example}</p>
-                      </div>
-                    )}
-
-                    {/* Auto-advancing message */}
-                    {autoAdvanceOnIncorrect && (
-                      <p className="text-center text-sm text-muted-foreground">
-                        Auto-advancing to next word...
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -470,18 +357,8 @@ export const ModernWordCard = ({
 
       {/* Keyboard Shortcuts Info */}
       <div className="mt-4 text-center text-xs text-muted-foreground">
-        {effectiveMode === "flashcard" ? (
-          <>
-            Press <kbd className="rounded bg-muted px-2 py-1">Space</kbd> to reveal,
-            <kbd className="mx-1 rounded bg-muted px-2 py-1">1</kbd> for incorrect,
-            <kbd className="mx-1 rounded bg-muted px-2 py-1">2</kbd> for correct
-          </>
-        ) : (
-          <>
-            Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
-            <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+H</kbd> for hint
-          </>
-        )}
+        Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
+        <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+H</kbd> for hint
       </div>
     </div>
   );

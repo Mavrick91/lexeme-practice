@@ -7,7 +7,7 @@ import { MobileStatsSheet } from "./components/MobileStatsSheet";
 import { Button } from "./components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
 import { toast, Toaster } from "sonner";
-import { BookOpen, PenTool, Brain, Zap, AlertCircle } from "lucide-react";
+import { Brain, Zap, AlertCircle, BookText } from "lucide-react";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
@@ -32,7 +32,6 @@ const AppContent = () => {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalAnswers, setTotalAnswers] = useState(0);
   const [practiceMode, setPracticeMode] = useState<"smart" | "new" | "all" | "mistakes">("smart");
-  const [learningMode, setLearningMode] = useState<"flashcard" | "writing">("writing");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
@@ -327,24 +326,6 @@ const AppContent = () => {
             <div className="flex flex-wrap justify-center gap-4">
               <ToggleGroup
                 type="single"
-                value={learningMode}
-                onValueChange={(value) =>
-                  value && setLearningMode(value as "flashcard" | "writing")
-                }
-                className="gap-2"
-              >
-                <ToggleGroupItem value="flashcard" className="gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  Flashcards
-                </ToggleGroupItem>
-                <ToggleGroupItem value="writing" className="gap-2">
-                  <PenTool className="h-4 w-4" />
-                  Writing
-                </ToggleGroupItem>
-              </ToggleGroup>
-
-              <ToggleGroup
-                type="single"
                 value={practiceMode}
                 onValueChange={(value) =>
                   value && setPracticeMode(value as "smart" | "new" | "all" | "mistakes")
@@ -360,7 +341,7 @@ const AppContent = () => {
                   New Only
                 </ToggleGroupItem>
                 <ToggleGroupItem value="all" className="gap-2">
-                  <BookOpen className="h-4 w-4" />
+                  <BookText className="h-4 w-4" />
                   All Words
                 </ToggleGroupItem>
                 <ToggleGroupItem value="mistakes" className="gap-2">
@@ -377,7 +358,6 @@ const AppContent = () => {
               {/* Main Card */}
               <ModernWordCard
                 lexeme={currentLexeme}
-                mode={learningMode}
                 onCorrect={handleMarkCorrect}
                 onIncorrect={handleMarkIncorrect}
                 onNext={handleNext}
