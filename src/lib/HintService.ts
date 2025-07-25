@@ -9,14 +9,21 @@ let requestTimestamps: number[] = [];
 let isLoaded = false;
 
 // Migrate legacy hint data
-const migrateLegacyHint = (hint: any): HintData | null => {
+const migrateLegacyHint = (hint: unknown): HintData | null => {
+  // Type guard to check if hint is an object
+  if (!hint || typeof hint !== "object") {
+    return null;
+  }
+
+  const hintObj = hint as Record<string, unknown>;
+
   // If it's already in the new format, return as is
-  if (hint.relatedWords && Array.isArray(hint.relatedWords)) {
+  if (hintObj.relatedWords && Array.isArray(hintObj.relatedWords)) {
     return hint as HintData;
   }
 
   // If it's legacy format with sentence, return null to skip it
-  if (hint.sentence && typeof hint.sentence === "string") {
+  if (hintObj.sentence && typeof hintObj.sentence === "string") {
     return null; // Legacy data, skip it
   }
 

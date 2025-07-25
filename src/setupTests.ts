@@ -2,8 +2,7 @@
 import "@testing-library/jest-dom";
 
 // Mock window.matchMedia
-// eslint-disable-next-line no-undef
-global.matchMedia = jest.fn().mockImplementation((query) => ({
+globalThis.matchMedia = jest.fn().mockImplementation((query) => ({
   matches: false,
   media: query,
   onchange: null,

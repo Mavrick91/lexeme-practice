@@ -31,13 +31,14 @@ describe("MobileStatsSheet", () => {
     [
       "rumah",
       {
-        lexemeId: "rumah",
-        lastReviewed: Date.now(),
-        nextReview: Date.now() + 86400000,
-        interval: 1,
-        easeFactor: 2.5,
-        repetitions: 3,
+        text: "rumah",
+        timesSeen: 3,
+        timesCorrect: 3,
+        lastPracticedAt: Date.now(),
         mastered: false,
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 1,
       },
     ],
   ]);

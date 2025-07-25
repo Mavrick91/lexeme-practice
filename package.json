@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
+    "type-check:test": "tsc --noEmit -p tsconfig.test.json",
     "check-exports": "node scripts/check-unused-exports.cjs",
     "prepare": "husky",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\" && eslint --fix",

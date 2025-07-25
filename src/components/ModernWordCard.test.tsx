@@ -14,7 +14,7 @@ const mockPlay = jest.fn();
 const mockAudio = jest.fn().mockImplementation(() => ({
   play: mockPlay,
 }));
-(globalThis as any).Audio = mockAudio;
+(globalThis as unknown as { Audio: typeof mockAudio }).Audio = mockAudio;
 
 describe("ModernWordCard", () => {
   const mockOnCorrect = jest.fn();
@@ -40,13 +40,14 @@ describe("ModernWordCard", () => {
   };
 
   const masteredProgress: LexemeProgress = {
-    lexemeId: "rumah",
-    lastReviewed: Date.now(),
-    nextReview: Date.now() + 86400000,
-    interval: 1,
-    easeFactor: 2.5,
-    repetitions: 3,
+    text: "rumah",
+    timesSeen: 3,
+    timesCorrect: 3,
+    lastPracticedAt: Date.now(),
     mastered: true,
+    recentIncorrectStreak: 0,
+    confusedWith: {},
+    easingLevel: 1,
   };
 
   const defaultHintMock = {
@@ -362,7 +363,7 @@ describe("ModernWordCard", () => {
       renderCard({ mode: "flashcard" });
 
       // Find the keyboard shortcut elements
-      const kbdElements = screen.getAllByText((content, element) => element?.tagName === "KBD");
+      const kbdElements = screen.getAllByText((_, element) => element?.tagName === "KBD");
 
       const kbdTexts = kbdElements.map((el) => el.textContent);
       expect(kbdTexts).toContain("Space");
@@ -413,7 +414,7 @@ describe("ModernWordCard", () => {
       renderCard({ mode: "writing" });
 
       const inputElement = screen.getByPlaceholderText("Type your answer...");
-      await user.type(inputElement, input);
+      await user.type(inputElement, String(input));
       await user.keyboard("{Enter}");
 
       if (shouldBeCorrect) {

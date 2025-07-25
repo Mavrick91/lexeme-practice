@@ -7,11 +7,14 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { useChat } from "@/hooks/useChat";
 import type { PracticeHistoryItem } from "@/types";
 import { Loader2 } from "lucide-react";
+import { CHAT_PROMPT_TEMPLATES } from "@/features/chat/promptTemplates";
+import { formatPrompt } from "@/features/chat/formatPrompt";
 
 type ChatDrawerProps = {
   open: boolean;
@@ -68,6 +71,31 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
         </SheetHeader>
 
         <div className="mt-4 flex h-0 grow flex-col">
+          {/* Pre-built prompt chips */}
+          <div className="-mx-1 mb-3">
+            <div className="w-full overflow-x-auto">
+              <div className="flex gap-2 px-1 pb-2">
+                {CHAT_PROMPT_TEMPLATES.map((template) => (
+                  <Button
+                    key={template.id}
+                    variant="secondary"
+                    size="sm"
+                    className="whitespace-nowrap"
+                    onClick={() => {
+                      const formattedPrompt = formatPrompt(template.prompt, {
+                        currentWord: item.word,
+                      });
+                      sendMessage(formattedPrompt);
+                    }}
+                    disabled={isSending}
+                  >
+                    {template.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <ScrollArea className="-mr-4 flex-1 pr-4" ref={scrollAreaRef}>
             <div className="space-y-4 pb-4">
               {isLoading ? (

@@ -47,7 +47,7 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
       const tx = db.transaction("lexemeProgress", "readwrite");
       const store = tx.objectStore("lexemeProgress");
 
-      store.openCursor().then(function processCursor(cursor) {
+      store.openCursor().then(function processCursor(cursor): Promise<void> | void {
         if (!cursor) return;
 
         const progress = cursor.value;
