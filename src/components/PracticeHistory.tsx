@@ -73,9 +73,15 @@ export const PracticeHistory = ({ history, onClear }: PracticeHistoryProps) => {
               >
                 <div className="flex items-start gap-2">
                   {item.isCorrect ? (
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+                    <CheckCircle2
+                      data-testid="check-icon"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400"
+                    />
                   ) : (
-                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                    <XCircle
+                      data-testid="x-icon"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400"
+                    />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="break-words text-sm font-medium">{item.word}</div>
