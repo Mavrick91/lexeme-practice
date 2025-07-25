@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Sparkles, Trophy, Target, TrendingUp } from "lucide-react";
 import type { Lexeme, LexemeProgress } from "@/types";
+import { MistakesList } from "./MistakesList";
 
 type DashboardStatsProps = {
   allLexemes: Lexeme[];
@@ -111,6 +112,9 @@ export const DashboardStats = ({
           );
         })}
       </div>
+
+      {/* Mistakes List */}
+      <MistakesList allLexemes={allLexemes} progressMap={progressMap} limit={5} />
     </div>
   );
 };

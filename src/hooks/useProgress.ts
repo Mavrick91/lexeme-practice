@@ -27,55 +27,102 @@ export const useProgress = () => {
     loadData();
   }, []);
 
-  const recordAnswer = useCallback(async (lexeme: Lexeme, isCorrect: boolean) => {
-    const now = Date.now();
+  const recordAnswer = useCallback(
+    async (lexeme: Lexeme, isCorrect: boolean, userAnswer?: string) => {
+      const now = Date.now();
 
-    // Update per-lexeme progress
-    const prev = await getLexemeProgress(lexeme.text);
+      // Update per-lexeme progress
+      const prev = await getLexemeProgress(lexeme.text);
 
-    // Get current progress or create default
-    const currentProgress: LexemeProgress = prev ?? {
-      text: lexeme.text,
-      timesSeen: 0,
-      timesCorrect: 0,
-      lastPracticedAt: now,
-      mastered: false,
-    };
+      // Get current progress or create default
+      const currentProgress: LexemeProgress = prev ?? {
+        text: lexeme.text,
+        timesSeen: 0,
+        timesCorrect: 0,
+        lastPracticedAt: now,
+        mastered: false,
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 1,
+      };
 
-    // Simple mastery: 3+ times correct with 80%+ accuracy
-    const newTimesSeen = currentProgress.timesSeen + 1;
-    const newTimesCorrect = currentProgress.timesCorrect + (isCorrect ? 1 : 0);
-    const accuracy = newTimesCorrect / newTimesSeen;
-    const isMastered = newTimesCorrect >= 3 && accuracy >= 0.8;
+      // Update mistake tracking
+      let newStreak = currentProgress.recentIncorrectStreak || 0;
+      let newConfusedWith = { ...(currentProgress.confusedWith || {}) };
+      let newEasingLevel = currentProgress.easingLevel || 1;
+      let lastIncorrectAt = currentProgress.lastIncorrectAt;
 
-    const updated: LexemeProgress = {
-      text: lexeme.text,
-      timesSeen: newTimesSeen,
-      timesCorrect: newTimesCorrect,
-      lastPracticedAt: now,
-      mastered: isMastered,
-    };
+      if (!isCorrect) {
+        newStreak++;
+        lastIncorrectAt = now;
 
-    await putLexemeProgress(updated);
-    setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
+        // Track what the user confused it with
+        if (userAnswer && userAnswer.trim()) {
+          const normalizedAnswer = userAnswer.toLowerCase().trim();
+          newConfusedWith[normalizedAnswer] = (newConfusedWith[normalizedAnswer] || 0) + 1;
+        }
 
-    // Update overall stats
-    const prevStats = await getUserStats();
-    const stats: UserStats = prevStats ?? {
-      totalSeen: 0,
-      totalCorrect: 0,
-      lastPracticedAt: now,
-    };
+        // Drop to flashcard mode if struggling
+        if (
+          newStreak >= 2 ||
+          (currentProgress.timesSeen > 0 &&
+            currentProgress.timesCorrect / currentProgress.timesSeen < 0.5)
+        ) {
+          newEasingLevel = 0;
+        }
+      } else {
+        // Reset streak on correct answer
+        if (newStreak > 0) {
+          newStreak = 0;
+        }
 
-    const updatedStats: UserStats = {
-      totalSeen: stats.totalSeen + 1,
-      totalCorrect: stats.totalCorrect + (isCorrect ? 1 : 0),
-      lastPracticedAt: now,
-    };
+        // Gradually increase easing level with consecutive correct answers
+        const correctStreak = currentProgress.recentIncorrectStreak === 0 ? 1 : 0;
+        if (correctStreak >= 3 && newEasingLevel < 2) {
+          newEasingLevel = Math.min(2, newEasingLevel + 1);
+        }
+      }
 
-    await putUserStats(updatedStats);
-    setUserStats(updatedStats);
-  }, []);
+      // Simple mastery: 3+ times correct with 80%+ accuracy
+      const newTimesSeen = currentProgress.timesSeen + 1;
+      const newTimesCorrect = currentProgress.timesCorrect + (isCorrect ? 1 : 0);
+      const accuracy = newTimesCorrect / newTimesSeen;
+      const isMastered = newTimesCorrect >= 3 && accuracy >= 0.8;
+
+      const updated: LexemeProgress = {
+        text: lexeme.text,
+        timesSeen: newTimesSeen,
+        timesCorrect: newTimesCorrect,
+        lastPracticedAt: now,
+        mastered: isMastered,
+        lastIncorrectAt,
+        recentIncorrectStreak: newStreak,
+        confusedWith: newConfusedWith,
+        easingLevel: newEasingLevel,
+      };
+
+      await putLexemeProgress(updated);
+      setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
+
+      // Update overall stats
+      const prevStats = await getUserStats();
+      const stats: UserStats = prevStats ?? {
+        totalSeen: 0,
+        totalCorrect: 0,
+        lastPracticedAt: now,
+      };
+
+      const updatedStats: UserStats = {
+        totalSeen: stats.totalSeen + 1,
+        totalCorrect: stats.totalCorrect + (isCorrect ? 1 : 0),
+        lastPracticedAt: now,
+      };
+
+      await putUserStats(updatedStats);
+      setUserStats(updatedStats);
+    },
+    []
+  );
 
   const getProgress = useCallback(
     (text: string): LexemeProgress | undefined => {
@@ -91,11 +138,49 @@ export const useProgress = () => {
     [progressMap]
   );
 
+  const getMistakePool = useCallback(
+    (allLexemes: Lexeme[], limit: number = 20): Lexeme[] => {
+      // Get lexemes that have been answered incorrectly
+      const mistakeLexemes = allLexemes.filter((lexeme) => {
+        const progress = progressMap.get(lexeme.text);
+        return progress && progress.timesSeen > progress.timesCorrect;
+      });
+
+      // Sort by mistake severity (more mistakes = higher priority)
+      return mistakeLexemes
+        .sort((a, b) => {
+          const progressA = progressMap.get(a.text)!;
+          const progressB = progressMap.get(b.text)!;
+
+          // Calculate mistake score
+          const mistakeScoreA =
+            progressA.timesSeen -
+            progressA.timesCorrect +
+            progressA.recentIncorrectStreak * 2 +
+            (progressA.lastIncorrectAt
+              ? (Date.now() - progressA.lastIncorrectAt) / (1000 * 60 * 60)
+              : 0);
+          const mistakeScoreB =
+            progressB.timesSeen -
+            progressB.timesCorrect +
+            progressB.recentIncorrectStreak * 2 +
+            (progressB.lastIncorrectAt
+              ? (Date.now() - progressB.lastIncorrectAt) / (1000 * 60 * 60)
+              : 0);
+
+          return mistakeScoreB - mistakeScoreA; // Higher score first
+        })
+        .slice(0, limit);
+    },
+    [progressMap]
+  );
+
   return {
     recordAnswer,
     userStats,
     getProgress,
     progressMap,
     getDueLexemes,
+    getMistakePool,
   };
 };

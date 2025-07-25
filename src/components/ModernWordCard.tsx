@@ -24,7 +24,7 @@ type ModernWordCardProps = {
   lexeme: Lexeme;
   mode: "flashcard" | "writing";
   onCorrect: () => void;
-  onIncorrect: () => void;
+  onIncorrect: (userAnswer?: string) => void;
   onNext: () => void;
   currentIndex: number;
   totalWords: number;
@@ -43,7 +43,10 @@ export const ModernWordCard = ({
   progress,
   autoAdvanceOnIncorrect = true,
 }: ModernWordCardProps) => {
-  const [showAnswer, setShowAnswer] = useState(mode === "flashcard");
+  // Force flashcard mode for struggling words
+  const effectiveMode = progress?.easingLevel === 0 ? "flashcard" : mode;
+
+  const [showAnswer, setShowAnswer] = useState(effectiveMode === "flashcard");
   const [isFlipping, setIsFlipping] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
@@ -51,13 +54,14 @@ export const ModernWordCard = ({
 
   useEffect(() => {
     // Reset state when lexeme changes
-    setShowAnswer(mode === "flashcard");
+    const newEffectiveMode = progress?.easingLevel === 0 ? "flashcard" : mode;
+    setShowAnswer(newEffectiveMode === "flashcard");
     setUserAnswer("");
     setShowHint(false);
-  }, [lexeme, mode]);
+  }, [lexeme, mode, progress?.easingLevel]);
 
   // Use the auto-focus hook for reliable input focusing in writing mode
-  useAutoFocus(inputRef, mode === "writing", [lexeme]);
+  useAutoFocus(inputRef, effectiveMode === "writing", [lexeme]);
 
   const handleCorrect = useCallback(() => {
     onCorrect();
@@ -92,7 +96,7 @@ export const ModernWordCard = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (mode === "flashcard") {
+      if (effectiveMode === "flashcard") {
         if (e.code === "Space" && !showAnswer) {
           e.preventDefault();
           handleReveal();
@@ -101,7 +105,7 @@ export const ModernWordCard = ({
         } else if (e.key === "2" && showAnswer) {
           handleCorrect();
         }
-      } else if (mode === "writing") {
+      } else if (effectiveMode === "writing") {
         if ((e.ctrlKey || e.metaKey) && e.key === "h") {
           e.preventDefault();
           handleHintClick();
@@ -111,7 +115,7 @@ export const ModernWordCard = ({
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleCorrect, handleIncorrect, mode, showAnswer, showHint, handleHintClick]);
+  }, [handleCorrect, handleIncorrect, effectiveMode, showAnswer, showHint, handleHintClick]);
 
   const playAudio = () => {
     const audio = new Audio(lexeme.audioURL);
@@ -166,7 +170,7 @@ export const ModernWordCard = ({
     if (correct) {
       handleCorrect();
     } else {
-      onIncorrect();
+      onIncorrect(userAnswer);
       setShowAnswer(true); // Reveal correct answer
       if (autoAdvanceOnIncorrect) {
         onNext();
@@ -235,6 +239,14 @@ export const ModernWordCard = ({
                 </Badge>
               )}
 
+              {/* Struggling Badge */}
+              {progress?.easingLevel === 0 && !progress?.mastered && (
+                <Badge variant="destructive" className="gap-1">
+                  <RefreshCw className="h-3 w-3" />
+                  NEEDS PRACTICE
+                </Badge>
+              )}
+
               <Button
                 size="icon"
                 variant="outline"
@@ -259,10 +271,10 @@ export const ModernWordCard = ({
           <div
             className={cn(
               "min-h-[120px] transition-all duration-300",
-              mode === "flashcard" && !showAnswer && "flex items-center justify-center"
+              effectiveMode === "flashcard" && !showAnswer && "flex items-center justify-center"
             )}
           >
-            {mode === "flashcard" ? (
+            {effectiveMode === "flashcard" ? (
               // Flashcard Mode
               !showAnswer ? (
                 <div className="text-center">
@@ -453,7 +465,7 @@ export const ModernWordCard = ({
 
       {/* Keyboard Shortcuts Info */}
       <div className="mt-4 text-center text-xs text-muted-foreground">
-        {mode === "flashcard" ? (
+        {effectiveMode === "flashcard" ? (
           <>
             Press <kbd className="rounded bg-muted px-2 py-1">Space</kbd> to reveal,
             <kbd className="mx-1 rounded bg-muted px-2 py-1">1</kbd> for incorrect,

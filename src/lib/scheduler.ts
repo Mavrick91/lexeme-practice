@@ -1,4 +1,36 @@
 import type { Lexeme, LexemeProgress } from "@/types";
+import { LEARNING_CONFIG } from "@/config/learning";
+
+// Calculate mistake score for a lexeme
+const calculateMistakeScore = (progress: LexemeProgress): number => {
+  if (!progress || progress.timesSeen === 0) return 0;
+
+  let mistakeScore = 0;
+  const timesIncorrect = progress.timesSeen - progress.timesCorrect;
+
+  // Base mistake score (0-30 points)
+  mistakeScore += timesIncorrect * 10;
+
+  // Recent incorrect streak bonus (0-20 points)
+  mistakeScore += progress.recentIncorrectStreak * 10;
+
+  // Recency bonus for recent mistakes (0-20 points)
+  if (progress.lastIncorrectAt) {
+    const hoursSinceLastIncorrect = (Date.now() - progress.lastIncorrectAt) / (1000 * 60 * 60);
+    if (hoursSinceLastIncorrect < LEARNING_CONFIG.RECENT_INCORRECT_HOURS) {
+      const recencyBonus =
+        20 * Math.pow(LEARNING_CONFIG.RECENCY_DECAY_FACTOR, hoursSinceLastIncorrect);
+      mistakeScore += recencyBonus;
+    }
+  }
+
+  // Easing level bonus (0-10 points)
+  if (progress.easingLevel === 0) {
+    mistakeScore += 10; // Needs flashcard mode
+  }
+
+  return mistakeScore;
+};
 
 // Score a lexeme for selection (higher score = more likely to be selected)
 export const scoreLexeme = (lexeme: Lexeme, progress: LexemeProgress | undefined): number => {
@@ -7,35 +39,39 @@ export const scoreLexeme = (lexeme: Lexeme, progress: LexemeProgress | undefined
     return lexeme.isNew ? 100 : 80;
   }
 
-  let score = 0;
+  let baseScore = 0;
 
   // 1. Accuracy factor (0-50 points)
   // Lower accuracy = higher priority
   const accuracy = progress.timesSeen > 0 ? progress.timesCorrect / progress.timesSeen : 0;
-  score += (1 - accuracy) * 50;
+  baseScore += (1 - accuracy) * 50;
 
   // 2. Times seen factor (0-30 points)
   // Fewer times seen = higher priority
-  if (progress.timesSeen === 0) score += 30;
-  else if (progress.timesSeen < 3) score += 20;
-  else if (progress.timesSeen < 5) score += 10;
+  if (progress.timesSeen === 0) baseScore += 30;
+  else if (progress.timesSeen < 3) baseScore += 20;
+  else if (progress.timesSeen < 5) baseScore += 10;
 
   // 3. Recency penalty (0-20 points)
   // Recently practiced words get lower priority
   const now = Date.now();
   const hoursSinceLastPractice = (now - progress.lastPracticedAt) / (1000 * 60 * 60);
   if (hoursSinceLastPractice < 1) {
-    score -= 20; // Just practiced
+    baseScore -= 20; // Just practiced
   } else if (hoursSinceLastPractice < 6) {
-    score -= 10; // Practiced recently
+    baseScore -= 10; // Practiced recently
   }
 
   // 4. Mastered words get lowest priority
   if (progress.mastered) {
-    score = Math.max(0, score * 0.1); // Reduce score by 90%
+    baseScore = Math.max(0, baseScore * 0.1); // Reduce score by 90%
   }
 
-  return Math.max(0, score);
+  // 5. Add mistake score with weight
+  const mistakeScore = calculateMistakeScore(progress);
+  const finalScore = baseScore + mistakeScore * LEARNING_CONFIG.MISTAKE_WEIGHT;
+
+  return Math.max(0, finalScore);
 };
 
 // Select next lexemes to practice

@@ -7,7 +7,7 @@ import { MobileStatsSheet } from "./components/MobileStatsSheet";
 import { Button } from "./components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
 import { toast, Toaster } from "sonner";
-import { BookOpen, PenTool, Brain, Zap } from "lucide-react";
+import { BookOpen, PenTool, Brain, Zap, AlertCircle } from "lucide-react";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
@@ -30,12 +30,12 @@ const AppContent = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalAnswers, setTotalAnswers] = useState(0);
-  const [practiceMode, setPracticeMode] = useState<"smart" | "new" | "all">("smart");
+  const [practiceMode, setPracticeMode] = useState<"smart" | "new" | "all" | "mistakes">("smart");
   const [learningMode, setLearningMode] = useState<"flashcard" | "writing">("writing");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
-  const { recordAnswer, getDueLexemes, getProgress, progressMap } = useProgress();
+  const { recordAnswer, getDueLexemes, getProgress, progressMap, getMistakePool } = useProgress();
 
   // Load practice history from IndexedDB on mount
   useEffect(() => {
@@ -99,6 +99,18 @@ const AppContent = () => {
         toast("All new words in this session completed!", {
           description: "Restarting with the new words from the beginning.",
           duration: 3000,
+        });
+      }
+    } else if (practiceMode === "mistakes") {
+      // Get mistake pool
+      newLexemes = getMistakePool(data.learnedLexemes, QUEUE_SIZE);
+
+      // Show feedback if no mistakes available
+      if (newLexemes.length === 0) {
+        toast("No mistakes to practice! 🎉", {
+          description:
+            "Great job! You haven't made any mistakes yet. Try other practice modes to continue learning.",
+          duration: 5000,
         });
       }
     } else if (practiceMode === "all") {
@@ -209,7 +221,7 @@ const AppContent = () => {
     recordAnswer(currentLexeme, true);
   };
 
-  const handleMarkIncorrect = async () => {
+  const handleMarkIncorrect = async (userAnswer?: string) => {
     const currentLexeme = practiceQueue[currentIndex];
 
     setTotalAnswers(totalAnswers + 1);
@@ -233,8 +245,8 @@ const AppContent = () => {
     // Always update local state
     setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
 
-    // Record answer with response time for SM-2 algorithm
-    recordAnswer(currentLexeme, false);
+    // Record answer with response time and user's answer for mistake tracking
+    recordAnswer(currentLexeme, false, userAnswer);
   };
 
   const handleReset = () => {
@@ -280,6 +292,7 @@ const AppContent = () => {
               "All your words are up to date! Great job keeping up with your reviews."}
             {practiceMode === "new" && "You've already seen all the new words. Well done!"}
             {practiceMode === "all" && "Something went wrong loading the words."}
+            {practiceMode === "mistakes" && "No mistakes to review. Keep up the great work!"}
           </p>
           <p className="text-sm text-gray-500">
             Try switching to a different practice mode using the buttons above.
@@ -330,7 +343,7 @@ const AppContent = () => {
                 type="single"
                 value={practiceMode}
                 onValueChange={(value) =>
-                  value && setPracticeMode(value as "smart" | "new" | "all")
+                  value && setPracticeMode(value as "smart" | "new" | "all" | "mistakes")
                 }
                 className="gap-2"
               >
@@ -345,6 +358,10 @@ const AppContent = () => {
                 <ToggleGroupItem value="all" className="gap-2">
                   <BookOpen className="h-4 w-4" />
                   All Words
+                </ToggleGroupItem>
+                <ToggleGroupItem value="mistakes" className="gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Mistakes
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>

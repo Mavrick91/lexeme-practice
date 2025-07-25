@@ -24,7 +24,7 @@ type LexemePracticeDB = {
   };
 } & DBSchema;
 
-const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 4, {
+const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
   upgrade(db, oldVersion) {
     if (oldVersion < 1) {
       db.createObjectStore("lexemeProgress", { keyPath: "text" });
@@ -41,6 +41,27 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 4, {
     if (oldVersion < 4) {
       // SM-2 fields migration happens automatically on first access due to default values in the code
       // No explicit migration needed here
+    }
+    if (oldVersion < 5) {
+      // Migrate existing progress records to include mistake tracking fields
+      const tx = db.transaction("lexemeProgress", "readwrite");
+      const store = tx.objectStore("lexemeProgress");
+
+      store.openCursor().then(function processCursor(cursor) {
+        if (!cursor) return;
+
+        const progress = cursor.value;
+        // Add new fields with default values
+        const updatedProgress = {
+          ...progress,
+          recentIncorrectStreak: progress.recentIncorrectStreak || 0,
+          confusedWith: progress.confusedWith || {},
+          easingLevel: progress.easingLevel || 1,
+        };
+
+        cursor.update(updatedProgress);
+        return cursor.continue().then(processCursor);
+      });
     }
   },
 });
