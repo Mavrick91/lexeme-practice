@@ -10,6 +10,12 @@ import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import {
+  getPracticeHistory,
+  addPracticeHistoryItem,
+  clearPracticeHistory as clearDBHistory,
+} from "./db";
+import { tryCatch } from "./lib/tryCatch";
 
 function AppContent() {
   const [lexemes, setLexemes] = useState<Lexeme[]>([]);
@@ -22,6 +28,23 @@ function AppContent() {
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
   const { recordAnswer } = useProgress();
+
+  // Load practice history from IndexedDB on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      const [history, error] = await tryCatch(() => getPracticeHistory());
+
+      if (error) {
+        console.error("Failed to load practice history:", error);
+        toast.error("Failed to load practice history");
+        return;
+      }
+
+      setPracticeHistory(history);
+    };
+
+    loadHistory();
+  }, []);
 
   useEffect(() => {
     const data = lexemesData as LexemesData;
@@ -44,7 +67,7 @@ function AppContent() {
     }
   };
 
-  const handleMarkCorrect = () => {
+  const handleMarkCorrect = async () => {
     const currentLexeme = lexemes[currentIndex];
     setCorrectAnswers(correctAnswers + 1);
     setTotalAnswers(totalAnswers + 1);
@@ -58,12 +81,21 @@ function AppContent() {
       timestamp: Date.now(),
     };
 
-    setPracticeHistory((prev) => [historyItem, ...prev.slice(-99)]); // Keep last 100 items
+    // Save to IndexedDB
+    const [, error] = await tryCatch(() => addPracticeHistoryItem(historyItem));
+
+    if (error) {
+      console.error("Failed to save practice history:", error);
+    }
+
+    // Always update local state
+    setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
+
     recordAnswer(currentLexeme, true);
     handleNext();
   };
 
-  const handleMarkIncorrect = () => {
+  const handleMarkIncorrect = async () => {
     const currentLexeme = lexemes[currentIndex];
     setTotalAnswers(totalAnswers + 1);
 
@@ -76,7 +108,16 @@ function AppContent() {
       timestamp: Date.now(),
     };
 
-    setPracticeHistory((prev) => [historyItem, ...prev.slice(-99)]); // Keep last 100 items
+    // Save to IndexedDB
+    const [, error] = await tryCatch(() => addPracticeHistoryItem(historyItem));
+
+    if (error) {
+      console.error("Failed to save practice history:", error);
+    }
+
+    // Always update local state
+    setPracticeHistory((prev) => [historyItem, ...prev.slice(0, 99)]); // Keep last 100 items, newest first
+
     recordAnswer(currentLexeme, false);
     handleNext();
   };
@@ -88,7 +129,15 @@ function AppContent() {
     setPracticeHistory([]);
   };
 
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
+    const [, error] = await tryCatch(() => clearDBHistory());
+
+    if (error) {
+      console.error("Failed to clear practice history:", error);
+      toast.error("Failed to clear practice history");
+      return;
+    }
+
     setPracticeHistory([]);
     toast.success("Practice history cleared");
   };
