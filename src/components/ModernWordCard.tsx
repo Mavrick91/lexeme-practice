@@ -18,9 +18,7 @@ import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useHint } from "@/hooks/useHint";
-import { useDelayedAction } from "@/hooks/useDelayedAction";
 import type { Lexeme, LexemeProgress } from "@/types";
-import { ADVANCE_DELAY_MS } from "@/constants/durations";
 
 type ModernWordCardProps = {
   lexeme: Lexeme;
@@ -51,8 +49,6 @@ export const ModernWordCard = ({
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scheduleAdvance = useDelayedAction(ADVANCE_DELAY_MS);
-
   useEffect(() => {
     // Reset state when lexeme changes
     setShowAnswer(mode === "flashcard");
@@ -65,15 +61,15 @@ export const ModernWordCard = ({
 
   const handleCorrect = useCallback(() => {
     onCorrect();
-    scheduleAdvance(onNext);
-  }, [onCorrect, onNext, scheduleAdvance]);
+    onNext();
+  }, [onCorrect, onNext]);
 
   const handleIncorrect = useCallback(() => {
     onIncorrect();
     if (autoAdvanceOnIncorrect) {
-      scheduleAdvance(onNext);
+      onNext();
     }
-  }, [onIncorrect, autoAdvanceOnIncorrect, scheduleAdvance, onNext]);
+  }, [onIncorrect, autoAdvanceOnIncorrect, onNext]);
 
   // Use the new hint system
   const {
@@ -173,7 +169,7 @@ export const ModernWordCard = ({
       onIncorrect();
       setShowAnswer(true); // Reveal correct answer
       if (autoAdvanceOnIncorrect) {
-        scheduleAdvance(onNext);
+        onNext();
       }
     }
   };

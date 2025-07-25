@@ -104,10 +104,6 @@ export const saveChatConversation = async (conversation: ChatConversation): Prom
   await (await dbPromise).put("chatConversations", conversation);
 };
 
-export const deleteChatConversation = async (historyItemId: string): Promise<void> => {
-  await (await dbPromise).delete("chatConversations", historyItemId);
-};
-
 export const clearAllChatConversations = async (): Promise<void> => {
   const db = await dbPromise;
   const tx = db.transaction("chatConversations", "readwrite");
