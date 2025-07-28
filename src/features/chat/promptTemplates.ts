@@ -7,6 +7,13 @@ export const CHAT_PROMPT_TEMPLATES = [
     category: "vocabulary",
   },
   {
+    id: "informal-ways",
+    label: "Informal ways",
+    prompt:
+      "What are the informal or colloquial ways to say '{{currentWord}}' in Indonesian? Please list them from most commonly used to least commonly used, and explain when each would be appropriate to use.",
+    category: "vocabulary",
+  },
+  {
     id: "give-examples",
     label: "Give me examples",
     prompt:
