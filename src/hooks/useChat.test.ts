@@ -182,6 +182,22 @@ describe("useChat", () => {
     expect(mockToast.error).toHaveBeenCalledWith("Failed to get AI response. Please try again.");
   });
 
+  it("handles timeout error specifically", async () => {
+    const timeoutError = new Error("OpenAI API request timeout");
+    mockChatCompletion.mockRejectedValueOnce(timeoutError);
+
+    const { result } = renderHook(() => useChat(mockSystemPrompt));
+
+    await act(async () => {
+      await result.current.sendMessage("Test message");
+    });
+
+    expect(result.current.messages).toHaveLength(1); // Only user message
+    expect(result.current.isSending).toBe(false);
+    expect(mockToast.error).toHaveBeenCalledWith("Failed to get AI response. Please try again.");
+    expect(console.error).toHaveBeenCalledWith("Failed to get AI response:", timeoutError);
+  });
+
   it("resets conversation", () => {
     const { result } = renderHook(() => useChat(mockSystemPrompt));
 
