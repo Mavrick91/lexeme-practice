@@ -2,7 +2,6 @@ export type Lexeme = {
   text: string;
   translations: string[];
   audioURL: string;
-  isNew: boolean;
   phonetic?: string;
   example?: string;
 };
@@ -16,7 +15,6 @@ export type LexemeProgress = {
   timesSeen: number;
   timesCorrect: number;
   lastPracticedAt: number; // epoch ms
-  mastered: boolean;
   // Mistake tracking fields
   lastIncorrectAt?: number; // timestamp of last incorrect answer
   recentIncorrectStreak: number; // current streak of incorrect answers

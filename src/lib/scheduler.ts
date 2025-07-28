@@ -36,7 +36,7 @@ const calculateMistakeScore = (progress: LexemeProgress): number => {
 export const scoreLexeme = (lexeme: Lexeme, progress: LexemeProgress | undefined): number => {
   // New words get high priority
   if (!progress) {
-    return lexeme.isNew ? 100 : 80;
+    return 100; // unseen words still get highest priority
   }
 
   let baseScore = 0;
@@ -60,11 +60,6 @@ export const scoreLexeme = (lexeme: Lexeme, progress: LexemeProgress | undefined
     baseScore -= 20; // Just practiced
   } else if (hoursSinceLastPractice < 6) {
     baseScore -= 10; // Practiced recently
-  }
-
-  // 4. Mastered words get lowest priority
-  if (progress.mastered) {
-    baseScore = Math.max(0, baseScore * 0.1); // Reduce score by 90%
   }
 
   // 5. Add mistake score with weight

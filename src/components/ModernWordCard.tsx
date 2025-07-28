@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, Sparkles, ChevronRight, Keyboard, Lightbulb, RefreshCw } from "lucide-react";
+import { Volume2, ChevronRight, Keyboard, Lightbulb, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -173,24 +173,8 @@ export const ModernWordCard = ({
           {/* Word Section */}
           <div className="mb-8 text-center">
             <div className="mb-4 inline-flex items-center gap-4">
-              {/* New Word Badge */}
-              {lexeme.isNew && !progress && (
-                <Badge variant="default" className="gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  NEW
-                </Badge>
-              )}
-
-              {/* Mastery Badge */}
-              {progress?.mastered && (
-                <Badge variant="default" className="gap-1 bg-green-600">
-                  <Sparkles className="h-3 w-3" />
-                  MASTERED
-                </Badge>
-              )}
-
               {/* Struggling Badge */}
-              {progress?.easingLevel === 0 && !progress?.mastered && (
+              {progress?.easingLevel === 0 && (
                 <Badge variant="destructive" className="gap-1">
                   <RefreshCw className="h-3 w-3" />
                   NEEDS PRACTICE

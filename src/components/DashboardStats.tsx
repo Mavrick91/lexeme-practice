@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Sparkles, Trophy, Target, TrendingUp } from "lucide-react";
+import { Target, TrendingUp } from "lucide-react";
 import type { Lexeme, LexemeProgress } from "@/types";
 import { MistakesList } from "./MistakesList";
 
@@ -21,36 +21,6 @@ export const DashboardStats = ({
 }: DashboardStatsProps) => {
   const totalWords = allLexemes.length;
   const practiceRate = Math.round((progressMap.size / totalWords) * 100);
-
-  // Calculate statistics
-  let newWords = 0;
-  let mastered = 0;
-
-  allLexemes.forEach((lexeme) => {
-    const progress = progressMap.get(lexeme.text);
-    if (!progress && lexeme.isNew) {
-      newWords++;
-    } else if (progress?.mastered) {
-      mastered++;
-    }
-  });
-
-  const statCards = [
-    {
-      label: "New Words",
-      value: newWords,
-      icon: Sparkles,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50 dark:bg-blue-950/20",
-    },
-    {
-      label: "Mastered",
-      value: mastered,
-      icon: Trophy,
-      color: "text-green-600",
-      bgColor: "bg-green-50 dark:bg-green-950/20",
-    },
-  ];
 
   return (
     <div className="space-y-4">
@@ -94,24 +64,6 @@ export const DashboardStats = ({
           )}
         </div>
       </Card>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {statCards.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label} className={`p-4 transition-all hover:scale-105 ${stat.bgColor}`}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="mt-1 text-2xl font-bold">{stat.value}</p>
-                </div>
-                <Icon className={`h-5 w-5 ${stat.color}`} />
-              </div>
-            </Card>
-          );
-        })}
-      </div>
 
       {/* Mistakes List */}
       <MistakesList allLexemes={allLexemes} progressMap={progressMap} limit={5} />

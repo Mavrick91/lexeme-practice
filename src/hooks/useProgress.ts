@@ -40,7 +40,6 @@ export const useProgress = () => {
         timesSeen: 0,
         timesCorrect: 0,
         lastPracticedAt: now,
-        mastered: false,
         recentIncorrectStreak: 0,
         confusedWith: {},
         easingLevel: 1,
@@ -83,18 +82,14 @@ export const useProgress = () => {
         }
       }
 
-      // Simple mastery: 3+ times correct with 80%+ accuracy
       const newTimesSeen = currentProgress.timesSeen + 1;
       const newTimesCorrect = currentProgress.timesCorrect + (isCorrect ? 1 : 0);
-      const accuracy = newTimesCorrect / newTimesSeen;
-      const isMastered = newTimesCorrect >= 3 && accuracy >= 0.8;
 
       const updated: LexemeProgress = {
         text: lexeme.text,
         timesSeen: newTimesSeen,
         timesCorrect: newTimesCorrect,
         lastPracticedAt: now,
-        mastered: isMastered,
         lastIncorrectAt,
         recentIncorrectStreak: newStreak,
         confusedWith: newConfusedWith,

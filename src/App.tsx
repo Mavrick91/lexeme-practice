@@ -7,7 +7,7 @@ import { MobileStatsSheet } from "./components/MobileStatsSheet";
 import { Button } from "./components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
 import { toast, Toaster } from "sonner";
-import { Brain, Zap, AlertCircle, BookText } from "lucide-react";
+import { Brain, AlertCircle, BookText } from "lucide-react";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
@@ -31,7 +31,7 @@ const AppContent = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [totalAnswers, setTotalAnswers] = useState(0);
-  const [practiceMode, setPracticeMode] = useState<"smart" | "new" | "all" | "mistakes">("smart");
+  const [practiceMode, setPracticeMode] = useState<"smart" | "all" | "mistakes">("smart");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
@@ -75,33 +75,8 @@ const AppContent = () => {
       if (newLexemes.length === 0) {
         toast("All words reviewed! 🎉", {
           description:
-            "Great job! All your words are up to date. Try practicing new words or switch to 'All Words' mode.",
+            "Great job! All your words are up to date. Try switching to 'All Words' mode to continue practicing.",
           duration: 5000,
-        });
-      }
-    } else if (practiceMode === "new") {
-      // Only new words
-      const allNewWords = data.learnedLexemes.filter((l) => l.isNew);
-      // Filter out seen words
-      newLexemes = allNewWords.filter((l) => !excludeSet.has(l.text)).slice(0, QUEUE_SIZE);
-
-      // If not enough words and excludeSet is not empty, include some seen words
-      if (newLexemes.length < QUEUE_SIZE && excludeSet.size > 0) {
-        const additionalWords = allNewWords.slice(0, QUEUE_SIZE - newLexemes.length);
-        newLexemes = [...newLexemes, ...additionalWords];
-      }
-
-      // Show feedback if no new words available
-      if (newLexemes.length === 0 && allNewWords.length === 0) {
-        toast("No new words available", {
-          description:
-            "You've already seen all the new words. Try 'Smart Review' or 'All Words' mode to continue practicing.",
-          duration: 5000,
-        });
-      } else if (newLexemes.length === 0 && excludeSet.size > 0) {
-        toast("All new words in this session completed!", {
-          description: "Restarting with the new words from the beginning.",
-          duration: 3000,
         });
       }
     } else if (practiceMode === "mistakes") {
@@ -293,7 +268,6 @@ const AppContent = () => {
           <p className="text-gray-600">
             {practiceMode === "smart" &&
               "All your words are up to date! Great job keeping up with your reviews."}
-            {practiceMode === "new" && "You've already seen all the new words. Well done!"}
             {practiceMode === "all" && "Something went wrong loading the words."}
             {practiceMode === "mistakes" && "No mistakes to review. Keep up the great work!"}
           </p>
@@ -328,17 +302,13 @@ const AppContent = () => {
                 type="single"
                 value={practiceMode}
                 onValueChange={(value) =>
-                  value && setPracticeMode(value as "smart" | "new" | "all" | "mistakes")
+                  value && setPracticeMode(value as "smart" | "all" | "mistakes")
                 }
                 className="gap-2"
               >
                 <ToggleGroupItem value="smart" className="gap-2">
                   <Brain className="h-4 w-4" />
                   Smart Review
-                </ToggleGroupItem>
-                <ToggleGroupItem value="new" className="gap-2">
-                  <Zap className="h-4 w-4" />
-                  New Only
                 </ToggleGroupItem>
                 <ToggleGroupItem value="all" className="gap-2">
                   <BookText className="h-4 w-4" />
