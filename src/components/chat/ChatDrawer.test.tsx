@@ -12,6 +12,11 @@ describe("ChatDrawer", () => {
   const mockSendMessage = jest.fn();
   const mockReset = jest.fn();
 
+  // Mock scrollIntoView
+  beforeAll(() => {
+    window.Element.prototype.scrollIntoView = jest.fn();
+  });
+
   const defaultChatMock = {
     messages: [],
     isSending: false,
@@ -160,5 +165,32 @@ describe("ChatDrawer", () => {
       ),
       "1"
     );
+  });
+
+  it("shows and hides loading indicator correctly", () => {
+    // Start with loading state
+    (useChat as jest.Mock).mockReturnValue({
+      ...defaultChatMock,
+      isLoading: true,
+    });
+
+    const { rerender } = render(
+      <ChatDrawer open={true} onOpenChange={mockOnOpenChange} item={historyItem} />
+    );
+
+    expect(screen.getByTestId("chat-loading")).toBeInTheDocument();
+
+    // Simulate conversation loaded with messages
+    (useChat as jest.Mock).mockReturnValue({
+      ...defaultChatMock,
+      isLoading: false,
+      messages: sampleMessages,
+    });
+
+    rerender(<ChatDrawer open={true} onOpenChange={mockOnOpenChange} item={historyItem} />);
+
+    expect(screen.queryByTestId("chat-loading")).not.toBeInTheDocument();
+    expect(screen.getByText("What does casa mean?")).toBeInTheDocument();
+    expect(screen.getByText("Casa means house or home in Spanish.")).toBeInTheDocument();
   });
 });

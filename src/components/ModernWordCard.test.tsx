@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { ModernWordCard } from "./ModernWordCard";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useHint } from "@/hooks/useHint";
-import type { Lexeme, LexemeProgress } from "@/types";
+import type { Lexeme } from "@/types";
 
 // Mock the hooks
 jest.mock("@/hooks/useAutoFocus");
@@ -28,7 +28,6 @@ describe("ModernWordCard", () => {
     translations: ["house", "home"],
     phonetic: "roo-mah",
     example: "Ini adalah rumah saya",
-    isNew: false,
   };
 
   const newLexeme: Lexeme = {
@@ -36,18 +35,6 @@ describe("ModernWordCard", () => {
     text: "buku",
     audioURL: "https://example.com/buku.mp3",
     translations: ["book"],
-    isNew: true,
-  };
-
-  const masteredProgress: LexemeProgress = {
-    text: "rumah",
-    timesSeen: 3,
-    timesCorrect: 3,
-    lastPracticedAt: Date.now(),
-    mastered: true,
-    recentIncorrectStreak: 0,
-    confusedWith: {},
-    easingLevel: 1,
   };
 
   const defaultHintMock = {
@@ -87,18 +74,6 @@ describe("ModernWordCard", () => {
       expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
     });
 
-    it("shows NEW badge for new lexemes", () => {
-      renderCard({ lexeme: newLexeme });
-
-      expect(screen.getByText("NEW")).toBeInTheDocument();
-    });
-
-    it("shows MASTERED badge for mastered lexemes", () => {
-      renderCard({ progress: masteredProgress });
-
-      expect(screen.getByText("MASTERED")).toBeInTheDocument();
-    });
-
     it("displays progress indicator correctly", () => {
       renderCard({ currentIndex: 2, totalWords: 4 });
 
@@ -111,9 +86,9 @@ describe("ModernWordCard", () => {
 
   describe("State management", () => {
     it("resets state when lexeme changes", () => {
-      const { rerender } = renderCard({ mode: "writing" });
+      const { rerender } = renderCard();
 
-      // Type something in writing mode
+      // Type something
       const input = screen.getByPlaceholderText("Type your answer...");
       fireEvent.change(input, { target: { value: "test" } });
       expect(input).toHaveValue("test");
@@ -139,7 +114,7 @@ describe("ModernWordCard", () => {
   describe("Writing mode interactions", () => {
     it("accepts correct answer with normalization", async () => {
       const user = userEvent.setup();
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
 
@@ -153,7 +128,7 @@ describe("ModernWordCard", () => {
 
     it("accepts alternative translations", async () => {
       const user = userEvent.setup();
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
       await user.type(input, "home");
@@ -165,7 +140,7 @@ describe("ModernWordCard", () => {
 
     it("handles incorrect answer and shows translations", async () => {
       const user = userEvent.setup();
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
       await user.type(input, "wrong");
@@ -180,7 +155,7 @@ describe("ModernWordCard", () => {
 
     it("does not auto-advance when disabled", async () => {
       const user = userEvent.setup();
-      renderCard({ mode: "writing", autoAdvanceOnIncorrect: false });
+      renderCard({ autoAdvanceOnIncorrect: false });
 
       const input = screen.getByPlaceholderText("Type your answer...");
       await user.type(input, "wrong");
@@ -200,7 +175,7 @@ describe("ModernWordCard", () => {
         loadHint: mockLoadHint,
       });
 
-      const { rerender } = renderCard({ mode: "writing" });
+      const { rerender } = renderCard();
 
       const hintButton = screen.getByRole("button", { name: /show hint/i });
       await user.click(hintButton);
@@ -216,12 +191,12 @@ describe("ModernWordCard", () => {
       rerender(
         <ModernWordCard
           lexeme={baseLexeme}
-          mode="writing"
           onCorrect={mockOnCorrect}
           onIncorrect={mockOnIncorrect}
           onNext={mockOnNext}
           currentIndex={0}
           totalWords={10}
+          autoAdvanceOnIncorrect={true}
         />
       );
 
@@ -235,7 +210,7 @@ describe("ModernWordCard", () => {
     });
 
     it("shows hint with Ctrl+H keyboard shortcut", () => {
-      renderCard({ mode: "writing" });
+      renderCard();
 
       fireEvent.keyDown(window, { ctrlKey: true, key: "h" });
 
@@ -248,7 +223,7 @@ describe("ModernWordCard", () => {
         status: "loading",
       });
 
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const hintButton = screen.getByRole("button", { name: /show hint/i });
       expect(hintButton).toBeDisabled();
@@ -265,7 +240,7 @@ describe("ModernWordCard", () => {
         error: "Failed to load hint",
       });
 
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const hintButton = screen.getByRole("button", { name: /show hint/i });
       fireEvent.click(hintButton);
@@ -273,12 +248,12 @@ describe("ModernWordCard", () => {
       expect(screen.getByText(/Failed to load hint/)).toBeInTheDocument();
     });
 
-    it("calls useAutoFocus in writing mode", () => {
-      renderCard({ mode: "writing" });
+    it("calls useAutoFocus", () => {
+      renderCard();
 
       expect(useAutoFocus).toHaveBeenCalled();
       const callArgs = (useAutoFocus as jest.Mock).mock.calls[0];
-      expect(callArgs[1]).toBe(true); // Should be enabled in writing mode
+      expect(callArgs[1]).toBe(true); // Should always be enabled
     });
   });
 
@@ -314,7 +289,7 @@ describe("ModernWordCard", () => {
     });
 
     it("disables check button when input is empty", () => {
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const checkButton = screen.getByRole("button", { name: /check answer/i });
       expect(checkButton).toBeDisabled();
@@ -322,7 +297,7 @@ describe("ModernWordCard", () => {
 
     it("enables check button when input has value", async () => {
       const user = userEvent.setup();
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
       await user.type(input, "test");
@@ -346,7 +321,7 @@ describe("ModernWordCard", () => {
 
     it.each(testCases)("input '%s' should be %s", async (input, shouldBeCorrect) => {
       const user = userEvent.setup();
-      renderCard({ mode: "writing" });
+      renderCard();
 
       const inputElement = screen.getByPlaceholderText("Type your answer...");
       await user.type(inputElement, String(input));

@@ -126,7 +126,7 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
             <ChatInput
               ref={inputRef}
               onSendMessage={sendMessage}
-              isDisabled={isSending}
+              isDisabled={isSending || isLoading}
               autoFocus={false}
             />
           </div>

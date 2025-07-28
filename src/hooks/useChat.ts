@@ -34,7 +34,16 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
       }
 
       if (conversation && conversation.messages.length > 0) {
-        setMessages(conversation.messages);
+        setMessages((prev) => {
+          // Only update if we haven't received new messages since loading started
+          // This prevents overwriting new messages with old conversation data
+          if (prev.length <= 1) {
+            return conversation.messages;
+          }
+          // If we already have messages beyond the system message, don't overwrite
+          console.warn("Skipping conversation load - newer messages already present");
+          return prev;
+        });
       }
 
       setIsLoading(false);
@@ -46,7 +55,8 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
   // Save conversation after each message update
   useEffect(() => {
     const saveConversation = async () => {
-      if (!historyItemId || messages.length <= 1 || isLoading) return; // Don't save if only system message
+      // Don't save if only system message or still loading initial conversation
+      if (!historyItemId || messages.length <= 1 || isLoading) return;
 
       const conversation: ChatConversation = {
         id: historyItemId,
