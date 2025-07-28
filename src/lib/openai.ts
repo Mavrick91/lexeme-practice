@@ -1,7 +1,6 @@
 import type { ChatMessage } from "@/types/chat";
 import { OPENAI_CONFIG } from "@/config/openai";
 import { HINT_CONFIG } from "@/config/hint";
-import { withTimeout } from "@/lib/asyncUtils";
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
@@ -28,28 +27,42 @@ const postChatCompletion = async (
   const temperature = options.temperature ?? OPENAI_CONFIG.defaultTemperature;
   const timeout = options.timeout ?? OPENAI_CONFIG.requestTimeout;
 
-  const fetchPromise = fetch(OPENAI_CONFIG.baseURL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens,
-      temperature,
-    }),
-  }).then(async (response) => {
+  // Create an AbortController for timeout handling
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(OPENAI_CONFIG.baseURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens,
+        temperature,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`OpenAI API error (${response.status}): ${error}`);
     }
+
     const data = await response.json();
     return data.choices[0]?.message?.content?.trim() || "";
-  });
-
-  return withTimeout(fetchPromise, timeout, "OpenAI API request timeout");
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("OpenAI API request timeout");
+    }
+    throw error;
+  }
 };
 
 /**

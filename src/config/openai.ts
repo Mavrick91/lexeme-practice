@@ -1,7 +1,7 @@
 // Get timeout from environment variable or use default
 const timeoutMs = import.meta.env.VITE_OPENAI_TIMEOUT_MS
   ? parseInt(import.meta.env.VITE_OPENAI_TIMEOUT_MS, 10)
-  : 10000;
+  : 30000; // Increased default timeout to 30 seconds
 
 export const OPENAI_CONFIG = {
   baseURL: "https://api.openai.com/v1/chat/completions",

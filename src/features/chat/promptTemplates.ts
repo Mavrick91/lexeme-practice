@@ -57,4 +57,5 @@ export const CHAT_PROMPT_TEMPLATES = [
   },
 ] as const;
 
+// Exported for type safety when using prompt templates
 export type PromptTemplate = (typeof CHAT_PROMPT_TEMPLATES)[number];
