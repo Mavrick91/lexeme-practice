@@ -193,4 +193,20 @@ describe("ChatDrawer", () => {
     expect(screen.getByText("What does casa mean?")).toBeInTheDocument();
     expect(screen.getByText("Casa means house or home in Spanish.")).toBeInTheDocument();
   });
+
+  it("renders messages that are displayed in the chat", () => {
+    (useChat as jest.Mock).mockReturnValue({
+      ...defaultChatMock,
+      messages: sampleMessages,
+    });
+
+    render(<ChatDrawer open={true} onOpenChange={mockOnOpenChange} item={historyItem} />);
+
+    // Verify messages are rendered
+    expect(screen.getByText("What does casa mean?")).toBeInTheDocument();
+    expect(screen.getByText("Casa means house or home in Spanish.")).toBeInTheDocument();
+
+    // The actual selectable text behavior is tested in ChatMessage.test.tsx
+    // Here we just verify the messages are rendered correctly
+  });
 });

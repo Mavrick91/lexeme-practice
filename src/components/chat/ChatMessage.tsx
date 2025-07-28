@@ -13,10 +13,11 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
       <div
         className={cn(
           "max-w-[80%] rounded-lg px-4 py-2",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted"
+          isUser ? "bg-primary text-primary-foreground" : "bg-muted",
+          "select-text cursor-text"
         )}
       >
-        <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
+        <p className="select-text whitespace-pre-wrap break-words text-sm">{message.content}</p>
       </div>
     </div>
   );

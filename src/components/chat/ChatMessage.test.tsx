@@ -136,4 +136,38 @@ describe("ChatMessage", () => {
     const paragraph = screen.getByText("", { selector: "p" });
     expect(paragraph).toBeInTheDocument();
   });
+
+  it("makes text selectable with appropriate CSS classes", () => {
+    renderMessage("user");
+
+    const paragraph = getMessageParagraph();
+    const bubble = paragraph.parentElement!;
+
+    // Check that select-text class is applied
+    expect(paragraph).toHaveClass("select-text");
+    expect(bubble).toHaveClass("select-text");
+    expect(bubble).toHaveClass("cursor-text");
+  });
+
+  it("allows text selection for both user and assistant messages", () => {
+    const { rerender } = renderMessage("user");
+
+    let paragraph = getMessageParagraph();
+    let bubble = paragraph.parentElement!;
+
+    // Check user message
+    expect(paragraph).toHaveClass("select-text");
+    expect(bubble).toHaveClass("select-text");
+    expect(bubble).toHaveClass("cursor-text");
+
+    // Check assistant message
+    rerender(<ChatMessage message={createMessage("assistant")} />);
+
+    paragraph = getMessageParagraph();
+    bubble = paragraph.parentElement!;
+
+    expect(paragraph).toHaveClass("select-text");
+    expect(bubble).toHaveClass("select-text");
+    expect(bubble).toHaveClass("cursor-text");
+  });
 });
