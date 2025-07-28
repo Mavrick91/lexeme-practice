@@ -118,11 +118,11 @@ describe("PracticeHistory", () => {
     expect(mockOnClear).toHaveBeenCalledTimes(1);
   });
 
-  it("opens ChatDrawer with selected item when chat button is clicked", () => {
+  it("opens ChatDrawer with selected item when card is clicked", () => {
     renderHistory(MIXED);
 
-    const chatButtons = screen.getAllByTitle("Ask AI about this word");
-    fireEvent.click(chatButtons[0]); // Click first item's chat button
+    const cards = screen.getAllByTestId("history-card");
+    fireEvent.click(cards[0]); // Click first card
 
     // Find the call where open is true and item matches
     const calls = (ChatDrawer as jest.Mock).mock.calls;
@@ -138,10 +138,10 @@ describe("PracticeHistory", () => {
   it("opens ChatDrawer for different items", () => {
     renderHistory(MIXED);
 
-    const chatButtons = screen.getAllByTitle("Ask AI about this word");
+    const cards = screen.getAllByTestId("history-card");
 
-    // Click second item's chat button
-    fireEvent.click(chatButtons[1]);
+    // Click second card
+    fireEvent.click(cards[1]);
 
     // Find the call where open is true and item matches
     const calls = (ChatDrawer as jest.Mock).mock.calls;
@@ -203,8 +203,8 @@ describe("PracticeHistory", () => {
     });
 
     // Open drawer
-    const chatButton = screen.getAllByTitle("Ask AI about this word")[0];
-    fireEvent.click(chatButton);
+    const card = screen.getAllByTestId("history-card")[0];
+    fireEvent.click(card);
 
     // Verify drawer was called with open=true
     const calls = (ChatDrawer as jest.Mock).mock.calls;
@@ -222,5 +222,49 @@ describe("PracticeHistory", () => {
     // Check for X circles (1 incorrect item)
     const xIcons = screen.getAllByTestId("x-icon");
     expect(xIcons).toHaveLength(1);
+  });
+
+  it("history cards have proper accessibility attributes", () => {
+    renderHistory(MIXED);
+
+    const cards = screen.getAllByTestId("history-card");
+
+    // Check first card
+    expect(cards[0]).toHaveAttribute("type", "button");
+    expect(cards[0]).toHaveAttribute("aria-label", "Ask AI about word-1");
+
+    // Check all cards are focusable
+    cards.forEach((card) => {
+      expect(card.tagName).toBe("BUTTON");
+      expect(card).toHaveAttribute("type", "button");
+    });
+  });
+
+  it("cards have hover and focus visual states", () => {
+    renderHistory(MIXED);
+
+    const cards = screen.getAllByTestId("history-card");
+
+    // Check for hover class
+    expect(cards[0]).toHaveClass("hover:opacity-90");
+
+    // Check for focus-visible classes
+    expect(cards[0]).toHaveClass("focus-visible:outline-none");
+    expect(cards[0]).toHaveClass("focus-visible:ring-2");
+    expect(cards[0]).toHaveClass("focus-visible:ring-ring");
+  });
+
+  it("entire card is clickable, not just the icon", () => {
+    renderHistory(MIXED);
+
+    const wordText = screen.getByText("word-1");
+
+    // Click on the word text itself (not the icon)
+    fireEvent.click(wordText);
+
+    // Verify drawer opened
+    const calls = (ChatDrawer as jest.Mock).mock.calls;
+    const openCall = calls.find((call) => call[0].open === true && call[0].item?.id === "1");
+    expect(openCall).toBeDefined();
   });
 });

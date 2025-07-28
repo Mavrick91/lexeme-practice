@@ -62,47 +62,47 @@ export const PracticeHistory = ({ history, onClear }: PracticeHistoryProps) => {
         ) : (
           <div className="space-y-2 p-2">
             {history.map((item) => (
-              <div
+              <button
                 key={item.id}
+                type="button"
                 className={cn(
-                  "p-3 rounded-lg border transition-colors",
+                  "p-3 rounded-lg border transition-colors w-full text-left flex items-start gap-2",
+                  "hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 group",
                   item.isCorrect
                     ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900"
                     : "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
                 )}
+                onClick={() => {
+                  setSelectedItem(item);
+                  setChatOpen(true);
+                }}
+                aria-label={`Ask AI about ${item.word}`}
+                data-testid="history-card"
               >
-                <div className="flex items-start gap-2">
-                  {item.isCorrect ? (
-                    <CheckCircle2
-                      data-testid="check-icon"
-                      className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400"
-                    />
-                  ) : (
-                    <XCircle
-                      data-testid="x-icon"
-                      className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="break-words text-sm font-medium">{item.word}</div>
-                    <div className="mt-1 break-words text-xs text-muted-foreground">
-                      {item.translation.join(", ")}
-                    </div>
+                {item.isCorrect ? (
+                  <CheckCircle2
+                    data-testid="check-icon"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-green-600 dark:text-green-400"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <XCircle
+                    data-testid="x-icon"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400"
+                    aria-hidden="true"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="break-words text-sm font-medium">{item.word}</div>
+                  <div className="mt-1 break-words text-xs text-muted-foreground">
+                    {item.translation.join(", ")}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto h-8 w-8 shrink-0"
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setChatOpen(true);
-                    }}
-                    title="Ask AI about this word"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                  </Button>
                 </div>
-              </div>
+                <MessageCircle
+                  className="ml-auto h-4 w-4 shrink-0 opacity-70 transition-opacity group-hover:opacity-100"
+                  aria-hidden="true"
+                />
+              </button>
             ))}
           </div>
         )}
