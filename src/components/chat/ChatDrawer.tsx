@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -12,9 +12,12 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { useChat } from "@/hooks/useChat";
 import type { PracticeHistoryItem } from "@/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImageIcon } from "lucide-react";
 import { CHAT_PROMPT_TEMPLATES } from "@/features/chat/promptTemplates";
 import { formatPrompt } from "@/features/chat/formatPrompt";
+import { generateImage } from "@/lib/openai";
+import { toast } from "sonner";
+import { tryCatch } from "@/lib/tryCatch";
 
 type ChatDrawerProps = {
   open: boolean;
@@ -35,16 +38,33 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
       )}). Answer in a concise, friendly way with examples. Help them understand usage, pronunciation, grammar, and provide context.`
     : "";
 
-  const { messages, isSending, isLoading, sendMessage, reset } = useChat(systemPrompt, item?.id);
+  const { messages, isSending, isLoading, sendMessage, addAssistantMessage } = useChat(
+    systemPrompt,
+    item?.word
+  );
 
-  // Reset chat when item changes (but not during initial load)
+  const [showImageButton, setShowImageButton] = useState(false);
+  const [lastMemoryTipResponse, setLastMemoryTipResponse] = useState<string>("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // Capture the memory tips response
   useEffect(() => {
-    if (item && systemPrompt && !isLoading) {
-      // Only reset if we're switching to a different item
-      reset(systemPrompt);
+    if (showImageButton && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "assistant" && !lastMessage.imageUrl) {
+        setLastMemoryTipResponse(lastMessage.content);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id]); // Only depend on item ID to avoid resetting during initial load
+  }, [messages, showImageButton]);
+
+  // Reset states when drawer closes or item changes
+  useEffect(() => {
+    if (!open || !item) {
+      setShowImageButton(false);
+      setLastMemoryTipResponse("");
+      setIsGeneratingImage(false);
+    }
+  }, [open, item]);
 
   // Auto-scroll to bottom when new messages arrive
   useLayoutEffect(() => {
@@ -85,7 +105,9 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
                       const formattedPrompt = formatPrompt(template.prompt, {
                         currentWord: item.word,
                       });
-                      sendMessage(formattedPrompt);
+                      setShowImageButton(template.id === "memory-tips");
+                      setLastMemoryTipResponse("");
+                      sendMessage(formattedPrompt, { templateId: template.id });
                     }}
                     disabled={isSending}
                   >
@@ -123,10 +145,49 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
           </ScrollArea>
 
           <div className="border-t pt-4">
+            {showImageButton && lastMemoryTipResponse && !isGeneratingImage && (
+              <Button
+                onClick={async () => {
+                  setIsGeneratingImage(true);
+                  const prompt = `Create a visual mnemonic to help remember the Indonesian word "${item.word}" (meaning: ${item.translation.join(", ")}). Based on this memory tip: ${lastMemoryTipResponse}. The image should be simple, memorable, and clearly connect the word to its meaning.`;
+
+                  const [imageUrl, error] = await tryCatch(() => generateImage(prompt));
+
+                  if (error) {
+                    console.error("Failed to generate image:", error);
+                    toast.error("Failed to generate visual mnemonic");
+                    setIsGeneratingImage(false);
+                    return;
+                  }
+
+                  if (imageUrl) {
+                    addAssistantMessage("Here's a visual mnemonic to help you remember:", imageUrl);
+                    setShowImageButton(false);
+                  }
+                  setIsGeneratingImage(false);
+                }}
+                disabled={isGeneratingImage}
+                variant="secondary"
+                size="sm"
+                className="mb-3 w-full"
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating visual mnemonic...
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Generate visual mnemonic
+                  </>
+                )}
+              </Button>
+            )}
             <ChatInput
               ref={inputRef}
               onSendMessage={sendMessage}
-              isDisabled={isSending || isLoading}
+              isDisabled={isSending || isLoading || isGeneratingImage}
               autoFocus={false}
             />
           </div>

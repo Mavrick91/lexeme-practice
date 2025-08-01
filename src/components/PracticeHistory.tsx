@@ -125,7 +125,12 @@ export const PracticeHistory = ({ history, onClear }: PracticeHistoryProps) => {
       )}
 
       {/* Chat Drawer */}
-      <ChatDrawer open={chatOpen} onOpenChange={setChatOpen} item={selectedItem} />
+      <ChatDrawer
+        key={selectedItem?.id}
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+        item={selectedItem}
+      />
     </div>
   );
 };

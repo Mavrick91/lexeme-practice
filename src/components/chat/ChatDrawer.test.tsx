@@ -1,4 +1,4 @@
-import { render, screen } from "@/test-utils";
+import { render, screen, act } from "@/test-utils";
 import { ChatDrawer } from "./ChatDrawer";
 import { useChat } from "@/hooks/useChat";
 import type { PracticeHistoryItem } from "@/types";
@@ -7,22 +7,35 @@ import type { ChatMessage } from "@/types/chat";
 // Mock the useChat hook
 jest.mock("@/hooks/useChat");
 
+// Mock the openai functions
+jest.mock("@/lib/openai", () => ({
+  generateImage: jest.fn(),
+}));
+
+// Mock toast
+jest.mock("sonner", () => ({
+  toast: {
+    error: jest.fn(),
+  },
+}));
+
 describe("ChatDrawer", () => {
   const mockOnOpenChange = jest.fn();
   const mockSendMessage = jest.fn();
-  const mockReset = jest.fn();
 
   // Mock scrollIntoView
   beforeAll(() => {
     window.Element.prototype.scrollIntoView = jest.fn();
   });
 
+  const mockAddAssistantMessage = jest.fn();
+
   const defaultChatMock = {
     messages: [],
     isSending: false,
     isLoading: false,
     sendMessage: mockSendMessage,
-    reset: mockReset,
+    addAssistantMessage: mockAddAssistantMessage,
   };
 
   const historyItem: PracticeHistoryItem = {
@@ -139,23 +152,6 @@ describe("ChatDrawer", () => {
     expect(input).toBeDisabled();
   });
 
-  it("resets chat when item changes", () => {
-    const { rerender } = render(
-      <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
-    );
-
-    const newItem: PracticeHistoryItem = {
-      ...historyItem,
-      id: "2",
-      word: "perro",
-      translation: ["dog"],
-    };
-
-    rerender(<ChatDrawer open={true} item={newItem} onOpenChange={mockOnOpenChange} />);
-
-    expect(mockReset).toHaveBeenCalled();
-  });
-
   it("initializes useChat with correct system prompt", () => {
     render(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
 
@@ -163,7 +159,7 @@ describe("ChatDrawer", () => {
       expect.stringContaining(
         'You are an AI language tutor. The student is asking about the word "casa"'
       ),
-      "1"
+      "casa"
     );
   });
 
@@ -208,5 +204,224 @@ describe("ChatDrawer", () => {
 
     // The actual selectable text behavior is tested in ChatMessage.test.tsx
     // Here we just verify the messages are rendered correctly
+  });
+
+  describe("Image Generation Feature", () => {
+    // Get references to the mocked modules
+    let generateImage: jest.MockedFunction<typeof import("@/lib/openai").generateImage>;
+    let toast: typeof import("sonner").toast;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // Initialize the mocked functions
+      generateImage = jest.fn();
+      toast = { error: jest.fn() } as any;
+
+      // Update the mocked modules
+      (jest.requireMock("@/lib/openai") as any).generateImage = generateImage;
+      (jest.requireMock("sonner") as any).toast = toast;
+    });
+
+    it("shows generate image button after clicking 'Help me remember'", async () => {
+      const { rerender } = render(
+        <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
+      );
+
+      // Find and click the "Help me remember" button
+      const helpButton = screen.getByRole("button", { name: /help me remember/i });
+      expect(helpButton).toBeInTheDocument();
+
+      // Simulate clicking the help button
+      act(() => {
+        helpButton.click();
+      });
+
+      // Verify sendMessage was called with the correct prompt and metadata
+      expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining("memory tricks"), {
+        templateId: "memory-tips",
+      });
+
+      // Simulate receiving a response
+      const memoryTipResponse: ChatMessage = {
+        id: "response-1",
+        role: "assistant",
+        content:
+          "To remember 'casa', think of it like 'castle' - both start with 'ca' and are places where people live.",
+        timestamp: Date.now(),
+      };
+
+      (useChat as jest.Mock).mockReturnValue({
+        ...defaultChatMock,
+        messages: [memoryTipResponse],
+      });
+
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      // Check that the generate image button appears
+      const generateButton = screen.getByRole("button", { name: /generate visual mnemonic/i });
+      expect(generateButton).toBeInTheDocument();
+    });
+
+    it("generates image when button is clicked", async () => {
+      const mockImageUrl = "https://example.com/generated-image.png";
+      generateImage.mockResolvedValueOnce(mockImageUrl);
+
+      // Set up the component with a memory tip response already received
+      const memoryTipResponse: ChatMessage = {
+        id: "response-1",
+        role: "assistant",
+        content: "To remember 'casa', think of a castle.",
+        timestamp: Date.now(),
+      };
+
+      (useChat as jest.Mock).mockReturnValue({
+        ...defaultChatMock,
+        messages: [memoryTipResponse],
+      });
+
+      const { rerender } = render(
+        <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
+      );
+
+      // First click "Help me remember" to enable the image button
+      const helpButton = screen.getByRole("button", { name: /help me remember/i });
+      act(() => {
+        helpButton.click();
+      });
+
+      // Re-render to show the generate button
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      const generateButton = screen.getByRole("button", { name: /generate visual mnemonic/i });
+
+      // Click the button and wait for state changes
+      await act(async () => {
+        generateButton.click();
+      });
+
+      expect(generateImage).toHaveBeenCalledWith(expect.stringContaining("casa"));
+
+      // Verify that addAssistantMessage was called with the image URL
+      await new Promise((resolve) => setTimeout(resolve, 0)); // Let promises resolve
+      expect(mockAddAssistantMessage).toHaveBeenCalledWith(
+        "Here's a visual mnemonic to help you remember:",
+        mockImageUrl
+      );
+    });
+
+    it("shows error toast when image generation fails", async () => {
+      generateImage.mockRejectedValueOnce(new Error("API error"));
+
+      // Set up the component with a memory tip response
+      const memoryTipResponse: ChatMessage = {
+        id: "response-1",
+        role: "assistant",
+        content: "To remember 'casa', think of a castle.",
+        timestamp: Date.now(),
+      };
+
+      (useChat as jest.Mock).mockReturnValue({
+        ...defaultChatMock,
+        messages: [memoryTipResponse],
+      });
+
+      const { rerender } = render(
+        <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
+      );
+
+      // Click "Help me remember"
+      const helpButton = screen.getByRole("button", { name: /help me remember/i });
+      act(() => {
+        helpButton.click();
+      });
+
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      const generateButton = screen.getByRole("button", { name: /generate visual mnemonic/i });
+      act(() => {
+        generateButton.click();
+      });
+
+      // Wait for the error handling
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(toast.error).toHaveBeenCalledWith("Failed to generate visual mnemonic");
+      expect(mockAddAssistantMessage).not.toHaveBeenCalled();
+    });
+
+    it("does not show generate button for other prompt templates", () => {
+      render(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      // Click a different prompt button (not "Help me remember")
+      const examplesButton = screen.getByRole("button", { name: /give me examples/i });
+      act(() => {
+        examplesButton.click();
+      });
+
+      // Verify sendMessage was called without the memory-tips templateId
+      expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining("example sentences"), {
+        templateId: "give-examples",
+      });
+
+      // Simulate receiving a response
+      const exampleResponse: ChatMessage = {
+        id: "response-2",
+        role: "assistant",
+        content: "Here are some examples with 'casa'...",
+        timestamp: Date.now(),
+      };
+
+      (useChat as jest.Mock).mockReturnValue({
+        ...defaultChatMock,
+        messages: [exampleResponse],
+      });
+
+      const { rerender } = render(
+        <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
+      );
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      // Verify the generate image button does NOT appear
+      const generateButton = screen.queryByRole("button", { name: /generate visual mnemonic/i });
+      expect(generateButton).not.toBeInTheDocument();
+    });
+
+    it("resets image generation state when drawer closes", () => {
+      const memoryTipResponse: ChatMessage = {
+        id: "response-1",
+        role: "assistant",
+        content: "Memory tip for casa",
+        timestamp: Date.now(),
+      };
+
+      (useChat as jest.Mock).mockReturnValue({
+        ...defaultChatMock,
+        messages: [memoryTipResponse],
+      });
+
+      const { rerender } = render(
+        <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
+      );
+
+      // Click help button to show generate button
+      const helpButton = screen.getByRole("button", { name: /help me remember/i });
+      act(() => {
+        helpButton.click();
+      });
+
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+      expect(screen.getByRole("button", { name: /generate visual mnemonic/i })).toBeInTheDocument();
+
+      // Close the drawer
+      rerender(<ChatDrawer open={false} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      // Re-open the drawer
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      // The generate button should not be visible anymore
+      expect(
+        screen.queryByRole("button", { name: /generate visual mnemonic/i })
+      ).not.toBeInTheDocument();
+    });
   });
 });

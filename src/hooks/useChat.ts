@@ -5,7 +5,7 @@ import { tryCatch } from "@/lib/tryCatch";
 import { toast } from "sonner";
 import { getChatConversation, saveChatConversation } from "@/db";
 
-export const useChat = (initialSystemPrompt: string, historyItemId?: string) => {
+export const useChat = (initialSystemPrompt: string, word?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: crypto.randomUUID(),
@@ -20,12 +20,12 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
   // Load existing conversation on mount
   useEffect(() => {
     const loadConversation = async () => {
-      if (!historyItemId) {
+      if (!word) {
         setIsLoading(false);
         return;
       }
 
-      const [conversation, error] = await tryCatch(() => getChatConversation(historyItemId));
+      const [conversation, error] = await tryCatch(() => getChatConversation(word));
 
       if (error) {
         console.error("Failed to load conversation:", error);
@@ -50,17 +50,17 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
     };
 
     loadConversation();
-  }, [historyItemId]);
+  }, [word]);
 
   // Save conversation after each message update
   useEffect(() => {
     const saveConversation = async () => {
       // Don't save if only system message or still loading initial conversation
-      if (!historyItemId || messages.length <= 1 || isLoading) return;
+      if (!word || messages.length <= 1 || isLoading) return;
 
       const conversation: ChatConversation = {
-        id: historyItemId,
-        historyItemId,
+        id: word,
+        word,
         messages,
         lastUpdated: Date.now(),
       };
@@ -73,10 +73,10 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
     };
 
     saveConversation();
-  }, [messages, historyItemId, isLoading]);
+  }, [messages, word, isLoading]);
 
   const sendMessage = useCallback(
-    async (userContent: string) => {
+    async (userContent: string, meta?: ChatMessage["meta"]) => {
       if (!userContent.trim() || isSending) return;
 
       const userMessage: ChatMessage = {
@@ -84,6 +84,7 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
         role: "user",
         content: userContent,
         timestamp: Date.now(),
+        meta,
       };
 
       setMessages((prev) => [...prev, userMessage]);
@@ -123,11 +124,23 @@ export const useChat = (initialSystemPrompt: string, historyItemId?: string) => 
     setIsSending(false);
   }, []);
 
+  const addAssistantMessage = useCallback((content: string, imageUrl?: string) => {
+    const assistantMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content,
+      timestamp: Date.now(),
+      imageUrl,
+    };
+    setMessages((prev) => [...prev, assistantMessage]);
+  }, []);
+
   return {
     messages: messages.filter((m) => m.role !== "system"), // Don't show system messages in UI
     isSending,
     isLoading,
     sendMessage,
     reset,
+    addAssistantMessage,
   };
 };

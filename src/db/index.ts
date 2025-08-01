@@ -18,7 +18,7 @@ type LexemePracticeDB = {
     indexes: { "by-timestamp": number };
   };
   chatConversations: {
-    key: string; // historyItemId
+    key: string; // word
     value: ChatConversation;
     indexes: { "by-lastUpdated": number };
   };
@@ -39,7 +39,7 @@ const storeExists = (
 };
 
 // Create and export the database promise
-const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
+const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 7, {
   async upgrade(db, oldVersion, _newVersion, transaction) {
     if (oldVersion < 1) {
       db.createObjectStore("lexemeProgress", { keyPath: "text" });
@@ -78,6 +78,18 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 5, {
         cursor.update(updatedProgress);
         return cursor.continue().then(processCursor);
       });
+    }
+    if (oldVersion < 6) {
+      // Version 6: No schema changes, just a version bump
+      // This can happen when testing or developing with different versions
+    }
+    if (oldVersion < 7) {
+      // Delete and recreate chatConversations store with new key (word instead of historyItemId)
+      if (storeExists(db, "chatConversations")) {
+        db.deleteObjectStore("chatConversations");
+      }
+      const chatStore = db.createObjectStore("chatConversations", { keyPath: "word" });
+      chatStore.createIndex("by-lastUpdated", "lastUpdated");
     }
   },
 });
@@ -161,10 +173,8 @@ export const clearPracticeHistory = async (): Promise<void> => {
 };
 
 // Chat Conversation functions
-export const getChatConversation = async (
-  historyItemId: string
-): Promise<ChatConversation | undefined> => {
-  return (await dbPromise).get("chatConversations", historyItemId);
+export const getChatConversation = async (word: string): Promise<ChatConversation | undefined> => {
+  return (await dbPromise).get("chatConversations", word);
 };
 
 export const saveChatConversation = async (conversation: ChatConversation): Promise<void> => {

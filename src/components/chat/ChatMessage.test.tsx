@@ -170,4 +170,97 @@ describe("ChatMessage", () => {
     expect(bubble).toHaveClass("select-text");
     expect(bubble).toHaveClass("cursor-text");
   });
+
+  describe("Image rendering", () => {
+    it("renders image when imageUrl is provided", () => {
+      const messageWithImage: ChatMessageType = {
+        id: "img-1",
+        role: "assistant",
+        content: "Here's a visual mnemonic",
+        timestamp: Date.now(),
+        imageUrl: "https://example.com/image.png",
+      };
+
+      render(<ChatMessage message={messageWithImage} />);
+
+      const image = screen.getByRole("img");
+      expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute("src", "https://example.com/image.png");
+      expect(image).toHaveAttribute("alt", "Visual mnemonic");
+      expect(image).toHaveAttribute("loading", "lazy");
+      expect(image).toHaveClass("rounded-md", "max-h-80", "w-full", "object-contain");
+
+      // Text content should not be displayed when image is shown
+      expect(screen.queryByText("Here's a visual mnemonic")).not.toBeInTheDocument();
+    });
+
+    it("renders text content when imageUrl is not provided", () => {
+      const textOnlyMessage: ChatMessageType = {
+        id: "text-1",
+        role: "user",
+        content: "Show me a memory tip",
+        timestamp: Date.now(),
+      };
+
+      render(<ChatMessage message={textOnlyMessage} />);
+
+      expect(screen.getByText("Show me a memory tip")).toBeInTheDocument();
+      expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    });
+
+    it("handles messages with metadata", () => {
+      const messageWithMeta: ChatMessageType = {
+        id: "meta-1",
+        role: "assistant",
+        content: "Memory tip response",
+        timestamp: Date.now(),
+        meta: {
+          templateId: "memory-tips",
+          customData: "test",
+        },
+      };
+
+      render(<ChatMessage message={messageWithMeta} />);
+
+      // Metadata doesn't affect rendering
+      expect(screen.getByText("Memory tip response")).toBeInTheDocument();
+    });
+
+    it("applies correct styling to image messages", () => {
+      const userImageMessage: ChatMessageType = {
+        id: "img-user",
+        role: "user",
+        content: "User image",
+        timestamp: Date.now(),
+        imageUrl: "https://example.com/user-image.png",
+      };
+
+      const { rerender } = render(<ChatMessage message={userImageMessage} />);
+
+      // Check user image styling
+      let image = screen.getByRole("img");
+      let bubble = image.parentElement!;
+      let wrapper = bubble.parentElement!;
+
+      expect(wrapper).toHaveClass("justify-end");
+      expect(bubble).toHaveClass("bg-primary", "text-primary-foreground");
+
+      // Check assistant image styling
+      const assistantImageMessage: ChatMessageType = {
+        ...userImageMessage,
+        id: "img-assistant",
+        role: "assistant",
+        imageUrl: "https://example.com/assistant-image.png",
+      };
+
+      rerender(<ChatMessage message={assistantImageMessage} />);
+
+      image = screen.getByRole("img");
+      bubble = image.parentElement!;
+      wrapper = bubble.parentElement!;
+
+      expect(wrapper).toHaveClass("justify-start");
+      expect(bubble).toHaveClass("bg-muted");
+    });
+  });
 });

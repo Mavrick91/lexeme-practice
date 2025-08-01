@@ -20,14 +20,17 @@ const mockToast = toast as jest.Mocked<typeof toast>;
 
 describe("useChat", () => {
   const mockSystemPrompt = "You are a helpful assistant.";
-  const mockHistoryItemId = "test-item-123";
+  const mockWord = "casa";
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Mock crypto.randomUUID
-    (globalThis as any).crypto = {
-      randomUUID: jest.fn(() => `uuid-${Date.now()}`),
-    };
+    Object.defineProperty(globalThis, "crypto", {
+      value: {
+        randomUUID: jest.fn(() => `${Date.now()}-${Math.random()}`),
+      },
+      writable: true,
+    });
 
     // Mock console methods
     jest.spyOn(console, "warn").mockImplementation(() => {});
@@ -43,13 +46,13 @@ describe("useChat", () => {
 
     expect(result.current.messages).toHaveLength(0); // System messages are filtered out
     expect(result.current.isSending).toBe(false);
-    expect(result.current.isLoading).toBe(false); // No historyItemId, so loading is false
+    expect(result.current.isLoading).toBe(false); // No word, so loading is false
   });
 
   it("loads existing conversation on mount", async () => {
     const mockConversation = {
-      id: mockHistoryItemId,
-      historyItemId: mockHistoryItemId,
+      id: mockWord,
+      word: mockWord,
       messages: [
         { id: "1", role: "system" as const, content: mockSystemPrompt, timestamp: 1 },
         { id: "2", role: "user" as const, content: "Hello", timestamp: 2 },
@@ -60,7 +63,7 @@ describe("useChat", () => {
 
     mockGetChatConversation.mockResolvedValueOnce(mockConversation);
 
-    const { result } = renderHook(() => useChat(mockSystemPrompt, mockHistoryItemId));
+    const { result } = renderHook(() => useChat(mockSystemPrompt, mockWord));
 
     expect(result.current.isLoading).toBe(true);
 
@@ -97,8 +100,8 @@ describe("useChat", () => {
   it("handles race condition - does not overwrite new messages with old conversation", async () => {
     // Old conversation data
     const oldConversation = {
-      id: mockHistoryItemId,
-      historyItemId: mockHistoryItemId,
+      id: mockWord,
+      word: mockWord,
       messages: [
         { id: "1", role: "system" as const, content: mockSystemPrompt, timestamp: 1 },
         { id: "2", role: "user" as const, content: "Old message", timestamp: 2 },
@@ -125,7 +128,7 @@ describe("useChat", () => {
     );
     mockChatCompletion.mockReturnValueOnce(chatCompletionPromise as Promise<{ content: string }>);
 
-    const { result } = renderHook(() => useChat(mockSystemPrompt, mockHistoryItemId));
+    const { result } = renderHook(() => useChat(mockSystemPrompt, mockWord));
 
     // While conversation is loading, send a new message
     expect(result.current.isLoading).toBe(true);
@@ -222,7 +225,7 @@ describe("useChat", () => {
       content: "Response",
     });
 
-    const { result } = renderHook(() => useChat(mockSystemPrompt, mockHistoryItemId));
+    const { result } = renderHook(() => useChat(mockSystemPrompt, mockWord));
 
     // Wait for initial load
     await waitFor(() => {
@@ -237,8 +240,8 @@ describe("useChat", () => {
     await waitFor(() => {
       expect(mockSaveChatConversation).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: mockHistoryItemId,
-          historyItemId: mockHistoryItemId,
+          id: mockWord,
+          word: mockWord,
           messages: expect.arrayContaining([
             expect.objectContaining({ role: "system" }),
             expect.objectContaining({ role: "user", content: "Test" }),
@@ -253,7 +256,7 @@ describe("useChat", () => {
     // Keep loading state active
     mockGetChatConversation.mockImplementation(() => new Promise(() => {}));
 
-    const { result } = renderHook(() => useChat(mockSystemPrompt, mockHistoryItemId));
+    const { result } = renderHook(() => useChat(mockSystemPrompt, mockWord));
 
     expect(result.current.isLoading).toBe(true);
 
@@ -295,5 +298,122 @@ describe("useChat", () => {
     // Should only have one user message
     expect(result.current.messages).toHaveLength(1);
     expect(result.current.messages[0].content).toBe("First message");
+  });
+
+  describe("addAssistantMessage", () => {
+    it("adds assistant message with text content", () => {
+      const { result } = renderHook(() => useChat(mockSystemPrompt));
+
+      act(() => {
+        result.current.addAssistantMessage("This is an assistant message");
+      });
+
+      expect(result.current.messages).toHaveLength(1);
+      expect(result.current.messages[0]).toMatchObject({
+        role: "assistant",
+        content: "This is an assistant message",
+      });
+      expect(result.current.messages[0].imageUrl).toBeUndefined();
+    });
+
+    it("adds assistant message with image URL", () => {
+      const { result } = renderHook(() => useChat(mockSystemPrompt));
+      const imageUrl = "https://example.com/image.png";
+
+      act(() => {
+        result.current.addAssistantMessage("Here's a visual mnemonic", imageUrl);
+      });
+
+      expect(result.current.messages).toHaveLength(1);
+      expect(result.current.messages[0]).toMatchObject({
+        role: "assistant",
+        content: "Here's a visual mnemonic",
+        imageUrl,
+      });
+    });
+
+    it("generates unique IDs for added messages", () => {
+      const { result } = renderHook(() => useChat(mockSystemPrompt));
+
+      act(() => {
+        result.current.addAssistantMessage("First message");
+        result.current.addAssistantMessage("Second message");
+      });
+
+      expect(result.current.messages).toHaveLength(2);
+      expect(result.current.messages[0].id).not.toBe(result.current.messages[1].id);
+      // Just check that IDs are different and exist
+      expect(result.current.messages[0].id).toBeTruthy();
+      expect(result.current.messages[1].id).toBeTruthy();
+    });
+
+    it("saves conversation after adding assistant message", async () => {
+      // Mock the getChatConversation to resolve immediately
+      mockGetChatConversation.mockResolvedValueOnce(undefined);
+
+      const { result } = renderHook(() => useChat(mockSystemPrompt, mockWord));
+
+      // Wait for initial load
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      act(() => {
+        result.current.addAssistantMessage("Assistant response");
+      });
+
+      await waitFor(() => {
+        expect(mockSaveChatConversation).toHaveBeenCalledWith(
+          expect.objectContaining({
+            messages: expect.arrayContaining([
+              expect.objectContaining({
+                role: "assistant",
+                content: "Assistant response",
+              }),
+            ]),
+          })
+        );
+      });
+    });
+  });
+
+  describe("sendMessage with metadata", () => {
+    it("includes metadata in user message", async () => {
+      mockChatCompletion.mockResolvedValueOnce({ content: "Response" });
+      const { result } = renderHook(() => useChat(mockSystemPrompt));
+
+      const metadata = { templateId: "memory-tips", custom: "data" };
+
+      await act(async () => {
+        await result.current.sendMessage("Test message", metadata);
+      });
+
+      expect(result.current.messages[0]).toMatchObject({
+        role: "user",
+        content: "Test message",
+        meta: metadata,
+      });
+    });
+
+    it("passes message with metadata to chatCompletion", async () => {
+      mockChatCompletion.mockResolvedValueOnce({ content: "Response" });
+      const { result } = renderHook(() => useChat(mockSystemPrompt));
+
+      const metadata = { templateId: "memory-tips" };
+
+      await act(async () => {
+        await result.current.sendMessage("Test message", metadata);
+      });
+
+      // The chatCompletion should still only receive role and content
+      expect(mockChatCompletion).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            role: "user",
+            content: "Test message",
+          }),
+        ])
+      );
+    });
   });
 });

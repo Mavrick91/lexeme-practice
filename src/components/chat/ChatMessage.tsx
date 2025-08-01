@@ -17,7 +17,16 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
           "select-text cursor-text"
         )}
       >
-        <p className="select-text whitespace-pre-wrap break-words text-sm">{message.content}</p>
+        {message.imageUrl ? (
+          <img
+            src={message.imageUrl}
+            alt="Visual mnemonic"
+            className="max-h-80 w-full rounded-md object-contain"
+            loading="lazy"
+          />
+        ) : (
+          <p className="select-text whitespace-pre-wrap break-words text-sm">{message.content}</p>
+        )}
       </div>
     </div>
   );
