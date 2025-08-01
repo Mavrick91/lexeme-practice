@@ -3,10 +3,9 @@ import { HINT_CONFIG } from "@/config/hint";
 import type { ChatMessage } from "@/types/chat";
 
 const IMAGE_GENERATION_CONFIG = {
-  model: "dall-e-3", // Best available model via OpenAI API
+  model: "gpt-image-1", // Using gpt-image-1 model as requested
   size: "1024x1024" as const,
-  quality: "hd" as const, // Use HD quality for better visual mnemonics
-  style: "vivid" as const, // More visually engaging for memory aids
+  quality: "high" as const, // Use high quality for better visual mnemonics
   n: 1,
 };
 
@@ -104,7 +103,14 @@ export const chatCompletion = async (
 };
 
 /**
- * Generate an image using OpenAI's best available image model (DALL-E 3)
+ * Helper function to convert base64 to data URL
+ */
+const toDataURL = (base64: string, mimeType: string = "image/png"): string => {
+  return `data:${mimeType};base64,${base64}`;
+};
+
+/**
+ * Generate an image using gpt-image-1 model
  */
 export const generateImage = async (prompt: string): Promise<string> => {
   if (!OPENAI_API_KEY) {
@@ -129,5 +135,18 @@ export const generateImage = async (prompt: string): Promise<string> => {
   }
 
   const data = await response.json();
-  return data.data[0]?.url || "";
+
+  // Handle base64 response format
+  if (data.data?.[0]?.b64_json) {
+    const base64Data = data.data[0].b64_json;
+    const mimeType = data.output_format === "png" ? "image/png" : "image/jpeg";
+    return toDataURL(base64Data, mimeType);
+  }
+
+  // Fallback to URL if available (backwards compatibility)
+  if (data.data?.[0]?.url) {
+    return data.data[0].url;
+  }
+
+  throw new Error("No image data found in response");
 };

@@ -25,6 +25,41 @@ type ChatDrawerProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+// Helper component for the image generation action
+const ImageMnemonicAction = ({
+  isGenerating,
+  onClick,
+}: {
+  isGenerating: boolean;
+  onClick: () => void;
+}) => {
+  if (isGenerating) {
+    return (
+      <div
+        className="mb-3 flex w-full items-center justify-center py-3"
+        aria-busy="true"
+        data-testid="image-loading"
+      >
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Generating visual mnemonic...</span>
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      onClick={onClick}
+      variant="secondary"
+      size="sm"
+      className="mb-3 w-full"
+      data-testid="image-generate-btn"
+    >
+      <ImageIcon className="mr-2 h-4 w-4" />
+      Generate visual mnemonic
+    </Button>
+  );
+};
+
 export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -145,8 +180,9 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
           </ScrollArea>
 
           <div className="border-t pt-4">
-            {showImageButton && lastMemoryTipResponse && !isGeneratingImage && (
-              <Button
+            {showImageButton && lastMemoryTipResponse && (
+              <ImageMnemonicAction
+                isGenerating={isGeneratingImage}
                 onClick={async () => {
                   setIsGeneratingImage(true);
                   const prompt = `Create a visual mnemonic to help remember the Indonesian word "${item.word}" (meaning: ${item.translation.join(", ")}). Based on this memory tip: ${lastMemoryTipResponse}. The image should be simple, memorable, and clearly connect the word to its meaning.`;
@@ -166,23 +202,7 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
                   }
                   setIsGeneratingImage(false);
                 }}
-                disabled={isGeneratingImage}
-                variant="secondary"
-                size="sm"
-                className="mb-3 w-full"
-              >
-                {isGeneratingImage ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating visual mnemonic...
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    Generate visual mnemonic
-                  </>
-                )}
-              </Button>
+              />
             )}
             <ChatInput
               ref={inputRef}

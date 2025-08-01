@@ -215,11 +215,13 @@ describe("ChatDrawer", () => {
       jest.clearAllMocks();
       // Initialize the mocked functions
       generateImage = jest.fn();
-      toast = { error: jest.fn() } as any;
+      toast = { error: jest.fn() };
 
       // Update the mocked modules
-      (jest.requireMock("@/lib/openai") as any).generateImage = generateImage;
-      (jest.requireMock("sonner") as any).toast = toast;
+      const openaiMock = jest.requireMock("@/lib/openai") as { generateImage: jest.Mock };
+      openaiMock.generateImage = generateImage;
+      const sonnerMock = jest.requireMock("sonner") as { toast: { error: jest.Mock } };
+      sonnerMock.toast = toast;
     });
 
     it("shows generate image button after clicking 'Help me remember'", async () => {
@@ -262,9 +264,68 @@ describe("ChatDrawer", () => {
       expect(generateButton).toBeInTheDocument();
     });
 
+    it("shows loading indicator while generating image", async () => {
+      // Mock a slow image generation
+      let resolveGeneration: (value: string) => void;
+      const generationPromise = new Promise<string>((resolve) => {
+        resolveGeneration = resolve;
+      });
+      generateImage.mockReturnValueOnce(generationPromise);
+
+      // Set up the component with a memory tip response
+      const memoryTipResponse: ChatMessage = {
+        id: "response-1",
+        role: "assistant",
+        content: "To remember 'casa', think of a castle.",
+        timestamp: Date.now(),
+      };
+
+      (useChat as jest.Mock).mockReturnValue({
+        ...defaultChatMock,
+        messages: [memoryTipResponse],
+      });
+
+      const { rerender } = render(
+        <ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />
+      );
+
+      // Click "Help me remember"
+      const helpButton = screen.getByRole("button", { name: /help me remember/i });
+      act(() => {
+        helpButton.click();
+      });
+
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      const generateButton = screen.getByTestId("image-generate-btn");
+
+      // Click to start generation
+      act(() => {
+        generateButton.click();
+      });
+
+      rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
+
+      // Check that loading indicator is shown
+      expect(screen.getByTestId("image-loading")).toBeInTheDocument();
+      expect(screen.getByText("Generating visual mnemonic...")).toBeInTheDocument();
+      expect(screen.queryByTestId("image-generate-btn")).not.toBeInTheDocument();
+
+      // Resolve the generation with a base64 data URL
+      await act(async () => {
+        resolveGeneration!(
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        );
+      });
+
+      // Verify the loading state is gone
+      expect(screen.queryByTestId("image-loading")).not.toBeInTheDocument();
+    });
+
     it("generates image when button is clicked", async () => {
-      const mockImageUrl = "https://example.com/generated-image.png";
-      generateImage.mockResolvedValueOnce(mockImageUrl);
+      const mockImageDataUrl =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+      generateImage.mockResolvedValueOnce(mockImageDataUrl);
 
       // Set up the component with a memory tip response already received
       const memoryTipResponse: ChatMessage = {
@@ -301,11 +362,11 @@ describe("ChatDrawer", () => {
 
       expect(generateImage).toHaveBeenCalledWith(expect.stringContaining("casa"));
 
-      // Verify that addAssistantMessage was called with the image URL
+      // Verify that addAssistantMessage was called with the image data URL
       await new Promise((resolve) => setTimeout(resolve, 0)); // Let promises resolve
       expect(mockAddAssistantMessage).toHaveBeenCalledWith(
         "Here's a visual mnemonic to help you remember:",
-        mockImageUrl
+        mockImageDataUrl
       );
     });
 
