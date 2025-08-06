@@ -307,7 +307,39 @@ describe("ModernWordCard", () => {
   });
 
   describe("Common interactions", () => {
-    it("plays audio when audio button is clicked", () => {
+    it("calls onMarkAsMastered when Mark as Mastered button is clicked", async () => {
+      const mockOnMarkAsMastered = jest.fn();
+      const user = userEvent.setup();
+
+      renderCard({ onMarkAsMastered: mockOnMarkAsMastered });
+
+      const markAsMasteredButton = screen.getByRole("button", { name: /mark as mastered/i });
+      await user.click(markAsMasteredButton);
+
+      expect(mockOnMarkAsMastered).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides Mark as Mastered button when word is already mastered", () => {
+      const mockOnMarkAsMastered = jest.fn();
+      const masteredProgress: LexemeProgress = {
+        text: "rumah",
+        timesSeen: 10,
+        timesCorrect: 10,
+        lastPracticedAt: Date.now(),
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 2,
+        consecutiveCorrectStreak: 5,
+        isMastered: true,
+        masteredAt: Date.now(),
+      };
+
+      renderCard({ onMarkAsMastered: mockOnMarkAsMastered, progress: masteredProgress });
+
+      expect(screen.queryByRole("button", { name: /mark as mastered/i })).not.toBeInTheDocument();
+    });
+
+    it("plays audio when audio button is clicked", async () => {
       renderCard();
 
       const audioButton = screen.getByRole("button", { name: "" });

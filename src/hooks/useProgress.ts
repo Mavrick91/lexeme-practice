@@ -27,6 +27,38 @@ export const useProgress = () => {
     loadData();
   }, []);
 
+  const markAsMastered = useCallback(async (lexeme: Lexeme): Promise<void> => {
+    const now = Date.now();
+
+    // Get current progress or create new
+    const prev = await getLexemeProgress(lexeme.text);
+    const currentProgress: LexemeProgress = prev ?? {
+      text: lexeme.text,
+      timesSeen: 0,
+      timesCorrect: 0,
+      lastPracticedAt: now,
+      recentIncorrectStreak: 0,
+      confusedWith: {},
+      easingLevel: 2, // Set to highest easing level
+      consecutiveCorrectStreak: 5,
+      isMastered: true,
+      masteredAt: now,
+    };
+
+    // Update to mastered state
+    const updated: LexemeProgress = {
+      ...currentProgress,
+      consecutiveCorrectStreak: 5,
+      isMastered: true,
+      masteredAt: currentProgress.masteredAt || now,
+      easingLevel: 2, // Set to highest easing level
+      recentIncorrectStreak: 0, // Reset any incorrect streaks
+    };
+
+    await putLexemeProgress(updated);
+    setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
+  }, []);
+
   const recordAnswer = useCallback(
     async (lexeme: Lexeme, isCorrect: boolean, userAnswer?: string): Promise<LexemeProgress> => {
       const now = Date.now();
@@ -193,6 +225,7 @@ export const useProgress = () => {
 
   return {
     recordAnswer,
+    markAsMastered,
     userStats,
     getProgress,
     progressMap,

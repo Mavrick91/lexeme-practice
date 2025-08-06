@@ -35,7 +35,8 @@ const AppContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
-  const { recordAnswer, getDueLexemes, getProgress, progressMap, getMistakePool } = useProgress();
+  const { recordAnswer, markAsMastered, getDueLexemes, getProgress, progressMap, getMistakePool } =
+    useProgress();
 
   // Load practice history from IndexedDB on mount
   useEffect(() => {
@@ -240,6 +241,19 @@ const AppContent = () => {
     return { justMastered: false };
   };
 
+  const handleMarkAsMastered = async (lexeme: Lexeme) => {
+    await markAsMastered(lexeme);
+
+    // Show celebration toast
+    toast.success(`🎉 "${lexeme.text}" marked as MASTERED!`, {
+      description: "This word won't appear in practice anymore.",
+      duration: 3000,
+    });
+
+    // Move to next word immediately
+    handleNext(lexeme.text);
+  };
+
   const handleMarkIncorrect = async (lexeme: Lexeme, userAnswer?: string) => {
     setTotalAnswers(totalAnswers + 1);
 
@@ -373,6 +387,7 @@ const AppContent = () => {
                 onCorrect={() => handleMarkCorrect(currentLexeme)}
                 onIncorrect={(userAnswer) => handleMarkIncorrect(currentLexeme, userAnswer)}
                 onNext={handleNext}
+                onMarkAsMastered={() => handleMarkAsMastered(currentLexeme)}
                 currentIndex={currentIndex}
                 totalWords={practiceQueue.length}
                 progress={getProgress(currentLexeme.text)}

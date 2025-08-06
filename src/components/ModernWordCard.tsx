@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, ChevronRight, Keyboard, Lightbulb, RefreshCw } from "lucide-react";
+import { Volume2, ChevronRight, Keyboard, Lightbulb, RefreshCw, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -16,6 +16,7 @@ type ModernWordCardProps = {
   onCorrect: () => void | Promise<void> | Promise<{ justMastered: boolean }>;
   onIncorrect: (userAnswer?: string) => void | Promise<void>;
   onNext: (skipMasteredWord?: string) => void;
+  onMarkAsMastered?: () => void | Promise<void>;
   currentIndex: number;
   totalWords: number;
   progress?: LexemeProgress | null;
@@ -26,6 +27,7 @@ export const ModernWordCard = ({
   onCorrect,
   onIncorrect,
   onNext,
+  onMarkAsMastered,
   currentIndex,
   totalWords,
   progress,
@@ -323,8 +325,19 @@ export const ModernWordCard = ({
           </div>
         </div>
 
-        {/* Next Button (Always visible) */}
-        <div className="absolute bottom-4 right-4">
+        {/* Action Buttons (Always visible) */}
+        <div className="absolute bottom-4 right-4 flex gap-2">
+          {onMarkAsMastered && !progress?.isMastered && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onMarkAsMastered()}
+              className="gap-1 border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950"
+            >
+              <Trophy className="h-4 w-4" />
+              Mark as Mastered
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
