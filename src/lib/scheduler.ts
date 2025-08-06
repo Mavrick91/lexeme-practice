@@ -76,9 +76,13 @@ export const selectNextLexemes = (
   count: number = 50,
   excludeSet: Set<string> = new Set()
 ): Lexeme[] => {
-  // Score all lexemes
-  const scoredLexemes = allLexemes
-    .filter((lexeme) => !excludeSet.has(lexeme.text))
+  // Filter out mastered words and excluded words
+  const nonMastered = allLexemes.filter(
+    (lexeme) => !excludeSet.has(lexeme.text) && !progressMap.get(lexeme.text)?.isMastered
+  );
+
+  // Score all non-mastered lexemes
+  const scoredLexemes = nonMastered
     .map((lexeme) => ({
       lexeme,
       score: scoreLexeme(lexeme, progressMap.get(lexeme.text)),

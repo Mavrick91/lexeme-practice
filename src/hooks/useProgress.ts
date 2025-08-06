@@ -28,7 +28,7 @@ export const useProgress = () => {
   }, []);
 
   const recordAnswer = useCallback(
-    async (lexeme: Lexeme, isCorrect: boolean, userAnswer?: string) => {
+    async (lexeme: Lexeme, isCorrect: boolean, userAnswer?: string): Promise<LexemeProgress> => {
       const now = Date.now();
 
       // Update per-lexeme progress
@@ -43,6 +43,8 @@ export const useProgress = () => {
         recentIncorrectStreak: 0,
         confusedWith: {},
         easingLevel: 1,
+        consecutiveCorrectStreak: 0,
+        isMastered: false,
       };
 
       // Update mistake tracking
@@ -51,9 +53,15 @@ export const useProgress = () => {
       let newEasingLevel = currentProgress.easingLevel || 1;
       let lastIncorrectAt = currentProgress.lastIncorrectAt;
 
+      // Mastery tracking
+      let correctStreak = currentProgress.consecutiveCorrectStreak || 0;
+      let isMastered = currentProgress.isMastered || false;
+      let masteredAt = currentProgress.masteredAt;
+
       if (!isCorrect) {
         newStreak++;
         lastIncorrectAt = now;
+        correctStreak = 0; // Reset consecutive correct streak
 
         // Track what the user confused it with
         if (userAnswer && userAnswer.trim()) {
@@ -70,13 +78,21 @@ export const useProgress = () => {
           newEasingLevel = 0;
         }
       } else {
-        // Reset streak on correct answer
+        // Reset incorrect streak on correct answer
         if (newStreak > 0) {
           newStreak = 0;
         }
 
+        // Increment consecutive correct streak
+        correctStreak++;
+
+        // Check for mastery (5 correct in a row)
+        if (correctStreak >= 5 && !isMastered) {
+          isMastered = true;
+          masteredAt = now;
+        }
+
         // Gradually increase easing level with consecutive correct answers
-        const correctStreak = currentProgress.recentIncorrectStreak === 0 ? 1 : 0;
         if (correctStreak >= 3 && newEasingLevel < 2) {
           newEasingLevel = Math.min(2, newEasingLevel + 1);
         }
@@ -94,6 +110,9 @@ export const useProgress = () => {
         recentIncorrectStreak: newStreak,
         confusedWith: newConfusedWith,
         easingLevel: newEasingLevel,
+        consecutiveCorrectStreak: correctStreak,
+        isMastered,
+        masteredAt,
       };
 
       await putLexemeProgress(updated);
@@ -115,6 +134,8 @@ export const useProgress = () => {
 
       await putUserStats(updatedStats);
       setUserStats(updatedStats);
+
+      return updated;
     },
     []
   );
@@ -135,10 +156,10 @@ export const useProgress = () => {
 
   const getMistakePool = useCallback(
     (allLexemes: Lexeme[], limit: number = 20): Lexeme[] => {
-      // Get lexemes that have been answered incorrectly
+      // Get lexemes that have been answered incorrectly and are not mastered
       const mistakeLexemes = allLexemes.filter((lexeme) => {
         const progress = progressMap.get(lexeme.text);
-        return progress && progress.timesSeen > progress.timesCorrect;
+        return progress && !progress.isMastered && progress.timesSeen > progress.timesCorrect;
       });
 
       // Sort by mistake severity (more mistakes = higher priority)

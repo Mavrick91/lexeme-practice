@@ -20,6 +20,10 @@ export type LexemeProgress = {
   recentIncorrectStreak: number; // current streak of incorrect answers
   confusedWith: { [translation: string]: number }; // tracks which translations were confused
   easingLevel: number; // 0 = needs flashcard, 1 = normal, 2 = advanced
+  // Mastery tracking fields
+  consecutiveCorrectStreak: number; // current consecutive correct answers
+  isMastered: boolean; // true once streak >= 5
+  masteredAt?: number; // optional epoch when mastered
 };
 
 export type UserStats = {

@@ -39,7 +39,7 @@ const storeExists = (
 };
 
 // Create and export the database promise
-const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 7, {
+const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 8, {
   async upgrade(db, oldVersion, _newVersion, transaction) {
     if (oldVersion < 1) {
       db.createObjectStore("lexemeProgress", { keyPath: "text" });
@@ -90,6 +90,25 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 7, {
       }
       const chatStore = db.createObjectStore("chatConversations", { keyPath: "word" });
       chatStore.createIndex("by-lastUpdated", "lastUpdated");
+    }
+    if (oldVersion < 8) {
+      // Add mastery tracking fields to existing lexeme progress records
+      const store = transaction.objectStore("lexemeProgress");
+
+      await store.openCursor().then(function migrate(cursor): Promise<void> | void {
+        if (!cursor) return;
+
+        const progress = cursor.value as any;
+        const updated = {
+          ...progress,
+          consecutiveCorrectStreak: progress.consecutiveCorrectStreak ?? 0,
+          isMastered: progress.isMastered ?? false,
+          // masteredAt will be undefined initially, set when mastered
+        };
+
+        cursor.update(updated);
+        return cursor.continue().then(migrate);
+      });
     }
   },
 });

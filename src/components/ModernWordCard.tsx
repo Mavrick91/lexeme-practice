@@ -13,13 +13,12 @@ import type { Lexeme, LexemeProgress } from "@/types";
 
 type ModernWordCardProps = {
   lexeme: Lexeme;
-  onCorrect: () => void;
-  onIncorrect: (userAnswer?: string) => void;
-  onNext: () => void;
+  onCorrect: () => void | Promise<void> | Promise<{ justMastered: boolean }>;
+  onIncorrect: (userAnswer?: string) => void | Promise<void>;
+  onNext: (skipMasteredWord?: string) => void;
   currentIndex: number;
   totalWords: number;
-  progress?: LexemeProgress;
-  autoAdvanceOnIncorrect?: boolean;
+  progress?: LexemeProgress | null;
 };
 
 export const ModernWordCard = ({
@@ -30,16 +29,13 @@ export const ModernWordCard = ({
   currentIndex,
   totalWords,
   progress,
-  autoAdvanceOnIncorrect = true,
 }: ModernWordCardProps) => {
-  const [showAnswer, setShowAnswer] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Reset state when lexeme changes
-    setShowAnswer(false);
     setUserAnswer("");
     setShowHint(false);
   }, [lexeme]);
@@ -47,10 +43,11 @@ export const ModernWordCard = ({
   // Use the auto-focus hook for reliable input focusing in writing mode
   useAutoFocus(inputRef, true, [lexeme]);
 
-  const handleCorrect = useCallback(() => {
-    onCorrect();
-    onNext();
-  }, [onCorrect, onNext]);
+  const handleCorrect = useCallback(async () => {
+    const result = await onCorrect();
+    // Don't call onNext here - let checkAnswer handle advancement
+    return result;
+  }, [onCorrect]);
 
   // Use the new hint system
   const {
@@ -96,7 +93,7 @@ export const ModernWordCard = ({
       .replace(/\s+/g, " ");
   };
 
-  const checkAnswer = () => {
+  const checkAnswer = async () => {
     const normalizedInput = normalizeAnswer(userAnswer);
 
     // Check if the input matches any of the translations
@@ -107,7 +104,7 @@ export const ModernWordCard = ({
       if (normalizedInput === normalizedTranslation) return true;
 
       // Check if translation contains parenthetical info and match the main part
-      const mainPart = normalizedTranslation.replace(/\\([^)]*\\)/g, "").trim();
+      const mainPart = normalizedTranslation.replace(/\([^)]*\)/g, "").trim();
       if (normalizedInput === mainPart) return true;
 
       // For multi-word translations, check if all words are present
@@ -123,20 +120,24 @@ export const ModernWordCard = ({
     });
 
     if (correct) {
-      handleCorrect();
+      const result = await handleCorrect();
+      // Small delay to ensure state updates have propagated
+      setTimeout(() => {
+        // Pass the word if it was just mastered so it can be skipped
+        const skipWord = (result as any)?.justMastered ? lexeme.text : undefined;
+        onNext(skipWord);
+      }, 100);
     } else {
-      onIncorrect(userAnswer);
-      setShowAnswer(true); // Reveal correct answer
-      if (autoAdvanceOnIncorrect) {
-        onNext();
-      }
+      await onIncorrect(userAnswer);
+      // Delayed auto-advance to allow time to see the answer
+      setTimeout(() => onNext(), 2000);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (userAnswer.trim()) {
-      checkAnswer();
+      await checkAnswer();
     }
   };
 
@@ -165,6 +166,39 @@ export const ModernWordCard = ({
       <Card
         className={cn("relative overflow-hidden transition-all duration-200", animations.fadeIn)}
       >
+        {/* Mastery Progress Badge - Always show since mastered words are never displayed */}
+        {
+          <Badge
+            variant="outline"
+            className={cn(
+              "absolute left-4 top-4 z-10 text-xs font-semibold transition-all duration-300",
+              progress?.consecutiveCorrectStreak === 0 &&
+                "border-gray-300 bg-gray-50 text-gray-600",
+              progress?.consecutiveCorrectStreak === 1 &&
+                "border-blue-300 bg-blue-50 text-blue-700",
+              progress?.consecutiveCorrectStreak === 2 &&
+                "border-blue-400 bg-blue-100 text-blue-800",
+              progress?.consecutiveCorrectStreak === 3 &&
+                "border-purple-400 bg-purple-100 text-purple-800 animate-pulse",
+              progress?.consecutiveCorrectStreak === 4 &&
+                "border-orange-400 bg-orange-100 text-orange-800 animate-pulse shadow-md",
+              progress?.consecutiveCorrectStreak === undefined &&
+                "border-gray-300 bg-gray-50 text-gray-600"
+            )}
+          >
+            <span className="mr-1">
+              {progress?.consecutiveCorrectStreak === 0 && "⭕"}
+              {progress?.consecutiveCorrectStreak === 1 && "✨"}
+              {progress?.consecutiveCorrectStreak === 2 && "⭐"}
+              {progress?.consecutiveCorrectStreak === 3 && "🔥"}
+              {progress?.consecutiveCorrectStreak === 4 && "🎯"}
+              {progress?.consecutiveCorrectStreak === undefined && "⭕"}
+            </span>
+            <span className="font-mono">{progress?.consecutiveCorrectStreak || 0}/5</span>
+            <span className="ml-1">streak</span>
+          </Badge>
+        }
+
         {/* Decorative Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
 
@@ -205,122 +239,86 @@ export const ModernWordCard = ({
           <div className="min-h-[120px] transition-all duration-300">
             {/* Writing Mode */}
             <div className="space-y-4">
-              {!showAnswer ? (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="text-center">
-                    <p className="mb-4 text-lg text-muted-foreground">
-                      Type the English translation:
-                    </p>
-                    <Input
-                      ref={inputRef}
-                      type="text"
-                      value={userAnswer}
-                      onChange={(e) => setUserAnswer(e.target.value)}
-                      placeholder="Type your answer..."
-                      className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="flex justify-center gap-3">
-                    <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
-                      Check Answer
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="lg"
-                      onClick={handleHintClick}
-                      disabled={hintStatus === "loading"}
-                    >
-                      {hintStatus === "loading" ? (
-                        <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                      ) : (
-                        <Lightbulb className="mr-2 h-5 w-5" />
-                      )}
-                      {showHint ? "Hide Hint" : "Show Hint"}
-                    </Button>
-                  </div>
-
-                  {showHint && (
-                    <div
-                      className={cn(
-                        "bg-secondary/50 rounded-lg p-4 max-w-md mx-auto",
-                        animations.slideInFromTop
-                      )}
-                    >
-                      {hintStatus === "loading" && (
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-3/4" />
-                        </div>
-                      )}
-                      {hintStatus === "ready" &&
-                        hint &&
-                        hint.relatedWords &&
-                        Array.isArray(hint.relatedWords) && (
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium text-muted-foreground/70">
-                              Related words:
-                            </p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                              {hint.relatedWords.map((word, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium"
-                                >
-                                  {word}
-                                </span>
-                              ))}
-                            </div>
-                            {hint.source === "fallback" && (
-                              <p className="mt-2 text-center text-xs opacity-60">(offline hint)</p>
-                            )}
-                          </div>
-                        )}
-                      {hintStatus === "error" && (
-                        <p className="text-sm text-destructive">
-                          ⚠️ {hintError || "Failed to generate hint"}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </form>
-              ) : (
-                // Show correct answer after incorrect response
-                <div className={cn("space-y-4", animations.slideInFromBottom)}>
-                  <div className="text-center">
-                    <p className="mb-4 text-lg text-destructive">
-                      Incorrect! The correct answer is:
-                    </p>
-                    <div className="space-y-2">
-                      {lexeme.translations.map((translation, index) => (
-                        <div
-                          key={index}
-                          className="inline-block rounded-lg bg-secondary/30 px-4 py-2 text-xl font-medium md:text-2xl"
-                        >
-                          {translation}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Example sentence if available */}
-                  {lexeme.example && (
-                    <div className="mx-auto mt-6 max-w-md rounded-lg bg-muted/30 p-4">
-                      <p className="mb-1 text-sm font-medium">Example:</p>
-                      <p className="italic text-muted-foreground">{lexeme.example}</p>
-                    </div>
-                  )}
-
-                  {/* Auto-advancing message */}
-                  {autoAdvanceOnIncorrect && (
-                    <p className="text-center text-sm text-muted-foreground">
-                      Auto-advancing to next word...
-                    </p>
-                  )}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="text-center">
+                  <p className="mb-4 text-lg text-muted-foreground">
+                    Type the English translation:
+                  </p>
+                  <Input
+                    ref={inputRef}
+                    type="text"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder="Type your answer..."
+                    className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
+                    autoFocus
+                  />
                 </div>
-              )}
+
+                <div className="flex justify-center gap-3">
+                  <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
+                    Check Answer
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="lg"
+                    onClick={handleHintClick}
+                    disabled={hintStatus === "loading"}
+                  >
+                    {hintStatus === "loading" ? (
+                      <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      <Lightbulb className="mr-2 h-5 w-5" />
+                    )}
+                    {showHint ? "Hide Hint" : "Show Hint"}
+                  </Button>
+                </div>
+
+                {showHint && (
+                  <div
+                    className={cn(
+                      "bg-secondary/50 rounded-lg p-4 max-w-md mx-auto",
+                      animations.slideInFromTop
+                    )}
+                  >
+                    {hintStatus === "loading" && (
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    )}
+                    {hintStatus === "ready" &&
+                      hint &&
+                      hint.relatedWords &&
+                      Array.isArray(hint.relatedWords) && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground/70">
+                            Related words:
+                          </p>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {hint.relatedWords.map((word, index) => (
+                              <span
+                                key={index}
+                                className="inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium"
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </div>
+                          {hint.source === "fallback" && (
+                            <p className="mt-2 text-center text-xs opacity-60">(offline hint)</p>
+                          )}
+                        </div>
+                      )}
+                    {hintStatus === "error" && (
+                      <p className="text-sm text-destructive">
+                        ⚠️ {hintError || "Failed to generate hint"}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </form>
             </div>
           </div>
         </div>
@@ -330,7 +328,7 @@ export const ModernWordCard = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onNext}
+            onClick={() => onNext()}
             className="gap-1 text-muted-foreground"
           >
             Skip

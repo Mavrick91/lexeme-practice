@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { ModernWordCard } from "./ModernWordCard";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useHint } from "@/hooks/useHint";
-import type { Lexeme } from "@/types";
+import type { Lexeme, LexemeProgress } from "@/types";
 
 // Mock the hooks
 jest.mock("@/hooks/useAutoFocus");
@@ -81,6 +81,48 @@ describe("ModernWordCard", () => {
 
       const progressBar = document.querySelector('[style*="width"]');
       expect(progressBar).toHaveStyle({ width: "75%" });
+    });
+
+    it("displays mastery progress counter", () => {
+      const progress: LexemeProgress = {
+        text: "rumah",
+        timesSeen: 5,
+        timesCorrect: 3,
+        lastPracticedAt: Date.now(),
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 1,
+        consecutiveCorrectStreak: 3,
+        isMastered: false,
+      };
+
+      renderCard({ progress });
+      expect(screen.getByText("3/5")).toBeInTheDocument();
+      expect(screen.getByText("streak")).toBeInTheDocument();
+    });
+
+    it("displays counter even for zero streak", () => {
+      const progress: LexemeProgress = {
+        text: "rumah",
+        timesSeen: 5,
+        timesCorrect: 3,
+        lastPracticedAt: Date.now(),
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 1,
+        consecutiveCorrectStreak: 0,
+        isMastered: false,
+      };
+
+      renderCard({ progress });
+      expect(screen.getByText("0/5")).toBeInTheDocument();
+      expect(screen.getByText("streak")).toBeInTheDocument();
+    });
+
+    it("displays counter for words with no progress", () => {
+      renderCard({ progress: undefined });
+      expect(screen.getByText("0/5")).toBeInTheDocument();
+      expect(screen.getByText("streak")).toBeInTheDocument();
     });
   });
 
