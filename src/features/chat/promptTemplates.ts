@@ -31,7 +31,7 @@ export const CHAT_PROMPT_TEMPLATES = [
     id: "memory-tips",
     label: "Help me remember",
     prompt:
-      "Can you give me memory tricks or mnemonics to remember the Indonesian word '{{currentWord}}'?",
+      "Break down the Indonesian word '{{currentWord}}' into English-sounding syllables or parts, then create a memorable story that connects these parts to its meaning. Format your response like this:\n\n1. **[Part 1]**: [English word/sound it resembles] - [brief description]\n2. **[Part 2]**: [English word/sound it resembles] - [brief description]\n3. **[Part 3]**: (if applicable)\n\nThen create a short, vivid story using these English words that helps remember the meaning. The story should naturally connect the sound-alike words to the actual meaning of '{{currentWord}}'.\n\nExample format:\nFor 'dukungan' (support):\n1. **Duke**: A nobleman\n2. **Gun**: A weapon (sounds like 'kung')\n3. **Gan**: Short for 'gang' or group\n\nStory: Imagine a duke with a gun protecting his gang - this strong image of protection and backing helps you remember 'dukungan' means support.",
     category: "learning",
   },
   {

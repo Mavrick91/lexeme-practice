@@ -15,7 +15,7 @@ import type { PracticeHistoryItem } from "@/types";
 import { Loader2, ImageIcon } from "lucide-react";
 import { CHAT_PROMPT_TEMPLATES } from "@/features/chat/promptTemplates";
 import { formatPrompt } from "@/features/chat/formatPrompt";
-import { generateImage } from "@/lib/openai";
+import { generateMnemonicImage } from "@/lib/openai";
 import { toast } from "sonner";
 import { tryCatch } from "@/lib/tryCatch";
 
@@ -185,9 +185,16 @@ export const ChatDrawer = ({ open, item, onOpenChange }: ChatDrawerProps) => {
                 isGenerating={isGeneratingImage}
                 onClick={async () => {
                   setIsGeneratingImage(true);
-                  const prompt = `Create a visual mnemonic to help remember the Indonesian word "${item.word}" (meaning: ${item.translation.join(", ")}). Based on this memory tip: ${lastMemoryTipResponse}. The image should be simple, memorable, and clearly connect the word to its meaning.`;
 
-                  const [imageUrl, error] = await tryCatch(() => generateImage(prompt));
+                  // Use structured prompt generation with default spec
+                  const [imageUrl, error] = await tryCatch(() =>
+                    generateMnemonicImage(
+                      item.word,
+                      item.translation,
+                      lastMemoryTipResponse,
+                      "intermediate"
+                    )
+                  );
 
                   if (error) {
                     console.error("Failed to generate image:", error);

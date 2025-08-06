@@ -150,3 +150,17 @@ export const generateImage = async (prompt: string): Promise<string> => {
 
   throw new Error("No image data found in response");
 };
+
+/**
+ * Generate a mnemonic image using scenario presets
+ */
+export const generateMnemonicImage = async (
+  word: string,
+  translations: string[],
+  memoryTip?: string,
+  scenario: "beginner" | "intermediate" | "advanced" | "kids" | "quickReview" = "beginner"
+): Promise<string> => {
+  const { buildQuickMnemonicPrompt } = await import("./buildMnemonicPrompt");
+  const prompt = buildQuickMnemonicPrompt(word, translations, scenario, memoryTip);
+  return generateImage(prompt);
+};
