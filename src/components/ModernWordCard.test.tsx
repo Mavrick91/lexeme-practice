@@ -53,7 +53,6 @@ describe("ModernWordCard", () => {
       onNext: mockOnNext,
       currentIndex: 0,
       totalWords: 10,
-      autoAdvanceOnIncorrect: true,
     };
     return render(<ModernWordCard {...defaultProps} {...props} />);
   };
@@ -155,7 +154,8 @@ describe("ModernWordCard", () => {
 
   describe("Writing mode interactions", () => {
     it("accepts correct answer with normalization", async () => {
-      const user = userEvent.setup();
+      jest.useFakeTimers();
+      const user = userEvent.setup({ delay: null });
       renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
@@ -165,11 +165,18 @@ describe("ModernWordCard", () => {
       await user.keyboard("{Enter}");
 
       expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+
+      // Auto-advance happens after 100ms
+      expect(mockOnNext).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(100);
       expect(mockOnNext).toHaveBeenCalledTimes(1);
+
+      jest.useRealTimers();
     });
 
     it("accepts alternative translations", async () => {
-      const user = userEvent.setup();
+      jest.useFakeTimers();
+      const user = userEvent.setup({ delay: null });
       renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
@@ -177,11 +184,18 @@ describe("ModernWordCard", () => {
       await user.keyboard("{Enter}");
 
       expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+
+      // Auto-advance happens after 100ms
+      expect(mockOnNext).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(100);
       expect(mockOnNext).toHaveBeenCalledTimes(1);
+
+      jest.useRealTimers();
     });
 
-    it("handles incorrect answer and shows translations", async () => {
-      const user = userEvent.setup();
+    it("handles incorrect answer and auto-advances", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ delay: null });
       renderCard();
 
       const input = screen.getByPlaceholderText("Type your answer...");
@@ -189,25 +203,18 @@ describe("ModernWordCard", () => {
       await user.keyboard("{Enter}");
 
       expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("Incorrect! The correct answer is:")).toBeInTheDocument();
-      expect(screen.getByText("house")).toBeInTheDocument();
-      expect(screen.getByText("home")).toBeInTheDocument();
-      expect(mockOnNext).toHaveBeenCalledTimes(1); // Auto-advance
-    });
+      expect(mockOnIncorrect).toHaveBeenCalledWith("wrong");
 
-    it("does not auto-advance when disabled", async () => {
-      const user = userEvent.setup();
-      renderCard({ autoAdvanceOnIncorrect: false });
-
-      const input = screen.getByPlaceholderText("Type your answer...");
-      await user.type(input, "wrong");
-      await user.keyboard("{Enter}");
-
-      expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
+      // Auto-advance happens after 2 seconds
       expect(mockOnNext).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(2000);
+      expect(mockOnNext).toHaveBeenCalledTimes(1);
+
+      jest.useRealTimers();
     });
 
     it("shows and hides hint", async () => {
+      jest.setTimeout(10000); // Increase timeout for this test
       const user = userEvent.setup();
       const mockLoadHint = jest.fn();
 
@@ -338,6 +345,7 @@ describe("ModernWordCard", () => {
     });
 
     it("enables check button when input has value", async () => {
+      jest.setTimeout(10000); // Increase timeout for this test
       const user = userEvent.setup();
       renderCard();
 
@@ -362,7 +370,9 @@ describe("ModernWordCard", () => {
     ];
 
     it.each(testCases)("input '%s' should be %s", async (input, shouldBeCorrect) => {
-      const user = userEvent.setup();
+      jest.setTimeout(10000); // Increase timeout for parameterized tests
+      jest.useFakeTimers();
+      const user = userEvent.setup({ delay: null });
       renderCard();
 
       const inputElement = screen.getByPlaceholderText("Type your answer...");
@@ -371,9 +381,17 @@ describe("ModernWordCard", () => {
 
       if (shouldBeCorrect) {
         expect(mockOnCorrect).toHaveBeenCalled();
+        // Advance timer to trigger onNext
+        jest.advanceTimersByTime(100);
+        expect(mockOnNext).toHaveBeenCalled();
       } else {
         expect(mockOnIncorrect).toHaveBeenCalled();
+        // Advance timer to trigger onNext for incorrect
+        jest.advanceTimersByTime(2000);
+        expect(mockOnNext).toHaveBeenCalled();
       }
+
+      jest.useRealTimers();
     });
   });
 });

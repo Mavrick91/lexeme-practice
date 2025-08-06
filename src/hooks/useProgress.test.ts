@@ -51,6 +51,23 @@ describe("useProgress", () => {
 
       // Answer correctly 3 times
       for (let i = 1; i <= 3; i++) {
+        // Mock getLexemeProgress to return the previous state
+        if (i === 1) {
+          mockedDb.getLexemeProgress.mockResolvedValueOnce(undefined);
+        } else {
+          mockedDb.getLexemeProgress.mockResolvedValueOnce({
+            text: mockLexeme.text,
+            timesSeen: i - 1,
+            timesCorrect: i - 1,
+            lastPracticedAt: Date.now(),
+            recentIncorrectStreak: 0,
+            confusedWith: {},
+            easingLevel: 1,
+            consecutiveCorrectStreak: i - 1,
+            isMastered: false,
+          });
+        }
+
         await act(async () => {
           await result.current.recordAnswer(mockLexeme, true);
         });
@@ -66,11 +83,32 @@ describe("useProgress", () => {
     it("should mark word as mastered after 5 consecutive correct answers", async () => {
       const { result } = renderHook(() => useProgress());
 
+      // Mock existing progress
+      let currentStreak = 0;
+      mockedDb.getLexemeProgress.mockImplementation(async () =>
+        currentStreak > 0
+          ? {
+              text: mockLexeme.text,
+              timesSeen: currentStreak,
+              timesCorrect: currentStreak,
+              lastPracticedAt: Date.now(),
+              recentIncorrectStreak: 0,
+              confusedWith: {},
+              easingLevel: 1,
+              consecutiveCorrectStreak: currentStreak,
+              isMastered: currentStreak >= 5,
+              masteredAt: currentStreak >= 5 ? Date.now() : undefined,
+            }
+          : undefined
+      );
+
       // Answer correctly 5 times
       for (let i = 1; i <= 5; i++) {
+        currentStreak = i - 1; // Set to previous value before the call
         await act(async () => {
           await result.current.recordAnswer(mockLexeme, true);
         });
+        currentStreak = i; // Update after the call
       }
 
       await waitFor(() => {
@@ -84,11 +122,31 @@ describe("useProgress", () => {
     it("should reset consecutive streak on incorrect answer", async () => {
       const { result } = renderHook(() => useProgress());
 
+      // Mock existing progress for correct answers
+      let currentStreak = 0;
+      mockedDb.getLexemeProgress.mockImplementation(async () =>
+        currentStreak > 0
+          ? {
+              text: mockLexeme.text,
+              timesSeen: currentStreak,
+              timesCorrect: currentStreak,
+              lastPracticedAt: Date.now(),
+              recentIncorrectStreak: 0,
+              confusedWith: {},
+              easingLevel: 1,
+              consecutiveCorrectStreak: currentStreak,
+              isMastered: false,
+            }
+          : undefined
+      );
+
       // Answer correctly 3 times
       for (let i = 0; i < 3; i++) {
+        currentStreak = i;
         await act(async () => {
           await result.current.recordAnswer(mockLexeme, true);
         });
+        currentStreak = i + 1;
       }
 
       // Verify streak is 3
@@ -98,6 +156,7 @@ describe("useProgress", () => {
       });
 
       // Answer incorrectly
+      currentStreak = 3;
       await act(async () => {
         await result.current.recordAnswer(mockLexeme, false, "wrong");
       });
@@ -113,11 +172,39 @@ describe("useProgress", () => {
     it("should maintain mastered status even after incorrect answer", async () => {
       const { result } = renderHook(() => useProgress());
 
+      // Mock existing progress
+      let currentStreak = 0;
+      let isMastered = false;
+      let masteredAt: number | undefined;
+
+      mockedDb.getLexemeProgress.mockImplementation(async () =>
+        currentStreak > 0 || isMastered
+          ? {
+              text: mockLexeme.text,
+              timesSeen: currentStreak,
+              timesCorrect: currentStreak,
+              lastPracticedAt: Date.now(),
+              recentIncorrectStreak: 0,
+              confusedWith: {},
+              easingLevel: 1,
+              consecutiveCorrectStreak: currentStreak,
+              isMastered,
+              masteredAt,
+            }
+          : undefined
+      );
+
       // Answer correctly 5 times to master
       for (let i = 0; i < 5; i++) {
+        currentStreak = i;
         await act(async () => {
           await result.current.recordAnswer(mockLexeme, true);
         });
+        currentStreak = i + 1;
+        if (currentStreak >= 5) {
+          isMastered = true;
+          masteredAt = Date.now();
+        }
       }
 
       // Verify mastered
@@ -127,6 +214,7 @@ describe("useProgress", () => {
       });
 
       // Answer incorrectly
+      currentStreak = 5;
       await act(async () => {
         await result.current.recordAnswer(mockLexeme, false);
       });
@@ -197,11 +285,32 @@ describe("useProgress", () => {
     it("should handle mastery for words with no prior progress", async () => {
       const { result } = renderHook(() => useProgress());
 
+      // Mock getLexemeProgress to return undefined initially, then updated values
+      let currentStreak = 0;
+      mockedDb.getLexemeProgress.mockImplementation(async () =>
+        currentStreak > 0
+          ? {
+              text: mockLexeme.text,
+              timesSeen: currentStreak,
+              timesCorrect: currentStreak,
+              lastPracticedAt: Date.now(),
+              recentIncorrectStreak: 0,
+              confusedWith: {},
+              easingLevel: 1,
+              consecutiveCorrectStreak: currentStreak,
+              isMastered: currentStreak >= 5,
+              masteredAt: currentStreak >= 5 ? Date.now() : undefined,
+            }
+          : undefined
+      );
+
       // Answer correctly 5 times for a new word
       for (let i = 1; i <= 5; i++) {
+        currentStreak = i - 1;
         await act(async () => {
           await result.current.recordAnswer(mockLexeme, true);
         });
+        currentStreak = i;
 
         await waitFor(() => {
           const progress = result.current.getProgress(mockLexeme.text);
