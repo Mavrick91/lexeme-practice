@@ -24,6 +24,7 @@ const AppContent = () => {
   const [currentLexeme, setCurrentLexeme] = useState<Lexeme | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
+  const [isReverseMode, setIsReverseMode] = useState(false); // false = Indonesian to English, true = English to Indonesian
 
   const { recordAnswer, markAsMastered, getProgress, progressMap } = useProgress();
 
@@ -96,6 +97,7 @@ const AppContent = () => {
       translation: lexeme.translations,
       isCorrect: true,
       timestamp: Date.now(),
+      isReverseMode,
     };
 
     // Save to IndexedDB
@@ -147,6 +149,7 @@ const AppContent = () => {
       translation: lexeme.translations,
       isCorrect: false,
       timestamp: Date.now(),
+      isReverseMode,
     };
 
     // Save to IndexedDB
@@ -205,10 +208,25 @@ const AppContent = () => {
         <div className="relative flex-1 overflow-auto">
           {/* Card Container - Centered */}
           <div className="flex h-full items-center justify-center p-6">
-            <div className="w-full max-w-2xl">
+            <div className="w-full max-w-2xl space-y-4">
+              {/* Practice Mode Toggle */}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setIsReverseMode(!isReverseMode)}
+                  className="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  <span className="text-muted-foreground">Mode:</span>
+                  <span className="font-semibold">
+                    {isReverseMode ? "English → Indonesian" : "Indonesian → English"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">(click to switch)</span>
+                </button>
+              </div>
+
               {/* Main Card */}
               <ModernWordCard
                 lexeme={currentLexeme}
+                isReverseMode={isReverseMode}
                 onCorrect={() => handleMarkCorrect(currentLexeme)}
                 onIncorrect={(userAnswer) => handleMarkIncorrect(currentLexeme, userAnswer)}
                 onNext={handleNext}

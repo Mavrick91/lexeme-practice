@@ -13,6 +13,7 @@ import type { Lexeme, LexemeProgress } from "@/types";
 
 type ModernWordCardProps = {
   lexeme: Lexeme;
+  isReverseMode?: boolean; // true = English to Indonesian
   onCorrect: () => void | Promise<void> | Promise<{ justMastered: boolean }>;
   onIncorrect: (userAnswer?: string) => void | Promise<void>;
   onNext: (skipMasteredWord?: string) => void;
@@ -22,6 +23,7 @@ type ModernWordCardProps = {
 
 export const ModernWordCard = ({
   lexeme,
+  isReverseMode = false,
   onCorrect,
   onIncorrect,
   onNext,
@@ -102,28 +104,36 @@ export const ModernWordCard = ({
   const checkAnswer = async () => {
     const normalizedInput = normalizeAnswer(userAnswer);
 
-    // Check if the input matches any of the translations
-    const correct = lexeme.translations.some((translation) => {
-      const normalizedTranslation = normalizeAnswer(translation);
+    let correct: boolean;
 
-      // Exact match
-      if (normalizedInput === normalizedTranslation) return true;
+    if (isReverseMode) {
+      // In reverse mode, check if input matches the Indonesian word
+      const normalizedLexeme = normalizeAnswer(lexeme.text);
+      correct = normalizedInput === normalizedLexeme;
+    } else {
+      // Normal mode: Check if the input matches any of the translations
+      correct = lexeme.translations.some((translation) => {
+        const normalizedTranslation = normalizeAnswer(translation);
 
-      // Check if translation contains parenthetical info and match the main part
-      const mainPart = normalizedTranslation.replace(/\([^)]*\)/g, "").trim();
-      if (normalizedInput === mainPart) return true;
+        // Exact match
+        if (normalizedInput === normalizedTranslation) return true;
 
-      // For multi-word translations, check if all words are present
-      const inputWords = normalizedInput.split(" ");
-      const translationWords = mainPart.split(" ");
+        // Check if translation contains parenthetical info and match the main part
+        const mainPart = normalizedTranslation.replace(/\([^)]*\)/g, "").trim();
+        if (normalizedInput === mainPart) return true;
 
-      // Check if it's a valid subset match (for compound words)
-      if (translationWords.length > 1 && inputWords.length === 1) {
-        return translationWords.some((word) => word === normalizedInput);
-      }
+        // For multi-word translations, check if all words are present
+        const inputWords = normalizedInput.split(" ");
+        const translationWords = mainPart.split(" ");
 
-      return false;
-    });
+        // Check if it's a valid subset match (for compound words)
+        if (translationWords.length > 1 && inputWords.length === 1) {
+          return translationWords.some((word) => word === normalizedInput);
+        }
+
+        return false;
+      });
+    }
 
     if (correct) {
       const result = await handleCorrect();
@@ -201,22 +211,24 @@ export const ModernWordCard = ({
                 </Badge>
               )}
 
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-12 w-12 rounded-full transition-transform hover:scale-110"
-                onClick={playAudio}
-              >
-                <Volume2 className="h-6 w-6" />
-              </Button>
+              {!isReverseMode && (
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-12 w-12 rounded-full transition-transform hover:scale-110"
+                  onClick={playAudio}
+                >
+                  <Volume2 className="h-6 w-6" />
+                </Button>
+              )}
             </div>
 
-            <h2 className="h-16 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
-              {lexeme.text}
+            <h2 className="min-h-16 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-4xl font-bold text-transparent md:text-5xl">
+              {isReverseMode ? lexeme.translations.join(", ") : lexeme.text}
             </h2>
 
-            {/* Phonetic if available */}
-            {lexeme.phonetic && (
+            {/* Phonetic if available - only show in normal mode */}
+            {!isReverseMode && lexeme.phonetic && (
               <p className="text-lg italic text-muted-foreground">/{lexeme.phonetic}/</p>
             )}
           </div>
@@ -228,14 +240,16 @@ export const ModernWordCard = ({
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="text-center">
                   <p className="mb-4 text-lg text-muted-foreground">
-                    Type the English translation:
+                    {isReverseMode ? "Type the Indonesian word:" : "Type the English translation:"}
                   </p>
                   <Input
                     ref={inputRef}
                     type="text"
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
-                    placeholder="Type your answer..."
+                    placeholder={
+                      isReverseMode ? "Type the Indonesian word..." : "Type your answer..."
+                    }
                     className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
                     autoFocus
                   />

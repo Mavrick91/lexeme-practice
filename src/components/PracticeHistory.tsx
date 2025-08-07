@@ -93,7 +93,14 @@ export const PracticeHistory = ({ history, onClear }: PracticeHistoryProps) => {
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="break-words text-sm font-medium">{item.word}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="break-words text-sm font-medium">{item.word}</div>
+                    {item.isReverseMode && (
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                        EN→ID
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-1 break-words text-xs text-muted-foreground">
                     {item.translation.join(", ")}
                   </div>

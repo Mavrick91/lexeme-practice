@@ -38,4 +38,5 @@ export type PracticeHistoryItem = {
   translation: string[];
   isCorrect: boolean;
   timestamp: number;
+  isReverseMode?: boolean; // true if practiced English to Indonesian
 };

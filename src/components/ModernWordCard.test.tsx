@@ -250,9 +250,6 @@ describe("ModernWordCard", () => {
           onCorrect={mockOnCorrect}
           onIncorrect={mockOnIncorrect}
           onNext={mockOnNext}
-          currentIndex={0}
-          totalWords={10}
-          autoAdvanceOnIncorrect={true}
         />
       );
 
@@ -425,6 +422,166 @@ describe("ModernWordCard", () => {
         expect(mockOnNext).toHaveBeenCalled();
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe("Reverse mode (English to Indonesian)", () => {
+    it("displays English translations instead of Indonesian word", () => {
+      renderCard({ isReverseMode: true });
+
+      // Should show translations
+      expect(screen.getByText("house, home")).toBeInTheDocument();
+      // Should not show Indonesian word as the main text
+      expect(screen.queryByRole("heading", { name: "rumah" })).not.toBeInTheDocument();
+    });
+
+    it("hides audio button in reverse mode", () => {
+      renderCard({ isReverseMode: true });
+
+      // Audio button should not be present
+      const audioButtons = screen.queryAllByRole("button").filter((button) => {
+        const volumeIcon = button.querySelector('[class*="lucide-volume"]');
+        return volumeIcon !== null;
+      });
+      expect(audioButtons).toHaveLength(0);
+    });
+
+    it("hides phonetic pronunciation in reverse mode", () => {
+      renderCard({ isReverseMode: true });
+
+      // Phonetic should not be shown
+      expect(screen.queryByText("/roo-mah/")).not.toBeInTheDocument();
+    });
+
+    it("shows correct prompt text in reverse mode", () => {
+      renderCard({ isReverseMode: true });
+
+      expect(screen.getByText("Type the Indonesian word:")).toBeInTheDocument();
+      expect(screen.queryByText("Type the English translation:")).not.toBeInTheDocument();
+    });
+
+    it("shows correct placeholder in reverse mode", () => {
+      renderCard({ isReverseMode: true });
+
+      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+      expect(input).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Type your answer...")).not.toBeInTheDocument();
+    });
+
+    it("accepts correct Indonesian answer in reverse mode", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderCard({ isReverseMode: true });
+
+      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+      await user.type(input, "rumah");
+      await user.keyboard("{Enter}");
+
+      expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1));
+    });
+
+    it("handles incorrect answer in reverse mode", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ delay: null });
+      renderCard({ isReverseMode: true });
+
+      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+      await user.type(input, "buku");
+      await user.keyboard("{Enter}");
+
+      expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
+      expect(mockOnIncorrect).toHaveBeenCalledWith("buku");
+
+      // Auto-advance happens after 2 seconds
+      expect(mockOnNext).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(2000);
+      expect(mockOnNext).toHaveBeenCalledTimes(1);
+
+      jest.useRealTimers();
+    });
+
+    it("normalizes Indonesian answer correctly in reverse mode", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderCard({ isReverseMode: true });
+
+      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+
+      // Test with different capitalizations and spaces
+      await user.type(input, "  RUMAH  ");
+      await user.keyboard("{Enter}");
+
+      expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1));
+    });
+
+    it("rejects English translations as answers in reverse mode", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ delay: null });
+      renderCard({ isReverseMode: true });
+
+      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+
+      // Try entering the English translation instead
+      await user.type(input, "house");
+      await user.keyboard("{Enter}");
+
+      expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
+      expect(mockOnCorrect).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(2000);
+      jest.useRealTimers();
+    });
+
+    it("Mark as Correct button works in reverse mode", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderCard({ isReverseMode: true });
+
+      const markAsCorrectButton = screen.getByRole("button", { name: /mark as correct/i });
+      await user.click(markAsCorrectButton);
+
+      expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1));
+    });
+  });
+
+  describe("Mode switching", () => {
+    it("maintains normal mode display when isReverseMode is false", () => {
+      renderCard({ isReverseMode: false });
+
+      // Should show Indonesian word
+      expect(screen.getByText("rumah")).toBeInTheDocument();
+      // Should show normal prompt
+      expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
+      // Should show normal placeholder
+      expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
+    });
+
+    it("maintains normal mode display when isReverseMode is undefined", () => {
+      renderCard(); // No isReverseMode prop
+
+      // Should show Indonesian word
+      expect(screen.getByText("rumah")).toBeInTheDocument();
+      // Should show normal prompt
+      expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
+      // Should show normal placeholder
+      expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
+    });
+
+    it("shows audio button in normal mode", () => {
+      renderCard({ isReverseMode: false });
+
+      // Audio button should be present
+      const audioButtons = screen.queryAllByRole("button").filter((button) => {
+        const volumeIcon = button.querySelector('[class*="lucide-volume"]');
+        return volumeIcon !== null;
+      });
+      expect(audioButtons.length).toBeGreaterThan(0);
+    });
+
+    it("shows phonetic in normal mode", () => {
+      renderCard({ isReverseMode: false });
+
+      expect(screen.getByText("/roo-mah/")).toBeInTheDocument();
     });
   });
 });
