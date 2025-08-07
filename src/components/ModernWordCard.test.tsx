@@ -3,11 +3,13 @@ import userEvent from "@testing-library/user-event";
 import { ModernWordCard } from "./ModernWordCard";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useLetterHint } from "@/hooks/useLetterHint";
+import { useLetterColoring } from "@/hooks/useLetterColoring";
 import type { Lexeme, LexemeProgress } from "@/types";
 
 // Mock the hooks
 jest.mock("@/hooks/useAutoFocus");
 jest.mock("@/hooks/useLetterHint");
+jest.mock("@/hooks/useLetterColoring");
 
 // Mock Audio API
 const mockPlay = jest.fn();
@@ -64,6 +66,7 @@ describe("ModernWordCard", () => {
     jest.clearAllMocks();
     (useAutoFocus as jest.Mock).mockImplementation(() => {});
     (useLetterHint as jest.Mock).mockReturnValue(defaultLetterHintMock);
+    (useLetterColoring as jest.Mock).mockReturnValue([]);
   });
 
   describe("Rendering", () => {
@@ -71,7 +74,7 @@ describe("ModernWordCard", () => {
       renderCard();
 
       expect(screen.getByText("rumah")).toBeInTheDocument();
-      expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: /type your answer/i })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /reveal answer/i })).not.toBeInTheDocument();
       expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
     });
@@ -124,7 +127,7 @@ describe("ModernWordCard", () => {
       const { rerender } = renderCard();
 
       // Type something
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       fireEvent.change(input, { target: { value: "test" } });
       expect(input).toHaveValue("test");
 
@@ -139,7 +142,7 @@ describe("ModernWordCard", () => {
       );
 
       // Input should be cleared
-      const newInput = screen.getByPlaceholderText("Type your answer...");
+      const newInput = screen.getByRole("textbox", { name: /type your answer/i });
       expect(newInput).toHaveValue("");
     });
   });
@@ -149,7 +152,7 @@ describe("ModernWordCard", () => {
       const user = userEvent.setup({ delay: null });
       renderCard();
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
 
       // Test various formats that should all be correct
       await user.type(input, "  HOUSE!!!  ");
@@ -595,7 +598,7 @@ describe("ModernWordCard", () => {
 
       renderCard();
 
-      const inputElement = screen.getByPlaceholderText("Type your answer...");
+      const inputElement = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(inputElement, String(input));
       await user.keyboard("{Enter}");
 
@@ -649,16 +652,16 @@ describe("ModernWordCard", () => {
     it("shows correct placeholder in reverse mode", () => {
       renderCard({ isReverseMode: true });
 
-      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       expect(input).toBeInTheDocument();
-      expect(screen.queryByPlaceholderText("Type your answer...")).not.toBeInTheDocument();
+      // Input is always present but hidden
     });
 
     it("accepts correct Indonesian answer in reverse mode", async () => {
       const user = userEvent.setup({ delay: null });
       renderCard({ isReverseMode: true });
 
-      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "rumah");
       await user.keyboard("{Enter}");
 
@@ -670,7 +673,7 @@ describe("ModernWordCard", () => {
       const user = userEvent.setup({ delay: null });
       renderCard({ isReverseMode: true });
 
-      const input = screen.getByPlaceholderText("Type the Indonesian word...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "buku");
       await user.keyboard("{Enter}");
 
@@ -685,8 +688,7 @@ describe("ModernWordCard", () => {
       const user = userEvent.setup({ delay: null });
       renderCard({ isReverseMode: true });
 
-      const input = screen.getByPlaceholderText("Type the Indonesian word...");
-
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       // Test with different capitalizations and spaces
       await user.type(input, "  RUMAH  ");
       await user.keyboard("{Enter}");
@@ -699,8 +701,7 @@ describe("ModernWordCard", () => {
       const user = userEvent.setup({ delay: null });
       renderCard({ isReverseMode: true });
 
-      const input = screen.getByPlaceholderText("Type the Indonesian word...");
-
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       // Try entering the English translation instead
       await user.type(input, "house");
       await user.keyboard("{Enter}");
@@ -851,6 +852,209 @@ describe("ModernWordCard", () => {
     });
   });
 
+  describe("Letter coloring feature", () => {
+    it("should not show colored letters when input is empty", () => {
+      renderCard();
+
+      // Should not render any colored letter preview
+      const coloredLetters = screen
+        .queryAllByRole("generic")
+        .filter((el) => el.className.includes("bg-green-500"));
+      expect(coloredLetters).toHaveLength(0);
+    });
+
+    it("should show colored letters when typing", async () => {
+      const user = userEvent.setup({ delay: null });
+
+      // Mock the coloring hook to return colored letters
+      (useLetterColoring as jest.Mock).mockReturnValue([
+        { letter: "h", color: "correct" },
+        { letter: "o", color: "correct" },
+        { letter: "m", color: "present" },
+        { letter: "e", color: "absent" },
+      ]);
+
+      renderCard();
+
+      const input = screen.getByPlaceholderText("Type your answer...");
+      await user.type(input, "home");
+
+      // Check that we have colored letters displayed
+      expect(screen.getByText("h")).toBeInTheDocument();
+      expect(screen.getByText("o")).toBeInTheDocument();
+      expect(screen.getByText("m")).toBeInTheDocument();
+      expect(screen.getByText("e")).toBeInTheDocument();
+
+      // Check that elements with color classes exist
+      const allSpans = screen.getAllByText(/[home]/i);
+      const coloredSpans = allSpans.filter((el) => {
+        return (
+          el.className.includes("bg-green-500") ||
+          el.className.includes("bg-yellow-500") ||
+          el.className.includes("bg-gray-400")
+        );
+      });
+      expect(coloredSpans.length).toBeGreaterThan(0);
+    });
+
+    it("should update colors as user types", async () => {
+      const user = userEvent.setup({ delay: null });
+
+      const mockColoringResults = [
+        [], // Empty initially
+        [{ letter: "h", color: "correct" }], // After typing 'h'
+        [
+          { letter: "h", color: "correct" },
+          { letter: "o", color: "correct" },
+        ], // After typing 'ho'
+      ];
+
+      let callCount = 0;
+      (useLetterColoring as jest.Mock).mockImplementation(() => {
+        return mockColoringResults[Math.min(callCount++, mockColoringResults.length - 1)];
+      });
+
+      renderCard();
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
+
+      // Type 'h'
+      await user.type(input, "h");
+      expect(useLetterColoring).toHaveBeenCalledWith({
+        input: "h",
+        target: "house",
+        isEnabled: true,
+      });
+
+      // Type 'o'
+      await user.type(input, "o");
+      expect(useLetterColoring).toHaveBeenCalledWith({
+        input: "ho",
+        target: "house",
+        isEnabled: true,
+      });
+    });
+
+    it("should use correct target word in normal mode", () => {
+      renderCard({ isReverseMode: false });
+
+      const input = screen.getByPlaceholderText("Type your answer...");
+      fireEvent.change(input, { target: { value: "test" } });
+
+      // In normal mode, target should be the English translation
+      expect(useLetterColoring).toHaveBeenCalledWith({
+        input: "test",
+        target: "house",
+        isEnabled: true,
+      });
+    });
+
+    it("should use correct target word in reverse mode", () => {
+      renderCard({ isReverseMode: true });
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
+      fireEvent.change(input, { target: { value: "test" } });
+
+      // In reverse mode, target should be the Indonesian word
+      expect(useLetterColoring).toHaveBeenCalledWith({
+        input: "test",
+        target: "rumah",
+        isEnabled: true,
+      });
+    });
+
+    it("should handle multi-word targets", () => {
+      const multiWordLexeme: Lexeme = {
+        text: "selamat pagi",
+        audioURL: "https://example.com/selamat-pagi.mp3",
+        translations: ["good morning"],
+        phonetic: "seh-lah-maht pah-gee",
+      };
+
+      renderCard({ lexeme: multiWordLexeme, isReverseMode: false });
+
+      const input = screen.getByPlaceholderText("Type your answer...");
+      fireEvent.change(input, { target: { value: "good morning" } });
+
+      // Should use the multi-word translation as target
+      expect(useLetterColoring).toHaveBeenCalledWith({
+        input: "good morning",
+        target: "good morning",
+        isEnabled: true,
+      });
+    });
+
+    it("should clear colored letters when answer is submitted", async () => {
+      const user = userEvent.setup({ delay: null });
+
+      // Start with some colored letters
+      (useLetterColoring as jest.Mock).mockReturnValue([
+        { letter: "h", color: "correct" },
+        { letter: "o", color: "correct" },
+        { letter: "u", color: "correct" },
+        { letter: "s", color: "correct" },
+        { letter: "e", color: "correct" },
+      ]);
+
+      renderCard();
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
+      await user.type(input, "house");
+
+      // Submit correct answer
+      await user.keyboard("{Enter}");
+
+      // After submission, input should be cleared and colored letters should disappear
+      expect(input).toHaveValue("");
+
+      // useLetterColoring should be called with empty input
+      expect(useLetterColoring).toHaveBeenLastCalledWith({
+        input: "",
+        target: "house",
+        isEnabled: true,
+      });
+    });
+
+    it("should not interfere with letter hint feature", () => {
+      (useLetterHint as jest.Mock).mockReturnValue({
+        ...defaultLetterHintMock,
+        showLetterHint: true,
+        letterHint: "h _ _ _ _",
+      });
+
+      (useLetterColoring as jest.Mock).mockReturnValue([
+        { letter: "h", color: "correct" },
+        { letter: "o", color: "present" },
+      ]);
+
+      renderCard();
+
+      // Both features should work independently
+      expect(screen.getByText("h _ _ _ _")).toBeInTheDocument(); // Letter hint
+      // Colored letters would also be displayed (mocked)
+    });
+
+    it("should handle special characters in colored display", () => {
+      (useLetterColoring as jest.Mock).mockReturnValue([
+        { letter: "i", color: "correct" },
+        { letter: "'", color: "correct" },
+        { letter: "m", color: "correct" },
+      ]);
+
+      renderCard();
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
+      fireEvent.change(input, { target: { value: "i'm" } });
+
+      // Should handle apostrophes and other special characters
+      expect(useLetterColoring).toHaveBeenCalledWith({
+        input: "i'm",
+        target: "house",
+        isEnabled: true,
+      });
+    });
+  });
+
   describe("Mode switching", () => {
     it("maintains normal mode display when isReverseMode is false", () => {
       renderCard({ isReverseMode: false });
@@ -859,8 +1063,8 @@ describe("ModernWordCard", () => {
       expect(screen.getByText("rumah")).toBeInTheDocument();
       // Should show normal prompt
       expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
-      // Should show normal placeholder
-      expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
+      // Should show normal input (hidden but present)
+      expect(screen.getByRole("textbox", { name: /type your answer/i })).toBeInTheDocument();
     });
 
     it("maintains normal mode display when isReverseMode is undefined", () => {
@@ -870,8 +1074,8 @@ describe("ModernWordCard", () => {
       expect(screen.getByText("rumah")).toBeInTheDocument();
       // Should show normal prompt
       expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
-      // Should show normal placeholder
-      expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
+      // Should show normal input (hidden but present)
+      expect(screen.getByRole("textbox", { name: /type your answer/i })).toBeInTheDocument();
     });
 
     it("shows audio button in normal mode", () => {

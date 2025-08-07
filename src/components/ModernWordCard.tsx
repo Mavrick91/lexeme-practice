@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Volume2, Trophy, Check, Eye, Plus, Minus, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useLetterHint } from "@/hooks/useLetterHint";
+import { useLetterColoring } from "@/hooks/useLetterColoring";
+import { ColoredInput } from "./ColoredInput";
 import type { Lexeme, LexemeProgress } from "@/types";
 
 type ModernWordCardProps = {
@@ -49,6 +50,13 @@ export const ModernWordCard = ({
   } = useLetterHint({
     targetWord,
     isEnabled: true,
+  });
+
+  // Use the letter coloring hook for real-time feedback
+  const coloredLetters = useLetterColoring({
+    input: userAnswer,
+    target: targetWord,
+    isEnabled: true, // Always enabled to show placeholders
   });
 
   // Track the previous lexeme to detect actual word changes
@@ -255,22 +263,16 @@ export const ModernWordCard = ({
             {/* Writing Mode */}
             <div className="space-y-4">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="text-center">
-                  <p className="mb-4 text-lg text-muted-foreground">
-                    {isReverseMode ? "Type the Indonesian word:" : "Type the English translation:"}
-                  </p>
-                  <Input
-                    ref={inputRef}
-                    type="text"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    placeholder={
-                      isReverseMode ? "Type the Indonesian word..." : "Type your answer..."
-                    }
-                    className={cn("w-full max-w-md mx-auto !text-xl text-center h-14")}
-                    autoFocus
-                  />
-                </div>
+                {/* ColoredInput replaces both the preview and the input */}
+                <ColoredInput
+                  ref={inputRef}
+                  value={userAnswer}
+                  coloredLetters={coloredLetters}
+                  maxLength={targetWord.length}
+                  onChange={setUserAnswer}
+                  onSubmit={checkAnswer}
+                  isReverseMode={isReverseMode}
+                />
 
                 <div className="flex justify-center gap-3">
                   <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
