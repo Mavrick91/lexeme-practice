@@ -321,7 +321,6 @@ describe("Streak Logic Integration Tests", () => {
 
     it("should reset streak when answering incorrectly after building streak", async () => {
       const user = userEvent.setup({ delay: null });
-      const { result } = renderHook(() => useProgress());
 
       // Start with streak of 3
       const initialProgress: LexemeProgress = {
@@ -338,6 +337,9 @@ describe("Streak Logic Integration Tests", () => {
 
       mockedDb.getLexemeProgress.mockResolvedValue(initialProgress);
       mockedDb.getAllLexemeProgress.mockResolvedValue([initialProgress]);
+      mockedDb.getUserStats.mockResolvedValue(undefined); // Ensure getUserStats is mocked
+
+      const { result } = renderHook(() => useProgress());
 
       // Wait for initial load
       await waitFor(() => {

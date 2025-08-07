@@ -8,6 +8,38 @@ import {
 } from "../db";
 import type { Lexeme, LexemeProgress, UserStats } from "../types";
 
+// Constants
+const MASTERY_THRESHOLD = 5;
+const MAX_EASING_LEVEL = 2;
+const STRUGGLE_THRESHOLD = 2;
+const MIN_SUCCESS_RATE = 0.5;
+
+// Helper functions
+const createDefaultProgress = (text: string, timestamp: number): LexemeProgress => ({
+  text,
+  timesSeen: 0,
+  timesCorrect: 0,
+  lastPracticedAt: timestamp,
+  recentIncorrectStreak: 0,
+  confusedWith: {},
+  easingLevel: 1,
+  consecutiveCorrectStreak: 0,
+  isMastered: false,
+});
+
+const createMasteredProgress = (text: string, timestamp: number): LexemeProgress => ({
+  ...createDefaultProgress(text, timestamp),
+  easingLevel: MAX_EASING_LEVEL,
+  consecutiveCorrectStreak: MASTERY_THRESHOLD,
+  isMastered: true,
+  masteredAt: timestamp,
+});
+
+const isStruggling = (progress: LexemeProgress): boolean => {
+  const successRate = progress.timesSeen > 0 ? progress.timesCorrect / progress.timesSeen : 1;
+  return progress.recentIncorrectStreak >= STRUGGLE_THRESHOLD || successRate < MIN_SUCCESS_RATE;
+};
+
 export const useProgress = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [progressMap, setProgressMap] = useState<Map<string, LexemeProgress>>(new Map());
@@ -15,166 +47,128 @@ export const useProgress = () => {
   // Load user stats and all progress on mount
   useEffect(() => {
     const loadData = async () => {
-      const stats = await getUserStats();
-      if (stats) setUserStats(stats);
+      const [stats, allProgress] = await Promise.all([getUserStats(), getAllLexemeProgress()]);
 
-      const allProgress = await getAllLexemeProgress();
-      const map = new Map<string, LexemeProgress>();
-      allProgress.forEach((p) => map.set(p.text, p));
-      setProgressMap(map);
+      if (stats) setUserStats(stats);
+      setProgressMap(new Map(allProgress.map((p) => [p.text, p])));
     };
     loadData();
   }, []);
 
-  const markAsMastered = useCallback(async (lexeme: Lexeme): Promise<void> => {
-    const now = Date.now();
-
-    // Get current progress or create new
-    const prev = await getLexemeProgress(lexeme.text);
-    const currentProgress: LexemeProgress = prev ?? {
-      text: lexeme.text,
-      timesSeen: 0,
-      timesCorrect: 0,
-      lastPracticedAt: now,
-      recentIncorrectStreak: 0,
-      confusedWith: {},
-      easingLevel: 2, // Set to highest easing level
-      consecutiveCorrectStreak: 5,
-      isMastered: true,
-      masteredAt: now,
-    };
-
-    // Update to mastered state
-    const updated: LexemeProgress = {
-      ...currentProgress,
-      consecutiveCorrectStreak: 5,
-      isMastered: true,
-      masteredAt: currentProgress.masteredAt || now,
-      easingLevel: 2, // Set to highest easing level
-      recentIncorrectStreak: 0, // Reset any incorrect streaks
-    };
-
-    await putLexemeProgress(updated);
-    setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
+  const updateProgressMap = useCallback((lexeme: Lexeme, progress: LexemeProgress) => {
+    setProgressMap((prev) => new Map(prev).set(lexeme.text, progress));
   }, []);
+
+  const markAsMastered = useCallback(
+    async (lexeme: Lexeme): Promise<void> => {
+      const now = Date.now();
+      const current = await getLexemeProgress(lexeme.text);
+
+      const updated: LexemeProgress = current
+        ? {
+            ...current,
+            consecutiveCorrectStreak: MASTERY_THRESHOLD,
+            isMastered: true,
+            masteredAt: current.masteredAt || now,
+            easingLevel: MAX_EASING_LEVEL,
+            recentIncorrectStreak: 0,
+          }
+        : createMasteredProgress(lexeme.text, now);
+
+      await putLexemeProgress(updated);
+      updateProgressMap(lexeme, updated);
+    },
+    [updateProgressMap]
+  );
 
   const recordAnswer = useCallback(
     async (lexeme: Lexeme, isCorrect: boolean, userAnswer?: string): Promise<LexemeProgress> => {
       const now = Date.now();
-
-      // Update per-lexeme progress
       const prev = await getLexemeProgress(lexeme.text);
+      const current = prev ?? createDefaultProgress(lexeme.text, now);
 
-      // Get current progress or create default
-      const currentProgress: LexemeProgress = prev ?? {
-        text: lexeme.text,
-        timesSeen: 0,
-        timesCorrect: 0,
-        lastPracticedAt: now,
-        recentIncorrectStreak: 0,
-        confusedWith: {},
-        easingLevel: 1,
-        consecutiveCorrectStreak: 0,
-        isMastered: false,
-      };
+      // Calculate new progress values
+      const updated = isCorrect
+        ? handleCorrectAnswer(current, now)
+        : handleIncorrectAnswer(current, now, userAnswer);
 
-      // Update mistake tracking
-      let newStreak = currentProgress.recentIncorrectStreak || 0;
-      let newConfusedWith = { ...(currentProgress.confusedWith || {}) };
-      let newEasingLevel = currentProgress.easingLevel || 1;
-      let lastIncorrectAt = currentProgress.lastIncorrectAt;
-
-      // Mastery tracking
-      let correctStreak = currentProgress.consecutiveCorrectStreak || 0;
-      let isMastered = currentProgress.isMastered || false;
-      let masteredAt = currentProgress.masteredAt;
-
-      if (!isCorrect) {
-        newStreak++;
-        lastIncorrectAt = now;
-        correctStreak = 0; // Reset consecutive correct streak
-
-        // Track what the user confused it with
-        if (userAnswer && userAnswer.trim()) {
-          const normalizedAnswer = userAnswer.toLowerCase().trim();
-          newConfusedWith[normalizedAnswer] = (newConfusedWith[normalizedAnswer] || 0) + 1;
-        }
-
-        // Drop to flashcard mode if struggling
-        if (
-          newStreak >= 2 ||
-          (currentProgress.timesSeen > 0 &&
-            currentProgress.timesCorrect / currentProgress.timesSeen < 0.5)
-        ) {
-          newEasingLevel = 0;
-        }
-      } else {
-        // Reset incorrect streak on correct answer
-        if (newStreak > 0) {
-          newStreak = 0;
-        }
-
-        // Increment consecutive correct streak
-        correctStreak++;
-
-        // Check for mastery (5 correct in a row)
-        if (correctStreak >= 5 && !isMastered) {
-          isMastered = true;
-          masteredAt = now;
-        }
-
-        // Gradually increase easing level with consecutive correct answers
-        if (correctStreak >= 3 && newEasingLevel < 2) {
-          newEasingLevel = Math.min(2, newEasingLevel + 1);
-        }
-      }
-
-      const newTimesSeen = currentProgress.timesSeen + 1;
-      const newTimesCorrect = currentProgress.timesCorrect + (isCorrect ? 1 : 0);
-
-      const updated: LexemeProgress = {
-        text: lexeme.text,
-        timesSeen: newTimesSeen,
-        timesCorrect: newTimesCorrect,
-        lastPracticedAt: now,
-        lastIncorrectAt,
-        recentIncorrectStreak: newStreak,
-        confusedWith: newConfusedWith,
-        easingLevel: newEasingLevel,
-        consecutiveCorrectStreak: correctStreak,
-        isMastered,
-        masteredAt,
-      };
-
+      // Save progress
       await putLexemeProgress(updated);
-      setProgressMap((prev) => new Map(prev).set(lexeme.text, updated));
+      updateProgressMap(lexeme, updated);
 
       // Update overall stats
-      const prevStats = await getUserStats();
-      const stats: UserStats = prevStats ?? {
-        totalSeen: 0,
-        totalCorrect: 0,
-        lastPracticedAt: now,
-      };
-
-      const updatedStats: UserStats = {
-        totalSeen: stats.totalSeen + 1,
-        totalCorrect: stats.totalCorrect + (isCorrect ? 1 : 0),
-        lastPracticedAt: now,
-      };
-
-      await putUserStats(updatedStats);
-      setUserStats(updatedStats);
+      await updateUserStats(isCorrect, now);
 
       return updated;
     },
-    []
+    [updateProgressMap]
   );
 
+  const handleCorrectAnswer = (progress: LexemeProgress, timestamp: number): LexemeProgress => {
+    const correctStreak = progress.consecutiveCorrectStreak + 1;
+    const isMastered = correctStreak >= MASTERY_THRESHOLD;
+    const easingLevel =
+      correctStreak >= 3
+        ? Math.min(MAX_EASING_LEVEL, progress.easingLevel + 1)
+        : progress.easingLevel;
+
+    return {
+      ...progress,
+      timesSeen: progress.timesSeen + 1,
+      timesCorrect: progress.timesCorrect + 1,
+      lastPracticedAt: timestamp,
+      recentIncorrectStreak: 0,
+      easingLevel,
+      consecutiveCorrectStreak: correctStreak,
+      isMastered,
+      masteredAt: isMastered && !progress.isMastered ? timestamp : progress.masteredAt,
+    };
+  };
+
+  const handleIncorrectAnswer = (
+    progress: LexemeProgress,
+    timestamp: number,
+    userAnswer?: string
+  ): LexemeProgress => {
+    const incorrectStreak = progress.recentIncorrectStreak + 1;
+    const confusedWith = { ...progress.confusedWith };
+
+    if (userAnswer?.trim()) {
+      const normalized = userAnswer.toLowerCase().trim();
+      confusedWith[normalized] = (confusedWith[normalized] || 0) + 1;
+    }
+
+    const updatedProgress = {
+      ...progress,
+      timesSeen: progress.timesSeen + 1,
+      recentIncorrectStreak: incorrectStreak,
+    };
+
+    return {
+      ...progress,
+      timesSeen: progress.timesSeen + 1,
+      lastPracticedAt: timestamp,
+      lastIncorrectAt: timestamp,
+      recentIncorrectStreak: incorrectStreak,
+      confusedWith,
+      easingLevel: isStruggling(updatedProgress) ? 0 : progress.easingLevel,
+      consecutiveCorrectStreak: 0,
+    };
+  };
+
+  const updateUserStats = async (isCorrect: boolean, timestamp: number) => {
+    const stats = await getUserStats();
+    const updatedStats: UserStats = {
+      totalSeen: (stats?.totalSeen || 0) + 1,
+      totalCorrect: (stats?.totalCorrect || 0) + (isCorrect ? 1 : 0),
+      lastPracticedAt: timestamp,
+    };
+    await putUserStats(updatedStats);
+    setUserStats(updatedStats);
+  };
+
   const getProgress = useCallback(
-    (text: string): LexemeProgress | undefined => {
-      return progressMap.get(text);
-    },
+    (text: string): LexemeProgress | undefined => progressMap.get(text),
     [progressMap]
   );
 
