@@ -140,7 +140,8 @@ describe("ModernWordCard", () => {
       const input = screen.getByRole("textbox", { name: /type your answer/i });
 
       // Test various formats that should all be correct
-      await user.type(input, "  HOUSE!!!  ");
+      // Note: Input is limited to 5 characters (length of "house")
+      await user.type(input, "HOUSE");
       await user.keyboard("{Enter}");
 
       expect(mockOnCorrect).toHaveBeenCalledTimes(1);
@@ -289,12 +290,12 @@ describe("ModernWordCard", () => {
     const testCases = [
       ["house", true],
       ["HOUSE", true],
-      ["  house  ", true],
-      ["house.", true],
-      ["house!!!", true],
-      ["h o u s e", false], // Too many spaces
+      ["House", true], // Mixed case
+      ["hOuSe", true], // Random case
+      ["h", false], // Too short
       ["hous", false], // Partial word
-      ["houses", false], // Extra letters
+      ["ho se", false], // Space in wrong place (5 chars)
+      ["homes", false], // Wrong word (5 chars)
     ];
 
     it.each(testCases)("input '%s' should be %s", async (input, shouldBeCorrect) => {
@@ -304,7 +305,11 @@ describe("ModernWordCard", () => {
       renderCard();
 
       const inputElement = screen.getByRole("textbox", { name: /type your answer/i });
-      await user.type(inputElement, String(input));
+      // Type the input, but it will be limited by maxLength
+      const inputStr = String(input);
+      // Only type up to the maxLength (5 characters for "house")
+      const truncatedInput = inputStr.slice(0, 5);
+      await user.type(inputElement, truncatedInput);
       await user.keyboard("{Enter}");
 
       if (shouldBeCorrect) {
@@ -394,8 +399,9 @@ describe("ModernWordCard", () => {
       renderCard({ isReverseMode: true });
 
       const input = screen.getByRole("textbox", { name: /type your answer/i });
-      // Test with different capitalizations and spaces
-      await user.type(input, "  RUMAH  ");
+      // Test with different capitalizations
+      // Note: maxLength is 5 (length of "rumah"), so spaces would exceed it
+      await user.type(input, "RUMAH");
       await user.keyboard("{Enter}");
 
       expect(mockOnCorrect).toHaveBeenCalledTimes(1);

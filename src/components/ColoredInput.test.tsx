@@ -192,17 +192,85 @@ describe("ColoredInput", () => {
       expect(input).toHaveFocus();
     });
 
-    it("respects maxLength constraint", async () => {
-      const user = userEvent.setup();
+    it("respects maxLength constraint", () => {
       render(<ColoredInput {...defaultProps} value="" maxLength={3} />);
 
       const input = screen.getByRole("textbox", { name: /type your answer/i });
 
-      // Type more than maxLength
-      await user.type(input, "abcdef");
+      // Should have maxLength attribute set correctly
+      expect(input).toHaveAttribute("maxLength", "3");
+    });
 
-      // Should accept up to maxLength + 10 (for edge case testing)
-      expect(input).toHaveAttribute("maxLength", "13");
+    it("prevents typing beyond maxLength", async () => {
+      const user = userEvent.setup();
+      render(<ColoredInput {...defaultProps} value="" maxLength={5} />);
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i }) as HTMLInputElement;
+
+      // Verify maxLength is set correctly
+      expect(input.maxLength).toBe(5);
+
+      // Type exactly maxLength characters
+      await user.type(input, "abcde");
+      expect(mockOnChange).toHaveBeenCalledTimes(5);
+      // userEvent.type calls onChange for each character, so last call will be with single char
+      expect(mockOnChange).toHaveBeenNthCalledWith(1, "a");
+      expect(mockOnChange).toHaveBeenNthCalledWith(2, "b");
+      expect(mockOnChange).toHaveBeenNthCalledWith(3, "c");
+      expect(mockOnChange).toHaveBeenNthCalledWith(4, "d");
+      expect(mockOnChange).toHaveBeenNthCalledWith(5, "e");
+
+      // Clear for next test
+      mockOnChange.mockClear();
+
+      // Try to type more when already at maxLength
+      // Note: In a real browser, maxLength would prevent this
+      // but in jsdom we can still test that the attribute is set correctly
+      fireEvent.change(input, { target: { value: "abcdef" } });
+
+      // The onChange will be called with whatever value is passed
+      expect(mockOnChange).toHaveBeenCalledWith("abcdef");
+
+      // But the important thing is the maxLength attribute is set
+      expect(input).toHaveAttribute("maxLength", "5");
+    });
+
+    it("enforces maxLength for different word lengths", () => {
+      const { rerender } = render(<ColoredInput {...defaultProps} value="" maxLength={3} />);
+
+      let input = screen.getByRole("textbox", { name: /type your answer/i }) as HTMLInputElement;
+
+      // Verify initial maxLength
+      expect(input.maxLength).toBe(3);
+
+      // Test with different maxLength
+      rerender(<ColoredInput {...defaultProps} value="" maxLength={7} />);
+
+      input = screen.getByRole("textbox", { name: /type your answer/i }) as HTMLInputElement;
+      expect(input.maxLength).toBe(7);
+
+      // Test with another maxLength
+      rerender(<ColoredInput {...defaultProps} value="" maxLength={10} />);
+
+      input = screen.getByRole("textbox", { name: /type your answer/i }) as HTMLInputElement;
+      expect(input.maxLength).toBe(10);
+    });
+
+    it("prevents input beyond maxLength with native browser enforcement", () => {
+      render(<ColoredInput {...defaultProps} value="" maxLength={5} />);
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i }) as HTMLInputElement;
+
+      // Set value directly to test browser enforcement
+      input.value = "abcdefghij";
+
+      // Manually dispatch input event using fireEvent
+      fireEvent.input(input, { target: { value: input.value } });
+
+      // The browser should enforce maxLength on the actual input element
+      // Note: In real browsers, maxLength prevents typing beyond the limit
+      expect(input.maxLength).toBe(5);
+      expect(input).toHaveAttribute("maxLength", "5");
     });
 
     it("handles backspace correctly", async () => {

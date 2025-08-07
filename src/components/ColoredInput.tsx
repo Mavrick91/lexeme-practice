@@ -53,7 +53,7 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            maxLength={maxLength + 10} // Allow extra characters for testing edge cases
+            maxLength={maxLength}
             aria-label="Type your answer"
             className="absolute inset-0 h-full w-full cursor-text opacity-0"
             autoCapitalize="none"
