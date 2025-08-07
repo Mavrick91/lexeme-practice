@@ -144,8 +144,7 @@ export const ModernWordCard = ({
       onNext(skipWord);
     } else {
       await onIncorrect(userAnswer);
-      // Delayed auto-advance to allow time to see the answer
-      setTimeout(() => onNext(), 2000);
+      onNext();
     }
   };
 

@@ -368,7 +368,6 @@ describe("Streak Logic Integration Tests", () => {
       ).toBeInTheDocument();
 
       // Answer incorrectly
-      jest.useFakeTimers();
       const input = screen.getByPlaceholderText("Type your answer...");
       await user.type(input, "wrong");
       await user.keyboard("{Enter}");
@@ -416,8 +415,6 @@ describe("Streak Logic Integration Tests", () => {
           })
         ).toBeInTheDocument();
       });
-
-      jest.useRealTimers();
     });
   });
 });

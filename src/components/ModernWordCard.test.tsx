@@ -200,8 +200,7 @@ describe("ModernWordCard", () => {
       await waitFor(() => expect(mockOnNext).toHaveBeenCalledWith("rumah"));
     });
 
-    it("handles incorrect answer and auto-advances", async () => {
-      jest.useFakeTimers();
+    it("handles incorrect answer and calls onNext immediately", async () => {
       const user = userEvent.setup({ delay: null });
       renderCard();
 
@@ -212,12 +211,8 @@ describe("ModernWordCard", () => {
       expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
       expect(mockOnIncorrect).toHaveBeenCalledWith("wrong");
 
-      // Auto-advance happens after 2 seconds
-      expect(mockOnNext).not.toHaveBeenCalled();
-      jest.advanceTimersByTime(2000);
+      // onNext should be called immediately after incorrect answer
       expect(mockOnNext).toHaveBeenCalledTimes(1);
-
-      jest.useRealTimers();
     });
 
     it("shows and hides hint", async () => {
@@ -401,10 +396,6 @@ describe("ModernWordCard", () => {
       jest.setTimeout(10000); // Increase timeout for parameterized tests
       const user = userEvent.setup({ delay: null });
 
-      if (!shouldBeCorrect) {
-        jest.useFakeTimers();
-      }
-
       renderCard();
 
       const inputElement = screen.getByPlaceholderText("Type your answer...");
@@ -417,10 +408,8 @@ describe("ModernWordCard", () => {
         await waitFor(() => expect(mockOnNext).toHaveBeenCalled());
       } else {
         expect(mockOnIncorrect).toHaveBeenCalled();
-        // Advance timer to trigger onNext for incorrect
-        jest.advanceTimersByTime(2000);
+        // onNext is called immediately for incorrect answers too now
         expect(mockOnNext).toHaveBeenCalled();
-        jest.useRealTimers();
       }
     });
   });
@@ -481,7 +470,6 @@ describe("ModernWordCard", () => {
     });
 
     it("handles incorrect answer in reverse mode", async () => {
-      jest.useFakeTimers();
       const user = userEvent.setup({ delay: null });
       renderCard({ isReverseMode: true });
 
@@ -492,12 +480,8 @@ describe("ModernWordCard", () => {
       expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
       expect(mockOnIncorrect).toHaveBeenCalledWith("buku");
 
-      // Auto-advance happens after 2 seconds
-      expect(mockOnNext).not.toHaveBeenCalled();
-      jest.advanceTimersByTime(2000);
+      // onNext should be called immediately
       expect(mockOnNext).toHaveBeenCalledTimes(1);
-
-      jest.useRealTimers();
     });
 
     it("normalizes Indonesian answer correctly in reverse mode", async () => {
@@ -515,7 +499,6 @@ describe("ModernWordCard", () => {
     });
 
     it("rejects English translations as answers in reverse mode", async () => {
-      jest.useFakeTimers();
       const user = userEvent.setup({ delay: null });
       renderCard({ isReverseMode: true });
 
@@ -527,9 +510,7 @@ describe("ModernWordCard", () => {
 
       expect(mockOnIncorrect).toHaveBeenCalledTimes(1);
       expect(mockOnCorrect).not.toHaveBeenCalled();
-
-      jest.advanceTimersByTime(2000);
-      jest.useRealTimers();
+      expect(mockOnNext).toHaveBeenCalledTimes(1);
     });
 
     it("Mark as Correct button works in reverse mode", async () => {
