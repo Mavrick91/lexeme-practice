@@ -2,11 +2,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Volume2, Trophy, Check, Eye, Plus, Minus, RefreshCw } from "lucide-react";
+import { Volume2, Trophy, Check, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
-import { useLetterHint } from "@/hooks/useLetterHint";
 import { useLetterColoring } from "@/hooks/useLetterColoring";
 import { ColoredInput } from "./ColoredInput";
 import type { Lexeme, LexemeProgress } from "@/types";
@@ -38,20 +37,6 @@ export const ModernWordCard = ({
     ? lexeme.text // In reverse mode, user types Indonesian word
     : lexeme.translations[0]; // In normal mode, user types English translation
 
-  // Use the letter hint hook
-  const {
-    showLetterHint,
-    revealedLetters,
-    letterHint,
-    maxLetters,
-    toggleLetterHint,
-    revealMoreLetters,
-    revealFewerLetters,
-  } = useLetterHint({
-    targetWord,
-    isEnabled: true,
-  });
-
   // Use the letter coloring hook for real-time feedback
   const coloredLetters = useLetterColoring({
     input: userAnswer,
@@ -66,7 +51,6 @@ export const ModernWordCard = ({
     // Only reset when lexeme actually changes to a different word
     if (prevLexemeRef.current !== lexeme.text) {
       setUserAnswer("");
-      // Letter hint persists across different words
       prevLexemeRef.current = lexeme.text;
     }
   }, [lexeme.text]);
@@ -88,29 +72,6 @@ export const ModernWordCard = ({
     const skipWord = (result as { justMastered?: boolean })?.justMastered ? lexeme.text : undefined;
     onNext(skipWord);
   }, [handleCorrect, onNext, lexeme.text]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Ctrl+L for letter hint toggle
-      if ((e.ctrlKey || e.metaKey) && e.key === "l") {
-        e.preventDefault();
-        toggleLetterHint();
-      }
-      // Ctrl+Plus/Minus for revealing more/fewer letters
-      if ((e.ctrlKey || e.metaKey) && e.key === "=") {
-        e.preventDefault();
-        revealMoreLetters();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "-") {
-        e.preventDefault();
-        revealFewerLetters();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [toggleLetterHint, revealMoreLetters, revealFewerLetters]);
 
   const playAudio = () => {
     const audio = new Audio(lexeme.audioURL);
@@ -288,61 +249,6 @@ export const ModernWordCard = ({
                     Mark as Correct
                   </Button>
                 </div>
-
-                {/* Letter Hint Controls */}
-                <div className="mt-4 flex justify-center">
-                  <div className="flex items-center gap-3 rounded-lg bg-secondary/30 p-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={toggleLetterHint}
-                      className="gap-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      {showLetterHint ? "Hide Letters" : "Show Letters"}
-                    </Button>
-
-                    {showLetterHint && (
-                      <>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={revealFewerLetters}
-                            disabled={revealedLetters <= 1}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-12 text-center text-sm font-medium">
-                            {revealedLetters}/{maxLetters}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={revealMoreLetters}
-                            disabled={revealedLetters >= maxLetters}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Letter Hint Display */}
-                {showLetterHint && letterHint && (
-                  <div className="mt-3 flex justify-center">
-                    <div className="rounded-lg bg-primary/10 px-4 py-2">
-                      <p className="font-mono text-lg font-semibold tracking-wider">{letterHint}</p>
-                    </div>
-                  </div>
-                )}
               </form>
             </div>
           </div>
@@ -367,15 +273,8 @@ export const ModernWordCard = ({
       {/* Keyboard Shortcuts Info */}
       <div className="mt-4 text-center text-xs text-muted-foreground">
         <div>
-          Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
-          <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+L</kbd> for letters
+          Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer
         </div>
-        {showLetterHint && (
-          <div className="mt-1">
-            <kbd className="rounded bg-muted px-2 py-1">Ctrl+-</kbd>/
-            <kbd className="rounded bg-muted px-2 py-1">Ctrl+=</kbd> to adjust letters
-          </div>
-        )}
       </div>
     </div>
   );

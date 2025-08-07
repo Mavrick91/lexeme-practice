@@ -2,13 +2,11 @@ import { render, screen, fireEvent, waitFor } from "@/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ModernWordCard } from "./ModernWordCard";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
-import { useLetterHint } from "@/hooks/useLetterHint";
 import { useLetterColoring } from "@/hooks/useLetterColoring";
 import type { Lexeme, LexemeProgress } from "@/types";
 
 // Mock the hooks
 jest.mock("@/hooks/useAutoFocus");
-jest.mock("@/hooks/useLetterHint");
 jest.mock("@/hooks/useLetterColoring");
 
 // Mock Audio API
@@ -39,18 +37,6 @@ describe("ModernWordCard", () => {
     translations: ["book"],
   };
 
-  const defaultLetterHintMock = {
-    showLetterHint: false,
-    revealedLetters: 1,
-    letterHint: "",
-    maxLetters: 5,
-    toggleLetterHint: jest.fn(),
-    revealMoreLetters: jest.fn(),
-    revealFewerLetters: jest.fn(),
-    setLetterCount: jest.fn(),
-    resetHint: jest.fn(),
-  };
-
   // Render helper
   const renderCard = (props: Partial<Parameters<typeof ModernWordCard>[0]> = {}) => {
     const defaultProps = {
@@ -65,7 +51,6 @@ describe("ModernWordCard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useAutoFocus as jest.Mock).mockImplementation(() => {});
-    (useLetterHint as jest.Mock).mockReturnValue(defaultLetterHintMock);
     (useLetterColoring as jest.Mock).mockReturnValue([]);
   });
 
@@ -168,7 +153,7 @@ describe("ModernWordCard", () => {
       const user = userEvent.setup({ delay: null });
       renderCard();
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "home");
       await user.keyboard("{Enter}");
 
@@ -212,7 +197,7 @@ describe("ModernWordCard", () => {
       const user = userEvent.setup({ delay: null });
       renderCard();
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "wrong");
       await user.keyboard("{Enter}");
 
@@ -279,287 +264,7 @@ describe("ModernWordCard", () => {
     });
   });
 
-  describe("Letter hint feature", () => {
-    it("renders letter hint button", () => {
-      renderCard();
-
-      const letterHintButton = screen.getByRole("button", { name: /show letters/i });
-      expect(letterHintButton).toBeInTheDocument();
-    });
-
-    it("toggles letter hint when button is clicked", () => {
-      const mockToggle = jest.fn();
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        toggleLetterHint: mockToggle,
-      });
-
-      renderCard();
-
-      const letterHintButton = screen.getByRole("button", { name: /show letters/i });
-      fireEvent.click(letterHintButton);
-
-      expect(mockToggle).toHaveBeenCalledTimes(1);
-    });
-
-    it("shows letter hint controls when enabled", () => {
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        letterHint: "h _ _ _ _",
-      });
-
-      renderCard();
-
-      // Should show hide button instead
-      expect(screen.getByRole("button", { name: /hide letters/i })).toBeInTheDocument();
-
-      // Should show letter count
-      expect(screen.getByText("1/5")).toBeInTheDocument();
-
-      // Should show the hint
-      expect(screen.getByText("h _ _ _ _")).toBeInTheDocument();
-    });
-
-    it("calls revealMoreLetters when plus button is clicked", () => {
-      const mockRevealMore = jest.fn();
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        revealMoreLetters: mockRevealMore,
-      });
-
-      renderCard();
-
-      const plusButtons = screen.getAllByRole("button").filter((button) => {
-        const plusIcon = button.querySelector('[class*="lucide-plus"]');
-        return plusIcon !== null;
-      });
-
-      expect(plusButtons.length).toBeGreaterThan(0);
-      fireEvent.click(plusButtons[0]);
-
-      expect(mockRevealMore).toHaveBeenCalledTimes(1);
-    });
-
-    it("calls revealFewerLetters when minus button is clicked", () => {
-      const mockRevealFewer = jest.fn();
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        revealedLetters: 2, // Need more than 1 for minus button to be enabled
-        revealFewerLetters: mockRevealFewer,
-      });
-
-      renderCard();
-
-      // Find the minus button - it's a small square button with specific classes
-      const buttons = screen.getAllByRole("button");
-      // The minus button is the one right before the counter display
-      const minusButton = buttons.find((button) => {
-        return (
-          button.className.includes("h-8") &&
-          button.className.includes("w-8") &&
-          !button.hasAttribute("disabled") && // Make sure it's not disabled
-          button.innerHTML.includes("svg")
-        );
-      });
-
-      expect(minusButton).toBeDefined();
-      if (minusButton) {
-        fireEvent.click(minusButton);
-        expect(mockRevealFewer).toHaveBeenCalledTimes(1);
-      }
-    });
-
-    it("uses correct target word in normal mode", () => {
-      renderCard({ isReverseMode: false });
-
-      // In normal mode, target should be the English translation
-      expect(useLetterHint).toHaveBeenCalledWith({
-        targetWord: "house",
-        isEnabled: true,
-      });
-    });
-
-    it("uses correct target word in reverse mode", () => {
-      renderCard({ isReverseMode: true });
-
-      // In reverse mode, target should be the Indonesian word
-      expect(useLetterHint).toHaveBeenCalledWith({
-        targetWord: "rumah",
-        isEnabled: true,
-      });
-    });
-
-    it("persists letter hint when lexeme changes", () => {
-      const mockReset = jest.fn();
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        resetHint: mockReset,
-      });
-
-      const { rerender } = renderCard();
-
-      // Change lexeme
-      rerender(
-        <ModernWordCard
-          lexeme={newLexeme}
-          onCorrect={mockOnCorrect}
-          onIncorrect={mockOnIncorrect}
-          onNext={mockOnNext}
-        />
-      );
-
-      // Letter hint should NOT be reset when lexeme changes
-      expect(mockReset).not.toHaveBeenCalled();
-    });
-
-    it("handles keyboard shortcuts for letter hint", () => {
-      const mockToggle = jest.fn();
-      const mockRevealMore = jest.fn();
-      const mockRevealFewer = jest.fn();
-
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        toggleLetterHint: mockToggle,
-        revealMoreLetters: mockRevealMore,
-        revealFewerLetters: mockRevealFewer,
-      });
-
-      renderCard();
-
-      // Ctrl+L to toggle letter hint
-      fireEvent.keyDown(window, { ctrlKey: true, key: "l" });
-      expect(mockToggle).toHaveBeenCalledTimes(1);
-
-      // Ctrl+= to reveal more letters
-      fireEvent.keyDown(window, { ctrlKey: true, key: "=" });
-      expect(mockRevealMore).toHaveBeenCalledTimes(1);
-
-      // Ctrl+- to reveal fewer letters
-      fireEvent.keyDown(window, { ctrlKey: true, key: "-" });
-      expect(mockRevealFewer).toHaveBeenCalledTimes(1);
-    });
-
-    it("disables plus button when all letters are revealed", () => {
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        revealedLetters: 5,
-        maxLetters: 5,
-      });
-
-      renderCard();
-
-      const plusButtons = screen.getAllByRole("button").filter((button) => {
-        const plusIcon = button.querySelector('[class*="lucide-plus"]');
-        return plusIcon !== null;
-      });
-
-      expect(plusButtons.length).toBeGreaterThan(0);
-      expect(plusButtons[0]).toBeDisabled();
-    });
-
-    it("disables minus button when only one letter is revealed", () => {
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        revealedLetters: 1,
-        maxLetters: 5,
-      });
-
-      renderCard();
-
-      const minusButtons = screen.getAllByRole("button").filter((button) => {
-        const minusIcon = button.querySelector('[class*="lucide-minus"]');
-        return minusIcon !== null;
-      });
-
-      expect(minusButtons.length).toBeGreaterThan(0);
-      expect(minusButtons[0]).toBeDisabled();
-    });
-
-    it("shows keyboard shortcut info for letter hints when active", () => {
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-      });
-
-      renderCard();
-
-      expect(screen.getByText(/Ctrl\+L/)).toBeInTheDocument();
-      expect(screen.getByText(/Ctrl\+-/)).toBeInTheDocument();
-      expect(screen.getByText(/Ctrl\+=/)).toBeInTheDocument();
-    });
-
-    it("persists letter hint after answer submission", async () => {
-      const user = userEvent.setup({ delay: null });
-      const mockToggle = jest.fn();
-      const mockReset = jest.fn();
-
-      // Start with letter hint shown
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        letterHint: "h _ _ _ _",
-        toggleLetterHint: mockToggle,
-        resetHint: mockReset,
-      });
-
-      renderCard();
-
-      // Verify hint is shown
-      expect(screen.getByText("h _ _ _ _")).toBeInTheDocument();
-
-      // Submit a correct answer
-      const input = screen.getByPlaceholderText("Type your answer...");
-      await user.type(input, "house");
-      await user.keyboard("{Enter}");
-
-      // Reset should NOT be called on answer submission
-      expect(mockReset).not.toHaveBeenCalled();
-
-      // The hint should still be visible (component should maintain showLetterHint state)
-      expect(screen.getByRole("button", { name: /hide letters/i })).toBeInTheDocument();
-    });
-
-    it("letter hint persists when lexeme changes", () => {
-      const mockReset = jest.fn();
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        letterHint: "h _ _ _ _",
-        resetHint: mockReset,
-      });
-
-      const { rerender } = renderCard();
-
-      // Initial render - reset not called
-      expect(mockReset).not.toHaveBeenCalled();
-
-      // Change to a different lexeme
-      rerender(
-        <ModernWordCard
-          lexeme={newLexeme}
-          onCorrect={mockOnCorrect}
-          onIncorrect={mockOnIncorrect}
-          onNext={mockOnNext}
-        />
-      );
-
-      // Reset should NOT be called when lexeme changes (persists)
-      expect(mockReset).not.toHaveBeenCalled();
-    });
-  });
-
   describe("UI details", () => {
-    it("shows correct keyboard shortcuts for writing mode", () => {
-      renderCard();
-
-      expect(screen.getByText(/Ctrl\+L/)).toBeInTheDocument();
-    });
-
     it("disables check button when input is empty", () => {
       renderCard();
 
@@ -569,10 +274,10 @@ describe("ModernWordCard", () => {
 
     it("enables check button when input has value", async () => {
       jest.setTimeout(10000); // Increase timeout for this test
-      const user = userEvent.setup();
+      const user = userEvent.setup({ delay: null });
       renderCard();
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "test");
 
       const checkButton = screen.getByRole("button", { name: /check answer/i });
@@ -876,7 +581,7 @@ describe("ModernWordCard", () => {
 
       renderCard();
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "home");
 
       // Check that we have colored letters displayed
@@ -938,7 +643,7 @@ describe("ModernWordCard", () => {
     it("should use correct target word in normal mode", () => {
       renderCard({ isReverseMode: false });
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       fireEvent.change(input, { target: { value: "test" } });
 
       // In normal mode, target should be the English translation
@@ -973,7 +678,7 @@ describe("ModernWordCard", () => {
 
       renderCard({ lexeme: multiWordLexeme, isReverseMode: false });
 
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       fireEvent.change(input, { target: { value: "good morning" } });
 
       // Should use the multi-word translation as target
@@ -1013,25 +718,6 @@ describe("ModernWordCard", () => {
         target: "house",
         isEnabled: true,
       });
-    });
-
-    it("should not interfere with letter hint feature", () => {
-      (useLetterHint as jest.Mock).mockReturnValue({
-        ...defaultLetterHintMock,
-        showLetterHint: true,
-        letterHint: "h _ _ _ _",
-      });
-
-      (useLetterColoring as jest.Mock).mockReturnValue([
-        { letter: "h", color: "correct" },
-        { letter: "o", color: "present" },
-      ]);
-
-      renderCard();
-
-      // Both features should work independently
-      expect(screen.getByText("h _ _ _ _")).toBeInTheDocument(); // Letter hint
-      // Colored letters would also be displayed (mocked)
     });
 
     it("should handle special characters in colored display", () => {
@@ -1091,7 +777,6 @@ describe("ModernWordCard", () => {
 
     it("shows phonetic in normal mode", () => {
       renderCard({ isReverseMode: false });
-
       expect(screen.getByText("/roo-mah/")).toBeInTheDocument();
     });
   });

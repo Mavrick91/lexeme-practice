@@ -290,7 +290,7 @@ describe("Streak Logic Integration Tests", () => {
         });
 
         // Type correct answer
-        const input = screen.getByPlaceholderText("Type your answer...");
+        const input = screen.getByRole("textbox", { name: /type your answer/i });
         await user.clear(input);
         await user.type(input, "house");
         await user.keyboard("{Enter}");
@@ -370,7 +370,7 @@ describe("Streak Logic Integration Tests", () => {
       ).toBeInTheDocument();
 
       // Answer incorrectly
-      const input = screen.getByPlaceholderText("Type your answer...");
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
       await user.type(input, "wrong");
       await user.keyboard("{Enter}");
 
