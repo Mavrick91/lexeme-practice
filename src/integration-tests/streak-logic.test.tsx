@@ -388,13 +388,10 @@ describe("Streak Logic Integration Tests", () => {
         isMastered: false,
       });
 
-      // Force update of progress map
-      await act(async () => {
-        // The recordAnswer should have updated the progress map
-        await waitFor(() => {
-          const updatedProgress = result.current.getProgress("rumah");
-          expect(updatedProgress?.consecutiveCorrectStreak).toBe(0);
-        });
+      // Wait for the progress map to update after incorrect answer
+      await waitFor(() => {
+        const updatedProgress = result.current.getProgress("rumah");
+        expect(updatedProgress?.consecutiveCorrectStreak).toBe(0);
       });
 
       // Rerender with updated progress
@@ -410,11 +407,13 @@ describe("Streak Logic Integration Tests", () => {
       );
 
       // Should now show 0/5
-      expect(
-        screen.getByText((content, element) => {
-          return element?.tagName === "SPAN" && content === "0/5";
-        })
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getByText((content, element) => {
+            return element?.tagName === "SPAN" && content === "0/5";
+          })
+        ).toBeInTheDocument();
+      });
 
       jest.useRealTimers();
     });
