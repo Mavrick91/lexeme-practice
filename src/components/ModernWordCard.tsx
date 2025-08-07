@@ -3,12 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, Lightbulb, RefreshCw, Trophy, Check, Eye, Plus, Minus } from "lucide-react";
+import { Volume2, Trophy, Check, Eye, Plus, Minus, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
-import { useHint } from "@/hooks/useHint";
 import { useLetterHint } from "@/hooks/useLetterHint";
 import type { Lexeme, LexemeProgress } from "@/types";
 
@@ -32,7 +30,6 @@ export const ModernWordCard = ({
   progress,
 }: ModernWordCardProps) => {
   const [userAnswer, setUserAnswer] = useState("");
-  const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Determine the target word based on mode
@@ -61,7 +58,6 @@ export const ModernWordCard = ({
     // Only reset when lexeme actually changes to a different word
     if (prevLexemeRef.current !== lexeme.text) {
       setUserAnswer("");
-      setShowHint(false);
       // Letter hint persists across different words
       prevLexemeRef.current = lexeme.text;
     }
@@ -85,31 +81,9 @@ export const ModernWordCard = ({
     onNext(skipWord);
   }, [handleCorrect, onNext, lexeme.text]);
 
-  // Use the new hint system
-  const {
-    hint,
-    status: hintStatus,
-    error: hintError,
-    loadHint,
-  } = useHint(lexeme, {
-    prefetch: false, // Load on demand
-  });
-
-  // Handle hint button click
-  const handleHintClick = useCallback(() => {
-    if (!showHint && hintStatus === "idle") {
-      loadHint();
-    }
-    setShowHint(!showHint);
-  }, [showHint, hintStatus, loadHint]);
-
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "h") {
-        e.preventDefault();
-        handleHintClick();
-      }
       // Ctrl+L for letter hint toggle
       if ((e.ctrlKey || e.metaKey) && e.key === "l") {
         e.preventDefault();
@@ -128,7 +102,7 @@ export const ModernWordCard = ({
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleHintClick, toggleLetterHint, revealMoreLetters, revealFewerLetters]);
+  }, [toggleLetterHint, revealMoreLetters, revealFewerLetters]);
 
   const playAudio = () => {
     const audio = new Audio(lexeme.audioURL);
@@ -311,20 +285,6 @@ export const ModernWordCard = ({
                     <Check className="mr-2 h-5 w-5" />
                     Mark as Correct
                   </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="lg"
-                    onClick={handleHintClick}
-                    disabled={hintStatus === "loading"}
-                  >
-                    {hintStatus === "loading" ? (
-                      <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                    ) : (
-                      <Lightbulb className="mr-2 h-5 w-5" />
-                    )}
-                    {showHint ? "Hide Hint" : "Show Hint"}
-                  </Button>
                 </div>
 
                 {/* Letter Hint Controls */}
@@ -381,50 +341,6 @@ export const ModernWordCard = ({
                     </div>
                   </div>
                 )}
-
-                {showHint && (
-                  <div
-                    className={cn(
-                      "bg-secondary/50 rounded-lg p-4 max-w-md mx-auto",
-                      animations.slideInFromTop
-                    )}
-                  >
-                    {hintStatus === "loading" && (
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
-                      </div>
-                    )}
-                    {hintStatus === "ready" &&
-                      hint &&
-                      hint.relatedWords &&
-                      Array.isArray(hint.relatedWords) && (
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground/70">
-                            Related words:
-                          </p>
-                          <div className="flex flex-wrap justify-center gap-2">
-                            {hint.relatedWords.map((word, index) => (
-                              <span
-                                key={index}
-                                className="inline-block rounded-full bg-secondary px-3 py-1 text-sm font-medium"
-                              >
-                                {word}
-                              </span>
-                            ))}
-                          </div>
-                          {hint.source === "fallback" && (
-                            <p className="mt-2 text-center text-xs opacity-60">(offline hint)</p>
-                          )}
-                        </div>
-                      )}
-                    {hintStatus === "error" && (
-                      <p className="text-sm text-destructive">
-                        ⚠️ {hintError || "Failed to generate hint"}
-                      </p>
-                    )}
-                  </div>
-                )}
               </form>
             </div>
           </div>
@@ -450,7 +366,6 @@ export const ModernWordCard = ({
       <div className="mt-4 text-center text-xs text-muted-foreground">
         <div>
           Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
-          <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+H</kbd> for hint,
           <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+L</kbd> for letters
         </div>
         {showLetterHint && (

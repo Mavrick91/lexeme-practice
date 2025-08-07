@@ -211,13 +211,13 @@ describe("ChatDrawer", () => {
     let generateMnemonicImage: jest.MockedFunction<
       typeof import("@/lib/openai").generateMnemonicImage
     >;
-    let toast: any;
+    let toast: { error: jest.Mock };
 
     beforeEach(() => {
       jest.clearAllMocks();
       // Initialize the mocked functions
       generateMnemonicImage = jest.fn();
-      toast = { error: jest.fn() } as any;
+      toast = { error: jest.fn() };
 
       // Update the mocked modules
       const openaiMock = jest.requireMock("@/lib/openai");

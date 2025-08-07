@@ -4,6 +4,8 @@ import { ModernWordCard } from "@/components/ModernWordCard";
 import { renderHook, act } from "@testing-library/react";
 import { useProgress } from "@/hooks/useProgress";
 import type { Lexeme, LexemeProgress } from "@/types";
+import type { IDBPDatabase } from "idb";
+import type { LexemePracticeDB } from "@/db";
 
 // Mock the database functions
 jest.mock("@/db", () => ({
@@ -39,7 +41,7 @@ describe("Streak Logic Integration Tests", () => {
     mockedDb.putLexemeProgress.mockResolvedValue();
     mockedDb.putUserStats.mockResolvedValue();
     mockedDb.getAllLexemeProgress.mockResolvedValue([]);
-    mockedDb.getReadyDB.mockReturnValue(Promise.resolve({} as any));
+    mockedDb.getReadyDB.mockReturnValue(Promise.resolve({} as IDBPDatabase<LexemePracticeDB>));
     mockedDb.getPracticeHistory.mockResolvedValue([]);
     mockedDb.addPracticeHistoryItem.mockResolvedValue();
     mockedDb.clearPracticeHistory.mockResolvedValue();

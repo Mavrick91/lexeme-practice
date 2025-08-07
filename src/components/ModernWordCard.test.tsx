@@ -2,13 +2,11 @@ import { render, screen, fireEvent, waitFor } from "@/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ModernWordCard } from "./ModernWordCard";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
-import { useHint } from "@/hooks/useHint";
 import { useLetterHint } from "@/hooks/useLetterHint";
 import type { Lexeme, LexemeProgress } from "@/types";
 
 // Mock the hooks
 jest.mock("@/hooks/useAutoFocus");
-jest.mock("@/hooks/useHint");
 jest.mock("@/hooks/useLetterHint");
 
 // Mock Audio API
@@ -39,13 +37,6 @@ describe("ModernWordCard", () => {
     translations: ["book"],
   };
 
-  const defaultHintMock = {
-    hint: null,
-    status: "idle" as const,
-    error: null,
-    loadHint: jest.fn(),
-  };
-
   const defaultLetterHintMock = {
     showLetterHint: false,
     revealedLetters: 1,
@@ -72,7 +63,6 @@ describe("ModernWordCard", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useAutoFocus as jest.Mock).mockImplementation(() => {});
-    (useHint as jest.Mock).mockReturnValue(defaultHintMock);
     (useLetterHint as jest.Mock).mockReturnValue(defaultLetterHintMock);
   });
 
@@ -228,87 +218,6 @@ describe("ModernWordCard", () => {
 
       // onNext should be called immediately after incorrect answer
       expect(mockOnNext).toHaveBeenCalledTimes(1);
-    });
-
-    it("shows and hides hint", async () => {
-      jest.setTimeout(10000); // Increase timeout for this test
-      const user = userEvent.setup();
-      const mockLoadHint = jest.fn();
-
-      // Start with idle status
-      (useHint as jest.Mock).mockReturnValue({
-        ...defaultHintMock,
-        loadHint: mockLoadHint,
-      });
-
-      const { rerender } = renderCard();
-
-      const hintButton = screen.getByRole("button", { name: /show hint/i });
-      await user.click(hintButton);
-
-      // After clicking, mock returns the hint
-      (useHint as jest.Mock).mockReturnValue({
-        hint: { relatedWords: ["building", "family", "shelter", "rooms", "door"], source: "gpt" },
-        status: "ready",
-        error: null,
-        loadHint: mockLoadHint,
-      });
-
-      rerender(
-        <ModernWordCard
-          lexeme={baseLexeme}
-          onCorrect={mockOnCorrect}
-          onIncorrect={mockOnIncorrect}
-          onNext={mockOnNext}
-        />
-      );
-
-      expect(screen.getByText("building")).toBeInTheDocument();
-      expect(screen.getByText("family")).toBeInTheDocument();
-      expect(screen.getByText("shelter")).toBeInTheDocument();
-
-      // Hide hint
-      await user.click(screen.getByRole("button", { name: /hide hint/i }));
-      expect(screen.queryByText("building")).not.toBeInTheDocument();
-    });
-
-    it("shows hint with Ctrl+H keyboard shortcut", () => {
-      renderCard();
-
-      fireEvent.keyDown(window, { ctrlKey: true, key: "h" });
-
-      expect(screen.getByRole("button", { name: /hide hint/i })).toBeInTheDocument();
-    });
-
-    it("shows loading state for hint", () => {
-      (useHint as jest.Mock).mockReturnValue({
-        ...defaultHintMock,
-        status: "loading",
-      });
-
-      renderCard();
-
-      const hintButton = screen.getByRole("button", { name: /show hint/i });
-      expect(hintButton).toBeDisabled();
-
-      // Check for loading spinner in button
-      const spinner = hintButton.querySelector('[class*="animate-spin"]');
-      expect(spinner).toBeInTheDocument();
-    });
-
-    it("shows error state for hint", () => {
-      (useHint as jest.Mock).mockReturnValue({
-        ...defaultHintMock,
-        status: "error",
-        error: "Failed to load hint",
-      });
-
-      renderCard();
-
-      const hintButton = screen.getByRole("button", { name: /show hint/i });
-      fireEvent.click(hintButton);
-
-      expect(screen.getByText(/Failed to load hint/)).toBeInTheDocument();
     });
 
     it("calls useAutoFocus", () => {
@@ -645,8 +554,6 @@ describe("ModernWordCard", () => {
     it("shows correct keyboard shortcuts for writing mode", () => {
       renderCard();
 
-      expect(screen.getByText(/Enter/)).toBeInTheDocument();
-      expect(screen.getByText(/Ctrl\+H/)).toBeInTheDocument();
       expect(screen.getByText(/Ctrl\+L/)).toBeInTheDocument();
     });
 

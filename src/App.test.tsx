@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@/test-utils";
 import App from "./App";
 import lexemesData from "./combined_lexemes.json";
 import type { LexemesData, LexemeProgress } from "./types";
+import type { IDBPDatabase } from "idb";
+import type { LexemePracticeDB } from "@/db";
 
 // Mock the database
 jest.mock("./db", () => ({
@@ -43,7 +45,7 @@ describe("App - Mastered Words Filtering", () => {
     mockedDb.putLexemeProgress.mockResolvedValue();
     mockedDb.putUserStats.mockResolvedValue();
     mockedDb.getAllLexemeProgress.mockResolvedValue([]);
-    mockedDb.getReadyDB.mockReturnValue(Promise.resolve({} as any));
+    mockedDb.getReadyDB.mockReturnValue(Promise.resolve({} as IDBPDatabase<LexemePracticeDB>));
     mockedDb.getPracticeHistory.mockResolvedValue([]);
     mockedDb.addPracticeHistoryItem.mockResolvedValue();
     mockedDb.clearPracticeHistory.mockResolvedValue();

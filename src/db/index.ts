@@ -3,7 +3,7 @@ import type { DBSchema, IDBPDatabase } from "idb";
 import type { LexemeProgress, UserStats, PracticeHistoryItem } from "../types";
 import type { ChatConversation } from "../types/chat";
 
-type LexemePracticeDB = {
+export type LexemePracticeDB = {
   lexemeProgress: {
     key: string; // lexeme text
     value: LexemeProgress;
@@ -98,7 +98,7 @@ const dbPromise = openDB<LexemePracticeDB>("lexemePractice", 8, {
       await store.openCursor().then(function migrate(cursor): Promise<void> | void {
         if (!cursor) return;
 
-        const progress = cursor.value as any;
+        const progress = cursor.value as LexemeProgress;
         const updated = {
           ...progress,
           consecutiveCorrectStreak: progress.consecutiveCorrectStreak ?? 0,

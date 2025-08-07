@@ -1,5 +1,4 @@
 import { OPENAI_CONFIG } from "@/config/openai";
-import { HINT_CONFIG } from "@/config/hint";
 import type { ChatMessage } from "@/types/chat";
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -63,22 +62,6 @@ const postChatCompletion = async (
     }
     throw error;
   }
-};
-
-/**
- * Generate related words hint for Indonesian language learning
- */
-export const generateRelatedWords = async (word: string): Promise<string[]> => {
-  const messages = [
-    { role: "system", content: HINT_CONFIG.systemPrompt },
-    { role: "user", content: `Indonesian word: "${word}"` },
-  ];
-  const response = await postChatCompletion(messages, { maxTokens: HINT_CONFIG.maxTokens });
-  // Parse the comma-separated list of words
-  return response
-    .split(",")
-    .map((w) => w.trim())
-    .filter((w) => w.length > 0);
 };
 
 /**
