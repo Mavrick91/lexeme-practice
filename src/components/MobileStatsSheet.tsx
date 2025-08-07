@@ -14,18 +14,9 @@ import type { Lexeme, LexemeProgress } from "@/types";
 type MobileStatsSheetProps = {
   allLexemes: Lexeme[];
   progressMap: Map<string, LexemeProgress>;
-  accuracy?: number;
-  sessionWordsSeen?: number;
-  currentQueueSize?: number;
 };
 
-export const MobileStatsSheet = ({
-  allLexemes,
-  progressMap,
-  accuracy,
-  sessionWordsSeen = 0,
-  currentQueueSize = 0,
-}: MobileStatsSheetProps) => {
+export const MobileStatsSheet = ({ allLexemes, progressMap }: MobileStatsSheetProps) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -44,13 +35,7 @@ export const MobileStatsSheet = ({
           <SheetDescription>Track your learning progress and statistics</SheetDescription>
         </SheetHeader>
         <div className="mt-6">
-          <DashboardStats
-            allLexemes={allLexemes}
-            progressMap={progressMap}
-            accuracy={accuracy}
-            sessionWordsSeen={sessionWordsSeen}
-            currentQueueSize={currentQueueSize}
-          />
+          <DashboardStats allLexemes={allLexemes} progressMap={progressMap} />
         </div>
       </SheetContent>
     </Sheet>

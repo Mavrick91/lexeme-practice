@@ -46,9 +46,6 @@ describe("MobileStatsSheet", () => {
   const defaultProps = {
     allLexemes: sampleLexemes,
     progressMap: sampleProgressMap,
-    accuracy: 85,
-    sessionWordsSeen: 10,
-    currentQueueSize: 5,
   };
 
   beforeEach(() => {
@@ -101,33 +98,6 @@ describe("MobileStatsSheet", () => {
     expect(lastCall).toMatchObject({
       allLexemes: sampleLexemes,
       progressMap: sampleProgressMap,
-      accuracy: 85,
-      sessionWordsSeen: 10,
-      currentQueueSize: 5,
-    });
-  });
-
-  it("uses default values for optional props", () => {
-    const minimalProps = {
-      allLexemes: sampleLexemes,
-      progressMap: sampleProgressMap,
-    };
-
-    render(<MobileStatsSheet {...minimalProps} />);
-
-    // Open sheet
-    const triggerButton = screen.getByRole("button", { name: /view statistics/i });
-    fireEvent.click(triggerButton);
-
-    // Check that DashboardStats was called with default values
-    expect(DashboardStats).toHaveBeenCalled();
-    const lastCall = (DashboardStats as jest.Mock).mock.calls[0][0];
-    expect(lastCall).toMatchObject({
-      allLexemes: sampleLexemes,
-      progressMap: sampleProgressMap,
-      accuracy: undefined,
-      sessionWordsSeen: 0,
-      currentQueueSize: 0,
     });
   });
 
@@ -165,9 +135,6 @@ describe("MobileStatsSheet", () => {
     const customProps = {
       allLexemes: sampleLexemes,
       progressMap: sampleProgressMap,
-      accuracy: 92.5,
-      sessionWordsSeen: 25,
-      currentQueueSize: 8,
     };
 
     render(<MobileStatsSheet {...customProps} />);
@@ -182,9 +149,6 @@ describe("MobileStatsSheet", () => {
     expect(lastCall).toMatchObject({
       allLexemes: sampleLexemes,
       progressMap: sampleProgressMap,
-      accuracy: 92.5,
-      sessionWordsSeen: 25,
-      currentQueueSize: 8,
     });
   });
 
@@ -192,9 +156,6 @@ describe("MobileStatsSheet", () => {
     const emptyProps = {
       allLexemes: [],
       progressMap: new Map(),
-      accuracy: 0,
-      sessionWordsSeen: 0,
-      currentQueueSize: 0,
     };
 
     render(<MobileStatsSheet {...emptyProps} />);
@@ -210,9 +171,6 @@ describe("MobileStatsSheet", () => {
     expect(lastCall).toMatchObject({
       allLexemes: [],
       progressMap: new Map(),
-      accuracy: 0,
-      sessionWordsSeen: 0,
-      currentQueueSize: 0,
     });
   });
 
@@ -229,8 +187,6 @@ describe("MobileStatsSheet", () => {
     // Re-render with updated props
     const updatedProps = {
       ...defaultProps,
-      accuracy: 90,
-      sessionWordsSeen: 15,
     };
     rerender(<MobileStatsSheet {...updatedProps} />);
 
@@ -243,9 +199,6 @@ describe("MobileStatsSheet", () => {
     expect(lastCall).toMatchObject({
       allLexemes: sampleLexemes,
       progressMap: sampleProgressMap,
-      accuracy: 90,
-      sessionWordsSeen: 15,
-      currentQueueSize: 5,
     });
   });
 

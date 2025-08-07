@@ -51,8 +51,6 @@ describe("ModernWordCard", () => {
       onCorrect: mockOnCorrect,
       onIncorrect: mockOnIncorrect,
       onNext: mockOnNext,
-      currentIndex: 0,
-      totalWords: 10,
     };
     return render(<ModernWordCard {...defaultProps} {...props} />);
   };
@@ -71,15 +69,6 @@ describe("ModernWordCard", () => {
       expect(screen.getByPlaceholderText("Type your answer...")).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /reveal answer/i })).not.toBeInTheDocument();
       expect(screen.getByText("Type the English translation:")).toBeInTheDocument();
-    });
-
-    it("displays progress indicator correctly", () => {
-      renderCard({ currentIndex: 2, totalWords: 4 });
-
-      expect(screen.getByText("Word 3 of 4")).toBeInTheDocument();
-
-      const progressBar = document.querySelector('[style*="width"]');
-      expect(progressBar).toHaveStyle({ width: "75%" });
     });
 
     it("displays mastery progress counter", () => {
@@ -141,8 +130,6 @@ describe("ModernWordCard", () => {
           onCorrect={mockOnCorrect}
           onIncorrect={mockOnIncorrect}
           onNext={mockOnNext}
-          currentIndex={0}
-          totalWords={10}
         />
       );
 

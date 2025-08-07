@@ -4,29 +4,14 @@ import type { Lexeme, LexemeProgress } from "@/types";
 type DashboardSidebarProps = {
   allLexemes: Lexeme[];
   progressMap: Map<string, LexemeProgress>;
-  accuracy?: number;
-  sessionWordsSeen?: number;
-  currentQueueSize?: number;
 };
 
-export const DashboardSidebar = ({
-  allLexemes,
-  progressMap,
-  accuracy,
-  sessionWordsSeen = 0,
-  currentQueueSize = 0,
-}: DashboardSidebarProps) => {
+export const DashboardSidebar = ({ allLexemes, progressMap }: DashboardSidebarProps) => {
   return (
     <aside className="hidden w-96 overflow-y-auto border-r bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:block">
       <div className="sticky top-0">
         <h2 className="mb-4 text-lg font-semibold">Progress Overview</h2>
-        <DashboardStats
-          allLexemes={allLexemes}
-          progressMap={progressMap}
-          accuracy={accuracy}
-          sessionWordsSeen={sessionWordsSeen}
-          currentQueueSize={currentQueueSize}
-        />
+        <DashboardStats allLexemes={allLexemes} progressMap={progressMap} />
       </div>
     </aside>
   );

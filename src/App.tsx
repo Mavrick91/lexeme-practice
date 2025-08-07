@@ -4,7 +4,6 @@ import { ModernWordCard } from "./components/ModernWordCard";
 import { PracticeHistory } from "./components/PracticeHistory";
 import { DashboardSidebar } from "./components/DashboardSidebar";
 import { MobileStatsSheet } from "./components/MobileStatsSheet";
-import { Button } from "./components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
 import { toast, Toaster } from "sonner";
 import { Brain, AlertCircle, BookText } from "lucide-react";
@@ -21,22 +20,64 @@ import {
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
 
-// Constants for queue management
-const QUEUE_SIZE = 50; // Number of words to fetch at once
-const RECENT_LIMIT = 200; // Max words to track as "seen" before recycling
+// Queue constants removed – we now pick one random word at a time
 
 const AppContent = () => {
-  const [practiceQueue, setPracticeQueue] = useState<Lexeme[]>([]);
-  const [globalSeen, setGlobalSeen] = useState<Set<string>>(new Set());
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [totalAnswers, setTotalAnswers] = useState(0);
+  const [currentLexeme, setCurrentLexeme] = useState<Lexeme | null>(null);
   const [practiceMode, setPracticeMode] = useState<"smart" | "all" | "mistakes">("smart");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
   const { recordAnswer, markAsMastered, getDueLexemes, getProgress, progressMap, getMistakePool } =
     useProgress();
+
+  // Function to pick a random lexeme based on practice mode
+  const pickRandomLexeme = useCallback(
+    (mode: "smart" | "all" | "mistakes"): Lexeme | null => {
+      const data = lexemesData as LexemesData;
+
+      if (mode === "smart") {
+        // For smart mode, get due lexemes and pick randomly
+        const pool = getDueLexemes(data.learnedLexemes, 999999, new Set());
+        if (pool.length === 0) {
+          toast("All words reviewed! 🎉", {
+            description:
+              "Great job! All your words are up to date. Try switching to 'All Words' mode to continue practicing.",
+            duration: 5000,
+          });
+          return null;
+        }
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      if (mode === "mistakes") {
+        // For mistakes mode, get mistake pool and pick randomly
+        const pool = getMistakePool(data.learnedLexemes, 999999);
+        if (pool.length === 0) {
+          toast("No mistakes to practice! 🎉", {
+            description:
+              "Great job! You haven't made any mistakes yet. Try other practice modes to continue learning.",
+            duration: 5000,
+          });
+          return null;
+        }
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      // mode === "all" - pick from all non-mastered words
+      const unmastered = data.learnedLexemes.filter((l) => !progressMap.get(l.text)?.isMastered);
+      if (unmastered.length === 0) {
+        toast("All words mastered! 🎉", {
+          description:
+            "Amazing! You've mastered all available words. Consider resetting your progress to practice again.",
+          duration: 5000,
+        });
+        return null;
+      }
+      return unmastered[Math.floor(Math.random() * unmastered.length)];
+    },
+    [getDueLexemes, getMistakePool, progressMap]
+  );
 
   // Load practice history from IndexedDB on mount
   useEffect(() => {
@@ -58,162 +99,32 @@ const AppContent = () => {
     loadHistory();
   }, []);
 
-  // Function to fill the practice queue
-  const fillQueue = useCallback(
-    async (excludeSet: Set<string>): Promise<boolean> => {
-      const data = lexemesData as LexemesData;
-      let newLexemes: Lexeme[] = [];
-
-      if (practiceMode === "smart") {
-        // Use smart selection with spaced repetition
-        newLexemes = getDueLexemes(data.learnedLexemes, QUEUE_SIZE, excludeSet);
-
-        // If no lexemes returned and excludeSet is not empty, clear excludeSet and retry
-        if (newLexemes.length === 0 && excludeSet.size > 0) {
-          newLexemes = getDueLexemes(data.learnedLexemes, QUEUE_SIZE, new Set());
-        }
-
-        // Show appropriate feedback if still no words
-        if (newLexemes.length === 0) {
-          toast("All words reviewed! 🎉", {
-            description:
-              "Great job! All your words are up to date. Try switching to 'All Words' mode to continue practicing.",
-            duration: 5000,
-          });
-        }
-      } else if (practiceMode === "mistakes") {
-        // Get mistake pool
-        newLexemes = getMistakePool(data.learnedLexemes, QUEUE_SIZE);
-
-        // Show feedback if no mistakes available
-        if (newLexemes.length === 0) {
-          toast("No mistakes to practice! 🎉", {
-            description:
-              "Great job! You haven't made any mistakes yet. Try other practice modes to continue learning.",
-            duration: 5000,
-          });
-        }
-      } else if (practiceMode === "all") {
-        // All words in order, filtering out mastered words
-        const allWords = [...data.learnedLexemes].filter(
-          (l) => !progressMap.get(l.text)?.isMastered
-        );
-        // Filter out seen words
-        newLexemes = allWords.filter((l) => !excludeSet.has(l.text)).slice(0, QUEUE_SIZE);
-
-        // If not enough words and excludeSet is not empty, include some seen words
-        if (newLexemes.length < QUEUE_SIZE && excludeSet.size > 0) {
-          const additionalWords = allWords.slice(0, QUEUE_SIZE - newLexemes.length);
-          newLexemes = [...newLexemes, ...additionalWords];
-        }
-
-        // Show feedback when all words have been seen
-        if (newLexemes.length === 0 && excludeSet.size >= allWords.length) {
-          toast("All words practiced! 🎉", {
-            description:
-              "Excellent work! You've gone through all available words. Starting over from the beginning.",
-            duration: 5000,
-          });
-        }
-      }
-
-      // Update practice queue
-      setPracticeQueue(newLexemes);
-      setIsLoading(false);
-
-      // Return false if no lexemes available even after retry
-      return newLexemes.length > 0;
-    },
-    [practiceMode, progressMap, getDueLexemes, getMistakePool]
-  );
-
-  // Handle mode changes
   useEffect(() => {
-    // Clear globalSeen when mode changes
-    setGlobalSeen(new Set());
-    setCurrentIndex(0);
+    const next = pickRandomLexeme(practiceMode);
+    if (!next) {
+      setIsLoading(false);
+      return;
+    }
+    setCurrentLexeme(next);
+    setIsLoading(false);
+  }, [practiceMode, pickRandomLexeme]);
 
-    // Call fillQueue with empty set
-    fillQueue(new Set());
-  }, [practiceMode, fillQueue]);
+  const handleNext = async () => {
+    const next = pickRandomLexeme(practiceMode);
 
-  const handleNext = async (skipMasteredWord?: string) => {
-    // Add current word to globalSeen
-    const currentWord = practiceQueue[currentIndex].text;
-    const newSeen = new Set(globalSeen);
-    newSeen.add(currentWord);
-
-    // If globalSeen.size > RECENT_LIMIT, remove oldest entries
-    if (newSeen.size > RECENT_LIMIT) {
-      const seenArray = Array.from(newSeen);
-      const toRemove = seenArray.slice(0, newSeen.size - RECENT_LIMIT);
-      toRemove.forEach((word) => newSeen.delete(word));
+    if (!next) {
+      toast("Session complete! 🎉", {
+        description:
+          "You've completed all available words for this mode. Switch modes to continue practicing or take a break!",
+        duration: 6000,
+      });
+      return;
     }
 
-    // Calculate the final next index BEFORE updating any state
-    let finalIndex = currentIndex;
-    let needsRefill = false;
-
-    // If at the end of queue, need to refill
-    if (currentIndex >= practiceQueue.length - 1) {
-      needsRefill = true;
-    } else {
-      // Find next non-mastered word in queue
-      let nextIndex = currentIndex + 1;
-
-      // Skip any mastered words (including just mastered word)
-      while (
-        nextIndex < practiceQueue.length &&
-        practiceQueue[nextIndex] &&
-        (progressMap.get(practiceQueue[nextIndex].text)?.isMastered ||
-          practiceQueue[nextIndex].text === skipMasteredWord)
-      ) {
-        nextIndex++;
-      }
-
-      if (nextIndex >= practiceQueue.length) {
-        // All remaining words in queue are mastered or we're at the end
-        needsRefill = true;
-      } else {
-        // Found a valid next word
-        finalIndex = nextIndex;
-      }
-    }
-
-    // Handle refill if needed
-    if (needsRefill) {
-      const hasMore = await fillQueue(newSeen);
-
-      if (!hasMore) {
-        // No more words available
-        if (currentIndex >= practiceQueue.length - 1) {
-          toast("Session complete! 🎉", {
-            description:
-              "You've completed all available words for this mode. Switch modes to continue practicing or take a well-deserved break!",
-            duration: 6000,
-          });
-        } else {
-          toast("No more words available", {
-            description: "All non-mastered words have been practiced.",
-          });
-        }
-        // Don't update state - stay on current word
-        return;
-      }
-
-      // Queue was refilled, start from beginning
-      finalIndex = 0;
-    }
-
-    // Update both states together to avoid intermediate renders
-    setGlobalSeen(newSeen);
-    setCurrentIndex(finalIndex);
+    setCurrentLexeme(next);
   };
 
   const handleMarkCorrect = async (lexeme: Lexeme) => {
-    setCorrectAnswers(correctAnswers + 1);
-    setTotalAnswers(totalAnswers + 1);
-
     // Add to practice history
     const historyItem: PracticeHistoryItem = {
       id: `${Date.now()}-${Math.random()}`,
@@ -261,12 +172,10 @@ const AppContent = () => {
     });
 
     // Move to next word immediately, passing the word to skip
-    await handleNext(lexeme.text);
+    await handleNext();
   };
 
   const handleMarkIncorrect = async (lexeme: Lexeme, userAnswer?: string) => {
-    setTotalAnswers(totalAnswers + 1);
-
     // Add to practice history
     const historyItem: PracticeHistoryItem = {
       id: `${Date.now()}-${Math.random()}`,
@@ -293,13 +202,6 @@ const AppContent = () => {
     // This gives them time to review the correct answer
   };
 
-  const handleReset = () => {
-    setCurrentIndex(0);
-    setCorrectAnswers(0);
-    setTotalAnswers(0);
-    setPracticeHistory([]);
-  };
-
   const handleClearHistory = async () => {
     // Clear practice history
     const [, historyError] = await tryCatch(() => clearDBHistory());
@@ -322,30 +224,9 @@ const AppContent = () => {
     toast.success("Practice history cleared");
   };
 
-  if (isLoading) {
+  if (isLoading || !currentLexeme) {
     return <div className="mt-16 text-center text-xl text-gray-600">Loading lexemes...</div>;
   }
-
-  if (practiceQueue.length === 0) {
-    return (
-      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="max-w-md space-y-4 text-center">
-          <h2 className="text-2xl font-semibold text-gray-700">No words available</h2>
-          <p className="text-gray-600">
-            {practiceMode === "smart" &&
-              "All your words are up to date! Great job keeping up with your reviews."}
-            {practiceMode === "all" && "Something went wrong loading the words."}
-            {practiceMode === "mistakes" && "No mistakes to review. Keep up the great work!"}
-          </p>
-          <p className="text-sm text-gray-500">
-            Try switching to a different practice mode using the buttons above.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const currentLexeme = practiceQueue[currentIndex];
 
   return (
     <Layout>
@@ -354,9 +235,6 @@ const AppContent = () => {
         <DashboardSidebar
           allLexemes={(lexemesData as LexemesData).learnedLexemes}
           progressMap={progressMap}
-          accuracy={totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0}
-          sessionWordsSeen={globalSeen.size}
-          currentQueueSize={practiceQueue.length - currentIndex - 1}
         />
 
         {/* Main Center Area */}
@@ -398,19 +276,8 @@ const AppContent = () => {
                 onIncorrect={(userAnswer) => handleMarkIncorrect(currentLexeme, userAnswer)}
                 onNext={handleNext}
                 onMarkAsMastered={() => handleMarkAsMastered(currentLexeme)}
-                currentIndex={currentIndex}
-                totalWords={practiceQueue.length}
                 progress={getProgress(currentLexeme.text)}
               />
-
-              {/* Session Stats */}
-              {totalAnswers > 0 && (
-                <div className="mt-8 flex justify-center">
-                  <Button onClick={handleReset} variant="outline" size="sm">
-                    Reset Session
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -425,9 +292,6 @@ const AppContent = () => {
       <MobileStatsSheet
         allLexemes={(lexemesData as LexemesData).learnedLexemes}
         progressMap={progressMap}
-        accuracy={totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 0}
-        sessionWordsSeen={globalSeen.size}
-        currentQueueSize={practiceQueue.length - currentIndex - 1}
       />
 
       <Toaster position="top-right" />

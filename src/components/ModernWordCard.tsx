@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, Keyboard, Lightbulb, RefreshCw, Trophy, Check } from "lucide-react";
+import { Volume2, Lightbulb, RefreshCw, Trophy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -17,8 +17,6 @@ type ModernWordCardProps = {
   onIncorrect: (userAnswer?: string) => void | Promise<void>;
   onNext: (skipMasteredWord?: string) => void;
   onMarkAsMastered?: () => void | Promise<void>;
-  currentIndex: number;
-  totalWords: number;
   progress?: LexemeProgress | null;
 };
 
@@ -28,8 +26,6 @@ export const ModernWordCard = ({
   onIncorrect,
   onNext,
   onMarkAsMastered,
-  currentIndex,
-  totalWords,
   progress,
 }: ModernWordCardProps) => {
   const [userAnswer, setUserAnswer] = useState("");
@@ -152,25 +148,6 @@ export const ModernWordCard = ({
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      {/* Progress Indicator */}
-      <div className="mb-6">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Word {currentIndex + 1} of {totalWords}
-          </span>
-          <Badge variant="outline" className="gap-1">
-            <Keyboard className="h-3 w-3" />
-            Space to reveal
-          </Badge>
-        </div>
-        <div className="h-2 w-full rounded-full bg-secondary">
-          <div
-            className="h-2 rounded-full bg-primary transition-all duration-300"
-            style={{ width: `${((currentIndex + 1) / totalWords) * 100}%` }}
-          />
-        </div>
-      </div>
-
       {/* Main Card */}
       <Card
         className={cn("relative overflow-hidden transition-all duration-200", animations.fadeIn)}
