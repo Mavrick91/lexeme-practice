@@ -25,10 +25,21 @@ const AppContent = () => {
   const [currentLexeme, setCurrentLexeme] = useState<Lexeme | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
-  const [isReverseMode, setIsReverseMode] = useState(false); // false = Indonesian to English, true = English to Indonesian
+  const [isReverseMode, setIsReverseMode] = useState<boolean>(() => {
+    // Load reverse mode preference from localStorage
+    const saved = localStorage.getItem("reverseMode");
+    return saved === "true";
+  });
   const [progressLoaded, setProgressLoaded] = useState(false);
 
   const { recordAnswer, markAsMastered, getProgress, progressMap } = useProgress();
+
+  // Handle reverse mode toggle with localStorage persistence
+  const handleToggleReverseMode = () => {
+    const newMode = !isReverseMode;
+    setIsReverseMode(newMode);
+    localStorage.setItem("reverseMode", String(newMode));
+  };
 
   // Function to pick a random lexeme (excluding mastered words)
   const pickRandomLexeme = useCallback((): Lexeme | null => {
@@ -269,7 +280,7 @@ const AppContent = () => {
               {/* Practice Mode Toggle */}
               <div className="flex justify-center">
                 <button
-                  onClick={() => setIsReverseMode(!isReverseMode)}
+                  onClick={handleToggleReverseMode}
                   className="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
                 >
                   <span className="text-muted-foreground">Mode:</span>

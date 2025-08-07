@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@/test-utils";
+import { render, screen, waitFor, fireEvent } from "@/test-utils";
 import App from "./App";
 import lexemesData from "./combined_lexemes.json";
 import type { LexemesData, LexemeProgress } from "./types";
@@ -38,6 +38,8 @@ const mockedToast = toast as jest.MockedFunction<typeof toast>;
 describe("App - Mastered Words Filtering", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Clear localStorage before each test
+    localStorage.clear();
 
     // Set up default mock implementations
     mockedDb.getUserStats.mockResolvedValue(undefined);
@@ -142,6 +144,76 @@ describe("App - Mastered Words Filtering", () => {
 
     // Either loading state or empty layout is acceptable
     expect(loadingText || layoutHeader).toBeTruthy();
+  });
+
+  it("should persist reverseMode preference in localStorage", async () => {
+    mockedDb.getAllLexemeProgress.mockResolvedValue([]);
+
+    // Initially localStorage should be empty
+    expect(localStorage.getItem("reverseMode")).toBeNull();
+
+    const { rerender } = render(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+    });
+
+    // Should default to normal mode (Indonesian → English)
+    expect(screen.getByText("Indonesian → English")).toBeInTheDocument();
+
+    // Click to toggle to reverse mode
+    const toggleButton = screen.getByRole("button", {
+      name: /Mode:.*click to switch/i,
+    });
+    fireEvent.click(toggleButton);
+
+    // Should now show reverse mode
+    expect(screen.getByText("English → Indonesian")).toBeInTheDocument();
+
+    // localStorage should be updated
+    expect(localStorage.getItem("reverseMode")).toBe("true");
+
+    // Unmount and remount to simulate page refresh
+    rerender(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+    });
+
+    // Should still be in reverse mode after refresh
+    expect(screen.getByText("English → Indonesian")).toBeInTheDocument();
+  });
+
+  it("should load reverseMode from localStorage on mount", async () => {
+    mockedDb.getAllLexemeProgress.mockResolvedValue([]);
+
+    // Set localStorage before rendering
+    localStorage.setItem("reverseMode", "true");
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+    });
+
+    // Should start in reverse mode based on localStorage
+    expect(screen.getByText("English → Indonesian")).toBeInTheDocument();
+  });
+
+  it("should default to normal mode when localStorage value is false", async () => {
+    mockedDb.getAllLexemeProgress.mockResolvedValue([]);
+
+    // Set localStorage to false
+    localStorage.setItem("reverseMode", "false");
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+    });
+
+    // Should be in normal mode
+    expect(screen.getByText("Indonesian → English")).toBeInTheDocument();
   });
 
   it("should show 0-4 streak but filter out words at streak 5", async () => {
