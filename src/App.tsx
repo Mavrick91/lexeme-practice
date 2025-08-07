@@ -289,7 +289,7 @@ const AppContent = () => {
     // Record answer with response time and user's answer for mistake tracking
     await recordAnswer(lexeme, false, userAnswer);
 
-    // Don't call handleNext here - let the user manually advance or use Skip button
+    // Don't call handleNext here - let the user manually advance after review
     // This gives them time to review the correct answer
   };
 

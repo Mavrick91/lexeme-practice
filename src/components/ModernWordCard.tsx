@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, ChevronRight, Keyboard, Lightbulb, RefreshCw, Trophy, Check } from "lucide-react";
+import { Volume2, Keyboard, Lightbulb, RefreshCw, Trophy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -341,9 +341,9 @@ export const ModernWordCard = ({
           </div>
         </div>
 
-        {/* Action Buttons (Always visible) */}
-        <div className="absolute bottom-4 right-4 flex gap-2">
-          {onMarkAsMastered && !progress?.isMastered && (
+        {/* Action Buttons (Mark as Mastered only) */}
+        {onMarkAsMastered && !progress?.isMastered && (
+          <div className="absolute bottom-4 right-4">
             <Button
               variant="outline"
               size="sm"
@@ -353,17 +353,8 @@ export const ModernWordCard = ({
               <Trophy className="h-4 w-4" />
               Mark as Mastered
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNext()}
-            className="gap-1 text-muted-foreground"
-          >
-            Skip
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+          </div>
+        )}
       </Card>
 
       {/* Keyboard Shortcuts Info */}

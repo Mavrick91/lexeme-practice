@@ -371,14 +371,6 @@ describe("ModernWordCard", () => {
       expect(mockAudio).toHaveBeenCalledWith("https://example.com/rumah.mp3");
       expect(mockPlay).toHaveBeenCalledTimes(1);
     });
-
-    it("skip button calls onNext", () => {
-      renderCard();
-
-      fireEvent.click(screen.getByRole("button", { name: /skip/i }));
-
-      expect(mockOnNext).toHaveBeenCalledTimes(1);
-    });
   });
 
   describe("UI details", () => {
