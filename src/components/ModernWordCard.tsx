@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, Lightbulb, RefreshCw, Trophy, Check } from "lucide-react";
+import { Volume2, Lightbulb, RefreshCw, Trophy, Check, Eye, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
 import { useHint } from "@/hooks/useHint";
+import { useLetterHint } from "@/hooks/useLetterHint";
 import type { Lexeme, LexemeProgress } from "@/types";
 
 type ModernWordCardProps = {
@@ -34,11 +35,37 @@ export const ModernWordCard = ({
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Determine the target word based on mode
+  const targetWord = isReverseMode
+    ? lexeme.text // In reverse mode, user types Indonesian word
+    : lexeme.translations[0]; // In normal mode, user types English translation
+
+  // Use the letter hint hook
+  const {
+    showLetterHint,
+    revealedLetters,
+    letterHint,
+    maxLetters,
+    toggleLetterHint,
+    revealMoreLetters,
+    revealFewerLetters,
+  } = useLetterHint({
+    targetWord,
+    isEnabled: true,
+  });
+
+  // Track the previous lexeme to detect actual word changes
+  const prevLexemeRef = useRef(lexeme.text);
+
   useEffect(() => {
-    // Reset state when lexeme changes
-    setUserAnswer("");
-    setShowHint(false);
-  }, [lexeme]);
+    // Only reset when lexeme actually changes to a different word
+    if (prevLexemeRef.current !== lexeme.text) {
+      setUserAnswer("");
+      setShowHint(false);
+      // Letter hint persists across different words
+      prevLexemeRef.current = lexeme.text;
+    }
+  }, [lexeme.text]);
 
   // Use the auto-focus hook for reliable input focusing in writing mode
   useAutoFocus(inputRef, true, [lexeme]);
@@ -51,6 +78,7 @@ export const ModernWordCard = ({
 
   // Manual override - treat current card as answered correctly
   const markCurrentAsCorrect = useCallback(async () => {
+    setUserAnswer(""); // Clear input when marking as correct
     const result = await handleCorrect();
     // Advance immediately (same as automatic correct answers)
     const skipWord = (result as { justMastered?: boolean })?.justMastered ? lexeme.text : undefined;
@@ -82,11 +110,25 @@ export const ModernWordCard = ({
         e.preventDefault();
         handleHintClick();
       }
+      // Ctrl+L for letter hint toggle
+      if ((e.ctrlKey || e.metaKey) && e.key === "l") {
+        e.preventDefault();
+        toggleLetterHint();
+      }
+      // Ctrl+Plus/Minus for revealing more/fewer letters
+      if ((e.ctrlKey || e.metaKey) && e.key === "=") {
+        e.preventDefault();
+        revealMoreLetters();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "-") {
+        e.preventDefault();
+        revealFewerLetters();
+      }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleHintClick]);
+  }, [handleHintClick, toggleLetterHint, revealMoreLetters, revealFewerLetters]);
 
   const playAudio = () => {
     const audio = new Audio(lexeme.audioURL);
@@ -136,6 +178,7 @@ export const ModernWordCard = ({
     }
 
     if (correct) {
+      setUserAnswer(""); // Clear input after correct answer
       const result = await handleCorrect();
       // Pass the word if it was just mastered so it can be skipped
       const skipWord = (result as { justMastered?: boolean })?.justMastered
@@ -143,6 +186,7 @@ export const ModernWordCard = ({
         : undefined;
       onNext(skipWord);
     } else {
+      setUserAnswer(""); // Clear input after incorrect answer
       await onIncorrect(userAnswer);
       onNext();
     }
@@ -283,6 +327,61 @@ export const ModernWordCard = ({
                   </Button>
                 </div>
 
+                {/* Letter Hint Controls */}
+                <div className="mt-4 flex justify-center">
+                  <div className="flex items-center gap-3 rounded-lg bg-secondary/30 p-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleLetterHint}
+                      className="gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      {showLetterHint ? "Hide Letters" : "Show Letters"}
+                    </Button>
+
+                    {showLetterHint && (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={revealFewerLetters}
+                            disabled={revealedLetters <= 1}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-12 text-center text-sm font-medium">
+                            {revealedLetters}/{maxLetters}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={revealMoreLetters}
+                            disabled={revealedLetters >= maxLetters}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Letter Hint Display */}
+                {showLetterHint && letterHint && (
+                  <div className="mt-3 flex justify-center">
+                    <div className="rounded-lg bg-primary/10 px-4 py-2">
+                      <p className="font-mono text-lg font-semibold tracking-wider">{letterHint}</p>
+                    </div>
+                  </div>
+                )}
+
                 {showHint && (
                   <div
                     className={cn(
@@ -349,8 +448,17 @@ export const ModernWordCard = ({
 
       {/* Keyboard Shortcuts Info */}
       <div className="mt-4 text-center text-xs text-muted-foreground">
-        Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
-        <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+H</kbd> for hint
+        <div>
+          Press <kbd className="rounded bg-muted px-2 py-1">Enter</kbd> to check answer,
+          <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+H</kbd> for hint,
+          <kbd className="mx-1 rounded bg-muted px-2 py-1">Ctrl+L</kbd> for letters
+        </div>
+        {showLetterHint && (
+          <div className="mt-1">
+            <kbd className="rounded bg-muted px-2 py-1">Ctrl+-</kbd>/
+            <kbd className="rounded bg-muted px-2 py-1">Ctrl+=</kbd> to adjust letters
+          </div>
+        )}
       </div>
     </div>
   );
