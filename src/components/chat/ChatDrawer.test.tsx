@@ -9,7 +9,7 @@ jest.mock("@/hooks/useChat");
 
 // Mock the openai functions
 jest.mock("@/lib/openai", () => ({
-  generateImage: jest.fn(),
+  generateMnemonicImage: jest.fn(),
 }));
 
 // Mock toast
@@ -208,18 +208,20 @@ describe("ChatDrawer", () => {
 
   describe("Image Generation Feature", () => {
     // Get references to the mocked modules
-    let generateImage: jest.MockedFunction<typeof import("@/lib/openai").generateImage>;
+    let generateMnemonicImage: jest.MockedFunction<
+      typeof import("@/lib/openai").generateMnemonicImage
+    >;
     let toast: typeof import("sonner").toast;
 
     beforeEach(() => {
       jest.clearAllMocks();
       // Initialize the mocked functions
-      generateImage = jest.fn();
+      generateMnemonicImage = jest.fn();
       toast = { error: jest.fn() };
 
       // Update the mocked modules
-      const openaiMock = jest.requireMock("@/lib/openai") as { generateImage: jest.Mock };
-      openaiMock.generateImage = generateImage;
+      const openaiMock = jest.requireMock("@/lib/openai") as { generateMnemonicImage: jest.Mock };
+      openaiMock.generateMnemonicImage = generateMnemonicImage;
       const sonnerMock = jest.requireMock("sonner") as { toast: { error: jest.Mock } };
       sonnerMock.toast = toast;
     });
@@ -239,9 +241,12 @@ describe("ChatDrawer", () => {
       });
 
       // Verify sendMessage was called with the correct prompt and metadata
-      expect(mockSendMessage).toHaveBeenCalledWith(expect.stringContaining("memory tricks"), {
-        templateId: "memory-tips",
-      });
+      expect(mockSendMessage).toHaveBeenCalledWith(
+        expect.stringContaining("Break down the Indonesian word"),
+        {
+          templateId: "memory-tips",
+        }
+      );
 
       // Simulate receiving a response
       const memoryTipResponse: ChatMessage = {
@@ -270,7 +275,7 @@ describe("ChatDrawer", () => {
       const generationPromise = new Promise<string>((resolve) => {
         resolveGeneration = resolve;
       });
-      generateImage.mockReturnValueOnce(generationPromise);
+      generateMnemonicImage.mockReturnValueOnce(generationPromise);
 
       // Set up the component with a memory tip response
       const memoryTipResponse: ChatMessage = {
@@ -325,7 +330,7 @@ describe("ChatDrawer", () => {
     it("generates image when button is clicked", async () => {
       const mockImageDataUrl =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-      generateImage.mockResolvedValueOnce(mockImageDataUrl);
+      generateMnemonicImage.mockResolvedValueOnce(mockImageDataUrl);
 
       // Set up the component with a memory tip response already received
       const memoryTipResponse: ChatMessage = {
@@ -355,15 +360,21 @@ describe("ChatDrawer", () => {
 
       const generateButton = screen.getByRole("button", { name: /generate visual mnemonic/i });
 
-      // Click the button and wait for state changes
+      // Click the button and wait for all async operations to complete
       await act(async () => {
         generateButton.click();
+        // Wait for promises to resolve
+        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      expect(generateImage).toHaveBeenCalledWith(expect.stringContaining("casa"));
+      expect(generateMnemonicImage).toHaveBeenCalledWith(
+        "casa",
+        ["house", "home"],
+        "To remember 'casa', think of a castle.",
+        "intermediate"
+      );
 
       // Verify that addAssistantMessage was called with the image data URL
-      await new Promise((resolve) => setTimeout(resolve, 0)); // Let promises resolve
       expect(mockAddAssistantMessage).toHaveBeenCalledWith(
         "Here's a visual mnemonic to help you remember:",
         mockImageDataUrl
@@ -371,7 +382,11 @@ describe("ChatDrawer", () => {
     });
 
     it("shows error toast when image generation fails", async () => {
-      generateImage.mockRejectedValueOnce(new Error("API error"));
+      // Mock console.error for this test to suppress expected error output
+      const originalConsoleError = console.error;
+      console.error = jest.fn();
+
+      generateMnemonicImage.mockRejectedValueOnce(new Error("API error"));
 
       // Set up the component with a memory tip response
       const memoryTipResponse: ChatMessage = {
@@ -399,14 +414,21 @@ describe("ChatDrawer", () => {
       rerender(<ChatDrawer open={true} item={historyItem} onOpenChange={mockOnOpenChange} />);
 
       const generateButton = screen.getByRole("button", { name: /generate visual mnemonic/i });
-      act(() => {
+
+      // Wrap the async operation in act
+      await act(async () => {
         generateButton.click();
+        // Wait for all promises to resolve
+        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      // Wait for the error handling
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
       expect(toast.error).toHaveBeenCalledWith("Failed to generate visual mnemonic");
+
+      // Verify console.error was called with expected message
+      expect(console.error).toHaveBeenCalledWith("Failed to generate image:", expect.any(Error));
+
+      // Restore console.error
+      console.error = originalConsoleError;
       expect(mockAddAssistantMessage).not.toHaveBeenCalled();
     });
 

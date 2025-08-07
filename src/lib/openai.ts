@@ -2,13 +2,6 @@ import { OPENAI_CONFIG } from "@/config/openai";
 import { HINT_CONFIG } from "@/config/hint";
 import type { ChatMessage } from "@/types/chat";
 
-const IMAGE_GENERATION_CONFIG = {
-  model: "gpt-image-1", // Using gpt-image-1 model as requested
-  size: "1024x1024" as const,
-  quality: "high" as const, // Use high quality for better visual mnemonics
-  n: 1,
-};
-
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 type CompletionOptions = {
@@ -103,19 +96,20 @@ export const chatCompletion = async (
 };
 
 /**
- * Helper function to convert base64 to data URL
+ * Generate a mnemonic image using scenario presets
  */
-const toDataURL = (base64: string, mimeType: string = "image/png"): string => {
-  return `data:${mimeType};base64,${base64}`;
-};
-
-/**
- * Generate an image using gpt-image-1 model
- */
-export const generateImage = async (prompt: string): Promise<string> => {
+export const generateMnemonicImage = async (
+  word: string,
+  translations: string[],
+  memoryTip?: string,
+  scenario: "beginner" | "intermediate" | "advanced" | "kids" | "quickReview" = "beginner"
+): Promise<string> => {
   if (!OPENAI_API_KEY) {
     throw new Error("OpenAI API key not configured");
   }
+
+  const { buildQuickMnemonicPrompt } = await import("./buildMnemonicPrompt");
+  const prompt = buildQuickMnemonicPrompt(word, translations, scenario, memoryTip);
 
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
@@ -124,7 +118,10 @@ export const generateImage = async (prompt: string): Promise<string> => {
       Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      ...IMAGE_GENERATION_CONFIG,
+      model: "gpt-image-1",
+      size: "1024x1024",
+      quality: "high",
+      n: 1,
       prompt,
     }),
   });
@@ -139,28 +136,14 @@ export const generateImage = async (prompt: string): Promise<string> => {
   // Handle base64 response format
   if (data.data?.[0]?.b64_json) {
     const base64Data = data.data[0].b64_json;
-    const mimeType = data.output_format === "png" ? "image/png" : "image/jpeg";
-    return toDataURL(base64Data, mimeType);
+    const mimeType = "image/png";
+    return `data:${mimeType};base64,${base64Data}`;
   }
 
-  // Fallback to URL if available (backwards compatibility)
+  // Fallback to URL if available
   if (data.data?.[0]?.url) {
     return data.data[0].url;
   }
 
   throw new Error("No image data found in response");
-};
-
-/**
- * Generate a mnemonic image using scenario presets
- */
-export const generateMnemonicImage = async (
-  word: string,
-  translations: string[],
-  memoryTip?: string,
-  scenario: "beginner" | "intermediate" | "advanced" | "kids" | "quickReview" = "beginner"
-): Promise<string> => {
-  const { buildQuickMnemonicPrompt } = await import("./buildMnemonicPrompt");
-  const prompt = buildQuickMnemonicPrompt(word, translations, scenario, memoryTip);
-  return generateImage(prompt);
 };

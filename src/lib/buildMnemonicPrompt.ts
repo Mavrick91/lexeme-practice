@@ -17,7 +17,7 @@ import {
  * @param overrides - Optional spec overrides
  * @returns Structured prompt string for image generation
  */
-export const buildMnemonicPrompt = (
+const buildMnemonicPrompt = (
   word: string,
   translations: string[],
   memoryTip?: string,

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@/test-utils";
+import { render, screen, fireEvent, waitFor } from "@/test-utils";
 import userEvent from "@testing-library/user-event";
 import { ModernWordCard } from "./ModernWordCard";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -154,7 +154,6 @@ describe("ModernWordCard", () => {
 
   describe("Writing mode interactions", () => {
     it("accepts correct answer with normalization", async () => {
-      jest.useFakeTimers();
       const user = userEvent.setup({ delay: null });
       renderCard();
 
@@ -166,16 +165,11 @@ describe("ModernWordCard", () => {
 
       expect(mockOnCorrect).toHaveBeenCalledTimes(1);
 
-      // Auto-advance happens after 100ms
-      expect(mockOnNext).not.toHaveBeenCalled();
-      jest.advanceTimersByTime(100);
-      expect(mockOnNext).toHaveBeenCalledTimes(1);
-
-      jest.useRealTimers();
+      // Auto-advance happens immediately
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1));
     });
 
     it("accepts alternative translations", async () => {
-      jest.useFakeTimers();
       const user = userEvent.setup({ delay: null });
       renderCard();
 
@@ -185,12 +179,38 @@ describe("ModernWordCard", () => {
 
       expect(mockOnCorrect).toHaveBeenCalledTimes(1);
 
-      // Auto-advance happens after 100ms
-      expect(mockOnNext).not.toHaveBeenCalled();
-      jest.advanceTimersByTime(100);
-      expect(mockOnNext).toHaveBeenCalledTimes(1);
+      // Auto-advance happens immediately
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1));
+    });
 
-      jest.useRealTimers();
+    it("marks as correct when Mark as Correct button is clicked", async () => {
+      const user = userEvent.setup({ delay: null });
+      renderCard();
+
+      const markAsCorrectButton = screen.getByRole("button", { name: /mark as correct/i });
+      await user.click(markAsCorrectButton);
+
+      expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+
+      // Auto-advance happens immediately
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledTimes(1));
+    });
+
+    it("marks as correct and skips mastered word", async () => {
+      const user = userEvent.setup({ delay: null });
+
+      // Mock onCorrect to return justMastered
+      mockOnCorrect.mockResolvedValueOnce({ justMastered: true });
+
+      renderCard();
+
+      const markAsCorrectButton = screen.getByRole("button", { name: /mark as correct/i });
+      await user.click(markAsCorrectButton);
+
+      expect(mockOnCorrect).toHaveBeenCalledTimes(1);
+
+      // Should call onNext immediately with the word to skip
+      await waitFor(() => expect(mockOnNext).toHaveBeenCalledWith("rumah"));
     });
 
     it("handles incorrect answer and auto-advances", async () => {
@@ -403,8 +423,12 @@ describe("ModernWordCard", () => {
 
     it.each(testCases)("input '%s' should be %s", async (input, shouldBeCorrect) => {
       jest.setTimeout(10000); // Increase timeout for parameterized tests
-      jest.useFakeTimers();
       const user = userEvent.setup({ delay: null });
+
+      if (!shouldBeCorrect) {
+        jest.useFakeTimers();
+      }
+
       renderCard();
 
       const inputElement = screen.getByPlaceholderText("Type your answer...");
@@ -413,17 +437,15 @@ describe("ModernWordCard", () => {
 
       if (shouldBeCorrect) {
         expect(mockOnCorrect).toHaveBeenCalled();
-        // Advance timer to trigger onNext
-        jest.advanceTimersByTime(100);
-        expect(mockOnNext).toHaveBeenCalled();
+        // onNext is called immediately for correct answers
+        await waitFor(() => expect(mockOnNext).toHaveBeenCalled());
       } else {
         expect(mockOnIncorrect).toHaveBeenCalled();
         // Advance timer to trigger onNext for incorrect
         jest.advanceTimersByTime(2000);
         expect(mockOnNext).toHaveBeenCalled();
+        jest.useRealTimers();
       }
-
-      jest.useRealTimers();
     });
   });
 });

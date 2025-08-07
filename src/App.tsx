@@ -150,24 +150,13 @@ const AppContent = () => {
       toRemove.forEach((word) => newSeen.delete(word));
     }
 
-    setGlobalSeen(newSeen);
+    // Calculate the final next index BEFORE updating any state
+    let finalIndex = currentIndex;
+    let needsRefill = false;
 
-    // If at the end of queue, try to fill more
+    // If at the end of queue, need to refill
     if (currentIndex >= practiceQueue.length - 1) {
-      const hasMore = await fillQueue(newSeen);
-
-      if (!hasMore) {
-        // No more words available, but keep the last word displayed
-        toast("Session complete! 🎉", {
-          description:
-            "You've completed all available words for this mode. Switch modes to continue practicing or take a well-deserved break!",
-          duration: 6000,
-        });
-        return;
-      }
-
-      // Reset to beginning of new queue
-      setCurrentIndex(0);
+      needsRefill = true;
     } else {
       // Find next non-mastered word in queue
       let nextIndex = currentIndex + 1;
@@ -183,21 +172,42 @@ const AppContent = () => {
       }
 
       if (nextIndex >= practiceQueue.length) {
-        // All remaining words in queue are mastered or we're at the end, refill
-        const hasMore = await fillQueue(newSeen);
-        if (hasMore) {
-          setCurrentIndex(0);
+        // All remaining words in queue are mastered or we're at the end
+        needsRefill = true;
+      } else {
+        // Found a valid next word
+        finalIndex = nextIndex;
+      }
+    }
+
+    // Handle refill if needed
+    if (needsRefill) {
+      const hasMore = await fillQueue(newSeen);
+
+      if (!hasMore) {
+        // No more words available
+        if (currentIndex >= practiceQueue.length - 1) {
+          toast("Session complete! 🎉", {
+            description:
+              "You've completed all available words for this mode. Switch modes to continue practicing or take a well-deserved break!",
+            duration: 6000,
+          });
         } else {
-          // No more words, stay on current
           toast("No more words available", {
             description: "All non-mastered words have been practiced.",
           });
         }
-      } else {
-        // Move to the next word
-        setCurrentIndex(nextIndex);
+        // Don't update state - stay on current word
+        return;
       }
+
+      // Queue was refilled, start from beginning
+      finalIndex = 0;
     }
+
+    // Update both states together to avoid intermediate renders
+    setGlobalSeen(newSeen);
+    setCurrentIndex(finalIndex);
   };
 
   const handleMarkCorrect = async (lexeme: Lexeme) => {
@@ -250,8 +260,8 @@ const AppContent = () => {
       duration: 3000,
     });
 
-    // Move to next word immediately
-    handleNext(lexeme.text);
+    // Move to next word immediately, passing the word to skip
+    await handleNext(lexeme.text);
   };
 
   const handleMarkIncorrect = async (lexeme: Lexeme, userAnswer?: string) => {

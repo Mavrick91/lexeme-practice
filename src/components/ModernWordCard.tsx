@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Volume2, ChevronRight, Keyboard, Lightbulb, RefreshCw, Trophy } from "lucide-react";
+import { Volume2, ChevronRight, Keyboard, Lightbulb, RefreshCw, Trophy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { animations } from "@/lib/animations";
 import { useAutoFocus } from "@/hooks/useAutoFocus";
@@ -50,6 +50,14 @@ export const ModernWordCard = ({
     // Don't call onNext here - let checkAnswer handle advancement
     return result;
   }, [onCorrect]);
+
+  // Manual override - treat current card as answered correctly
+  const markCurrentAsCorrect = useCallback(async () => {
+    const result = await handleCorrect();
+    // Advance immediately (same as automatic correct answers)
+    const skipWord = (result as { justMastered?: boolean })?.justMastered ? lexeme.text : undefined;
+    onNext(skipWord);
+  }, [handleCorrect, onNext, lexeme.text]);
 
   // Use the new hint system
   const {
@@ -123,12 +131,11 @@ export const ModernWordCard = ({
 
     if (correct) {
       const result = await handleCorrect();
-      // Small delay to ensure state updates have propagated
-      setTimeout(() => {
-        // Pass the word if it was just mastered so it can be skipped
-        const skipWord = (result as any)?.justMastered ? lexeme.text : undefined;
-        onNext(skipWord);
-      }, 100);
+      // Pass the word if it was just mastered so it can be skipped
+      const skipWord = (result as { justMastered?: boolean })?.justMastered
+        ? lexeme.text
+        : undefined;
+      onNext(skipWord);
     } else {
       await onIncorrect(userAnswer);
       // Delayed auto-advance to allow time to see the answer
@@ -260,6 +267,15 @@ export const ModernWordCard = ({
                 <div className="flex justify-center gap-3">
                   <Button type="submit" size="lg" disabled={!userAnswer.trim()}>
                     Check Answer
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="lg"
+                    onClick={markCurrentAsCorrect}
+                  >
+                    <Check className="mr-2 h-5 w-5" />
+                    Mark as Correct
                   </Button>
                   <Button
                     type="button"
