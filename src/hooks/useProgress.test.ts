@@ -24,7 +24,7 @@ describe("useProgress", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedDb.getAllLexemeProgress.mockResolvedValue([]);
-    mockedDb.getUserStats.mockResolvedValue(null);
+    mockedDb.getUserStats.mockResolvedValue(undefined);
     mockedDb.getLexemeProgress.mockResolvedValue(undefined);
     mockedDb.putLexemeProgress.mockResolvedValue(undefined);
     mockedDb.putUserStats.mockResolvedValue(undefined);

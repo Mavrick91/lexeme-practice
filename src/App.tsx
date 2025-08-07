@@ -14,6 +14,7 @@ import {
   addPracticeHistoryItem,
   clearPracticeHistory as clearDBHistory,
   clearAllChatConversations,
+  clearAllLexemeProgress,
   getReadyDB,
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
@@ -25,10 +26,11 @@ const AppContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
   const [isReverseMode, setIsReverseMode] = useState(false); // false = Indonesian to English, true = English to Indonesian
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
   const { recordAnswer, markAsMastered, getProgress, progressMap } = useProgress();
 
-  // Function to pick a random lexeme
+  // Function to pick a random lexeme (excluding mastered words)
   const pickRandomLexeme = useCallback((): Lexeme | null => {
     const data = lexemesData as LexemesData;
     const allLexemes = data.learnedLexemes;
@@ -41,9 +43,23 @@ const AppContent = () => {
       return null;
     }
 
-    // Simply pick a random word from all available lexemes
-    return allLexemes[Math.floor(Math.random() * allLexemes.length)];
-  }, []);
+    // Filter out mastered words
+    const availableLexemes = allLexemes.filter((lexeme) => {
+      const progress = progressMap.get(lexeme.text);
+      return !progress?.isMastered; // Include if not mastered or no progress yet
+    });
+
+    if (availableLexemes.length === 0) {
+      toast("🎉 All words mastered!", {
+        description: "You've mastered all available words. Great job!",
+        duration: 5000,
+      });
+      return null;
+    }
+
+    // Pick a random word from available (non-mastered) lexemes
+    return availableLexemes[Math.floor(Math.random() * availableLexemes.length)];
+  }, [progressMap]);
 
   // Load practice history from IndexedDB on mount
   useEffect(() => {
@@ -65,7 +81,19 @@ const AppContent = () => {
     loadHistory();
   }, []);
 
+  // Track when progress data is loaded
   useEffect(() => {
+    // progressMap is initially empty, wait for it to be populated
+    // Even if there's no saved progress, the useProgress hook will have finished loading
+    setProgressLoaded(true);
+  }, [progressMap]);
+
+  useEffect(() => {
+    // Wait for progress data to be loaded before picking first word
+    if (!progressLoaded) {
+      return;
+    }
+
     const next = pickRandomLexeme();
     if (!next) {
       setIsLoading(false);
@@ -73,7 +101,7 @@ const AppContent = () => {
     }
     setCurrentLexeme(next);
     setIsLoading(false);
-  }, [pickRandomLexeme]);
+  }, [pickRandomLexeme, progressLoaded]);
 
   const handleNext = async () => {
     const next = pickRandomLexeme();
@@ -191,6 +219,26 @@ const AppContent = () => {
     toast.success("Practice history cleared");
   };
 
+  // Debug function to clear all progress data
+  const handleClearAllProgress = async () => {
+    const confirmed = window.confirm(
+      "This will reset ALL word progress and streaks. Are you sure?"
+    );
+
+    if (!confirmed) return;
+
+    const [, error] = await tryCatch(() => clearAllLexemeProgress());
+
+    if (error) {
+      console.error("Failed to clear progress:", error);
+      toast.error("Failed to clear progress data");
+      return;
+    }
+
+    // Reload the page to reset all state
+    window.location.reload();
+  };
+
   if (isLoading || !currentLexeme) {
     return <div className="mt-16 text-center text-xl text-gray-600">Loading lexemes...</div>;
   }
@@ -209,6 +257,18 @@ const AppContent = () => {
           {/* Card Container - Centered */}
           <div className="flex h-full items-center justify-center p-6">
             <div className="w-full max-w-2xl space-y-4">
+              {/* Debug Controls */}
+              {process.env.NODE_ENV === "development" && (
+                <div className="mb-4 flex justify-center gap-2">
+                  <button
+                    onClick={handleClearAllProgress}
+                    className="rounded bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-600"
+                  >
+                    Reset All Progress (Dev)
+                  </button>
+                </div>
+              )}
+
               {/* Practice Mode Toggle */}
               <div className="flex justify-center">
                 <button

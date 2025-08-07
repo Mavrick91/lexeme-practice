@@ -17,13 +17,11 @@ describe("MobileStatsSheet", () => {
       translations: ["house", "home"],
       phonetic: "roo-mah",
       example: "Ini adalah rumah saya",
-      isNew: false,
     },
     {
       text: "buku",
       audioURL: "https://example.com/buku.mp3",
       translations: ["book"],
-      isNew: true,
     },
   ];
 
@@ -35,7 +33,8 @@ describe("MobileStatsSheet", () => {
         timesSeen: 3,
         timesCorrect: 3,
         lastPracticedAt: Date.now(),
-        mastered: false,
+        consecutiveCorrectStreak: 0,
+        isMastered: false,
         recentIncorrectStreak: 0,
         confusedWith: {},
         easingLevel: 1,

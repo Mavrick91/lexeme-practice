@@ -544,6 +544,135 @@ describe("ModernWordCard", () => {
     });
   });
 
+  describe("Streak counter logic", () => {
+    it("displays 0/5 for words with no progress", () => {
+      renderCard({ progress: undefined });
+
+      const badge = screen.getByText((content, element) => {
+        return element?.tagName === "SPAN" && content === "0/5";
+      });
+      expect(badge).toBeInTheDocument();
+      expect(screen.getByText("streak")).toBeInTheDocument();
+    });
+
+    it("displays 0/5 for words with zero streak", () => {
+      const progress: LexemeProgress = {
+        text: "rumah",
+        timesSeen: 5,
+        timesCorrect: 3,
+        lastPracticedAt: Date.now(),
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 1,
+        consecutiveCorrectStreak: 0,
+        isMastered: false,
+      };
+
+      renderCard({ progress });
+
+      const badge = screen.getByText((content, element) => {
+        return element?.tagName === "SPAN" && content === "0/5";
+      });
+      expect(badge).toBeInTheDocument();
+    });
+
+    it("displays correct streak count for 1-4 streaks", () => {
+      const testCases = [1, 2, 3, 4];
+
+      testCases.forEach((streak) => {
+        const { unmount } = renderCard({
+          progress: {
+            text: "rumah",
+            timesSeen: 5,
+            timesCorrect: 3,
+            lastPracticedAt: Date.now(),
+            recentIncorrectStreak: 0,
+            confusedWith: {},
+            easingLevel: 1,
+            consecutiveCorrectStreak: streak,
+            isMastered: false,
+          },
+        });
+
+        const badge = screen.getByText((content, element) => {
+          return element?.tagName === "SPAN" && content === `${streak}/5`;
+        });
+        expect(badge).toBeInTheDocument();
+
+        unmount();
+      });
+    });
+
+    it("can display 5/5 if passed mastered progress (though app should filter these)", () => {
+      // Note: In normal app usage, mastered words are filtered out and never shown.
+      // This test just verifies the component can handle mastered progress if passed.
+      const progress: LexemeProgress = {
+        text: "rumah",
+        timesSeen: 10,
+        timesCorrect: 10,
+        lastPracticedAt: Date.now(),
+        recentIncorrectStreak: 0,
+        confusedWith: {},
+        easingLevel: 2,
+        consecutiveCorrectStreak: 5,
+        isMastered: true,
+        masteredAt: Date.now(),
+      };
+
+      renderCard({ progress });
+
+      const badge = screen.getByText((content, element) => {
+        return element?.tagName === "SPAN" && content === "5/5";
+      });
+      expect(badge).toBeInTheDocument();
+    });
+
+    it("updates streak visual indicators based on progress", () => {
+      // Test different visual states
+      const visualTests = [
+        { streak: 0, expectedEmoji: "⭕", expectedClass: "gray" },
+        { streak: 1, expectedEmoji: "✨", expectedClass: "blue" },
+        { streak: 2, expectedEmoji: "⭐", expectedClass: "blue" },
+        { streak: 3, expectedEmoji: "🔥", expectedClass: "purple" },
+        { streak: 4, expectedEmoji: "🎯", expectedClass: "orange" },
+      ];
+
+      visualTests.forEach(({ streak, expectedEmoji, expectedClass }) => {
+        const { unmount } = renderCard({
+          progress: {
+            text: "rumah",
+            timesSeen: 5,
+            timesCorrect: 3,
+            lastPracticedAt: Date.now(),
+            recentIncorrectStreak: 0,
+            confusedWith: {},
+            easingLevel: 1,
+            consecutiveCorrectStreak: streak,
+            isMastered: false,
+          },
+        });
+
+        // Check emoji
+        expect(screen.getByText(expectedEmoji)).toBeInTheDocument();
+
+        // Check that the badge has the appropriate styling class
+        const badge = screen.getByText("streak").closest("div");
+        if (badge) {
+          expect(badge.className).toContain(expectedClass);
+        }
+
+        unmount();
+      });
+    });
+
+    it("handles undefined emojis for undefined progress", () => {
+      renderCard({ progress: undefined });
+
+      // Should show the default emoji for no progress
+      expect(screen.getByText("⭕")).toBeInTheDocument();
+    });
+  });
+
   describe("Mode switching", () => {
     it("maintains normal mode display when isReverseMode is false", () => {
       renderCard({ isReverseMode: false });

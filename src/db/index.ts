@@ -200,6 +200,14 @@ export const saveChatConversation = async (conversation: ChatConversation): Prom
   await (await dbPromise).put("chatConversations", conversation);
 };
 
+// Clear all lexeme progress data (useful for testing)
+export const clearAllLexemeProgress = async (): Promise<void> => {
+  const db = await dbPromise;
+  const tx = db.transaction("lexemeProgress", "readwrite");
+  await tx.store.clear();
+  await tx.done;
+};
+
 export const clearAllChatConversations = async (): Promise<void> => {
   const db = await dbPromise;
   const tx = db.transaction("chatConversations", "readwrite");
