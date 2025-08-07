@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { ColoredLetter } from "@/hooks/useLetterColoring";
 
@@ -18,13 +18,49 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
     ref
   ) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const autoSubmitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Expose the input ref to parent
     useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
+    // Auto-submit when all letters are correct
+    useEffect(() => {
+      // Clear any existing timer
+      if (autoSubmitTimerRef.current) {
+        clearTimeout(autoSubmitTimerRef.current);
+        autoSubmitTimerRef.current = null;
+      }
+
+      // Check if we have a complete answer with all correct letters
+      if (
+        value.length === maxLength &&
+        coloredLetters.length === maxLength &&
+        coloredLetters.every((letter) => letter.color === "correct" || letter.color === "space")
+      ) {
+        // Small delay to let user see the complete green word
+        autoSubmitTimerRef.current = setTimeout(() => {
+          onSubmit();
+          autoSubmitTimerRef.current = null;
+        }, 300);
+      }
+
+      // Cleanup on unmount or dependencies change
+      return () => {
+        if (autoSubmitTimerRef.current) {
+          clearTimeout(autoSubmitTimerRef.current);
+          autoSubmitTimerRef.current = null;
+        }
+      };
+    }, [value, coloredLetters, maxLength, onSubmit]);
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
         e.preventDefault();
+        // Clear any pending auto-submit timer
+        if (autoSubmitTimerRef.current) {
+          clearTimeout(autoSubmitTimerRef.current);
+          autoSubmitTimerRef.current = null;
+        }
         onSubmit();
       }
     };

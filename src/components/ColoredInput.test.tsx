@@ -468,6 +468,268 @@ describe("ColoredInput", () => {
     });
   });
 
+  describe("Auto-submit functionality", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    });
+
+    it("auto-submits when all letters are correct", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "e", color: "correct" },
+        { letter: "l", color: "correct" },
+        { letter: "l", color: "correct" },
+        { letter: "o", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput
+          {...defaultProps}
+          value="hello"
+          coloredLetters={coloredLetters}
+          maxLength={5}
+        />
+      );
+
+      // Should not submit immediately
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+
+      // Fast-forward time by 300ms
+      jest.advanceTimersByTime(300);
+
+      // Should have auto-submitted
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not auto-submit when some letters are incorrect", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "e", color: "present" }, // Not correct
+        { letter: "l", color: "correct" },
+        { letter: "l", color: "correct" },
+        { letter: "o", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput
+          {...defaultProps}
+          value="hello"
+          coloredLetters={coloredLetters}
+          maxLength={5}
+        />
+      );
+
+      // Fast-forward time
+      jest.advanceTimersByTime(500);
+
+      // Should not have submitted
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
+    it("does not auto-submit when input is incomplete", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "e", color: "correct" },
+        { letter: "l", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput {...defaultProps} value="hel" coloredLetters={coloredLetters} maxLength={5} />
+      );
+
+      // Fast-forward time
+      jest.advanceTimersByTime(500);
+
+      // Should not have submitted
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
+    it("handles multi-word answers with spaces correctly", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "i", color: "correct" },
+        { letter: " ", color: "space" },
+        { letter: "m", color: "correct" },
+        { letter: "e", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput
+          {...defaultProps}
+          value="hi me"
+          coloredLetters={coloredLetters}
+          maxLength={5}
+        />
+      );
+
+      // Fast-forward time
+      jest.advanceTimersByTime(300);
+
+      // Should have auto-submitted (spaces are considered correct)
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    it("cancels auto-submit if component unmounts", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "i", color: "correct" },
+      ];
+
+      const { unmount } = render(
+        <ColoredInput {...defaultProps} value="hi" coloredLetters={coloredLetters} maxLength={2} />
+      );
+
+      // Unmount before timer completes
+      unmount();
+
+      // Fast-forward time
+      jest.advanceTimersByTime(500);
+
+      // Should not have submitted
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
+    it("triggers auto-submit when typing completes the word correctly", () => {
+      const { rerender } = render(
+        <ColoredInput
+          {...defaultProps}
+          value="hell"
+          coloredLetters={[
+            { letter: "h", color: "correct" },
+            { letter: "e", color: "correct" },
+            { letter: "l", color: "correct" },
+            { letter: "l", color: "correct" },
+          ]}
+          maxLength={5}
+        />
+      );
+
+      // Should not submit yet (incomplete)
+      jest.advanceTimersByTime(500);
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+
+      // Complete the word
+      rerender(
+        <ColoredInput
+          {...defaultProps}
+          value="hello"
+          coloredLetters={[
+            { letter: "h", color: "correct" },
+            { letter: "e", color: "correct" },
+            { letter: "l", color: "correct" },
+            { letter: "l", color: "correct" },
+            { letter: "o", color: "correct" },
+          ]}
+          maxLength={5}
+        />
+      );
+
+      // Fast-forward time
+      jest.advanceTimersByTime(300);
+
+      // Should have auto-submitted
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not auto-submit when there are absent letters", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "e", color: "correct" },
+        { letter: "x", color: "absent" }, // Wrong letter
+        { letter: "l", color: "correct" },
+        { letter: "o", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput
+          {...defaultProps}
+          value="hexlo"
+          coloredLetters={coloredLetters}
+          maxLength={5}
+        />
+      );
+
+      // Fast-forward time
+      jest.advanceTimersByTime(500);
+
+      // Should not have submitted
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    });
+
+    it("resets timer when colored letters change", () => {
+      const { rerender } = render(
+        <ColoredInput
+          {...defaultProps}
+          value="hello"
+          coloredLetters={[
+            { letter: "h", color: "correct" },
+            { letter: "e", color: "correct" },
+            { letter: "l", color: "present" },
+            { letter: "l", color: "correct" },
+            { letter: "o", color: "correct" },
+          ]}
+          maxLength={5}
+        />
+      );
+
+      // Advance time but not enough to trigger
+      jest.advanceTimersByTime(200);
+
+      // Update to all correct
+      rerender(
+        <ColoredInput
+          {...defaultProps}
+          value="hello"
+          coloredLetters={[
+            { letter: "h", color: "correct" },
+            { letter: "e", color: "correct" },
+            { letter: "l", color: "correct" },
+            { letter: "l", color: "correct" },
+            { letter: "o", color: "correct" },
+          ]}
+          maxLength={5}
+        />
+      );
+
+      // The timer should restart from the update
+      jest.advanceTimersByTime(200);
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+
+      jest.advanceTimersByTime(100);
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows manual submit with Enter even before auto-submit timer", () => {
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "i", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput {...defaultProps} value="hi" coloredLetters={coloredLetters} maxLength={2} />
+      );
+
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
+
+      // Press Enter immediately
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      // Should have submitted immediately
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+
+      // Fast-forward time
+      jest.advanceTimersByTime(500);
+
+      // Should still only have been called once
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("Edge cases", () => {
     it("handles empty maxLength", () => {
       const { container } = render(<ColoredInput {...defaultProps} value="" maxLength={0} />);
