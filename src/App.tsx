@@ -4,9 +4,7 @@ import { ModernWordCard } from "./components/ModernWordCard";
 import { PracticeHistory } from "./components/PracticeHistory";
 import { DashboardSidebar } from "./components/DashboardSidebar";
 import { MobileStatsSheet } from "./components/MobileStatsSheet";
-import { ToggleGroup, ToggleGroupItem } from "./components/ui/toggle-group";
 import { toast, Toaster } from "sonner";
-import { Brain, AlertCircle, BookText } from "lucide-react";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
@@ -24,60 +22,27 @@ import { tryCatch } from "./lib/tryCatch";
 
 const AppContent = () => {
   const [currentLexeme, setCurrentLexeme] = useState<Lexeme | null>(null);
-  const [practiceMode, setPracticeMode] = useState<"smart" | "all" | "mistakes">("smart");
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
 
-  const { recordAnswer, markAsMastered, getDueLexemes, getProgress, progressMap, getMistakePool } =
-    useProgress();
+  const { recordAnswer, markAsMastered, getProgress, progressMap } = useProgress();
 
-  // Function to pick a random lexeme based on practice mode
-  const pickRandomLexeme = useCallback(
-    (mode: "smart" | "all" | "mistakes"): Lexeme | null => {
-      const data = lexemesData as LexemesData;
+  // Function to pick a random lexeme
+  const pickRandomLexeme = useCallback((): Lexeme | null => {
+    const data = lexemesData as LexemesData;
+    const allLexemes = data.learnedLexemes;
 
-      if (mode === "smart") {
-        // For smart mode, get due lexemes and pick randomly
-        const pool = getDueLexemes(data.learnedLexemes, 999999, new Set());
-        if (pool.length === 0) {
-          toast("All words reviewed! 🎉", {
-            description:
-              "Great job! All your words are up to date. Try switching to 'All Words' mode to continue practicing.",
-            duration: 5000,
-          });
-          return null;
-        }
-        return pool[Math.floor(Math.random() * pool.length)];
-      }
+    if (allLexemes.length === 0) {
+      toast("No words available", {
+        description: "There are no words in the database.",
+        duration: 5000,
+      });
+      return null;
+    }
 
-      if (mode === "mistakes") {
-        // For mistakes mode, get mistake pool and pick randomly
-        const pool = getMistakePool(data.learnedLexemes, 999999);
-        if (pool.length === 0) {
-          toast("No mistakes to practice! 🎉", {
-            description:
-              "Great job! You haven't made any mistakes yet. Try other practice modes to continue learning.",
-            duration: 5000,
-          });
-          return null;
-        }
-        return pool[Math.floor(Math.random() * pool.length)];
-      }
-
-      // mode === "all" - pick from all non-mastered words
-      const unmastered = data.learnedLexemes.filter((l) => !progressMap.get(l.text)?.isMastered);
-      if (unmastered.length === 0) {
-        toast("All words mastered! 🎉", {
-          description:
-            "Amazing! You've mastered all available words. Consider resetting your progress to practice again.",
-          duration: 5000,
-        });
-        return null;
-      }
-      return unmastered[Math.floor(Math.random() * unmastered.length)];
-    },
-    [getDueLexemes, getMistakePool, progressMap]
-  );
+    // Simply pick a random word from all available lexemes
+    return allLexemes[Math.floor(Math.random() * allLexemes.length)];
+  }, []);
 
   // Load practice history from IndexedDB on mount
   useEffect(() => {
@@ -100,23 +65,22 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    const next = pickRandomLexeme(practiceMode);
+    const next = pickRandomLexeme();
     if (!next) {
       setIsLoading(false);
       return;
     }
     setCurrentLexeme(next);
     setIsLoading(false);
-  }, [practiceMode, pickRandomLexeme]);
+  }, [pickRandomLexeme]);
 
   const handleNext = async () => {
-    const next = pickRandomLexeme(practiceMode);
+    const next = pickRandomLexeme();
 
     if (!next) {
-      toast("Session complete! 🎉", {
-        description:
-          "You've completed all available words for this mode. Switch modes to continue practicing or take a break!",
-        duration: 6000,
+      toast("No more words available", {
+        description: "Unable to load next word.",
+        duration: 3000,
       });
       return;
     }
@@ -239,35 +203,8 @@ const AppContent = () => {
 
         {/* Main Center Area */}
         <div className="relative flex-1 overflow-auto">
-          {/* Mode Selection - Fixed at top */}
-          <div className="sticky top-0 z-10 border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex flex-wrap justify-center gap-4">
-              <ToggleGroup
-                type="single"
-                value={practiceMode}
-                onValueChange={(value) =>
-                  value && setPracticeMode(value as "smart" | "all" | "mistakes")
-                }
-                className="gap-2"
-              >
-                <ToggleGroupItem value="smart" className="gap-2">
-                  <Brain className="h-4 w-4" />
-                  Smart Review
-                </ToggleGroupItem>
-                <ToggleGroupItem value="all" className="gap-2">
-                  <BookText className="h-4 w-4" />
-                  All Words
-                </ToggleGroupItem>
-                <ToggleGroupItem value="mistakes" className="gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  Mistakes
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </div>
-          </div>
-
-          {/* Card Container - Centered in remaining space */}
-          <div className="flex flex-1 items-center justify-center p-6">
+          {/* Card Container - Centered */}
+          <div className="flex h-full items-center justify-center p-6">
             <div className="w-full max-w-2xl">
               {/* Main Card */}
               <ModernWordCard

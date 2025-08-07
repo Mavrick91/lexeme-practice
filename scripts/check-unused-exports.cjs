@@ -51,10 +51,23 @@ const trulyUnused = [];
 const ignoredFromUI = [];
 const usedInternally = [];
 
+// Known dynamic imports that ts-unused-exports can't detect
+const knownDynamicImports = [
+  { filePath: 'src/lib/buildMnemonicPrompt.ts', exportName: 'buildQuickMnemonicPrompt' }
+];
+
 for (const item of unusedExports) {
   // Skip files in /components/ui folder
   if (item.filePath.includes('/components/ui/')) {
     ignoredFromUI.push(item);
+    continue;
+  }
+  
+  // Skip known dynamic imports
+  if (knownDynamicImports.some(known =>
+    item.filePath.endsWith(known.filePath) && item.exportName === known.exportName
+  )) {
+    usedInternally.push(item);
     continue;
   }
   

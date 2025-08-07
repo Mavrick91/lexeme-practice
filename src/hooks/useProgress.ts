@@ -7,7 +7,6 @@ import {
   getAllLexemeProgress,
 } from "../db";
 import type { Lexeme, LexemeProgress, UserStats } from "../types";
-import { selectNextLexemes } from "../lib/scheduler";
 
 export const useProgress = () => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
@@ -179,57 +178,11 @@ export const useProgress = () => {
     [progressMap]
   );
 
-  const getDueLexemes = useCallback(
-    (allLexemes: Lexeme[], count: number = 50, excludeSet: Set<string> = new Set()) => {
-      return selectNextLexemes(allLexemes, progressMap, count, excludeSet);
-    },
-    [progressMap]
-  );
-
-  const getMistakePool = useCallback(
-    (allLexemes: Lexeme[], limit: number = 20): Lexeme[] => {
-      // Get lexemes that have been answered incorrectly and are not mastered
-      const mistakeLexemes = allLexemes.filter((lexeme) => {
-        const progress = progressMap.get(lexeme.text);
-        return progress && !progress.isMastered && progress.timesSeen > progress.timesCorrect;
-      });
-
-      // Sort by mistake severity (more mistakes = higher priority)
-      return mistakeLexemes
-        .sort((a, b) => {
-          const progressA = progressMap.get(a.text)!;
-          const progressB = progressMap.get(b.text)!;
-
-          // Calculate mistake score
-          const mistakeScoreA =
-            progressA.timesSeen -
-            progressA.timesCorrect +
-            progressA.recentIncorrectStreak * 2 +
-            (progressA.lastIncorrectAt
-              ? (Date.now() - progressA.lastIncorrectAt) / (1000 * 60 * 60)
-              : 0);
-          const mistakeScoreB =
-            progressB.timesSeen -
-            progressB.timesCorrect +
-            progressB.recentIncorrectStreak * 2 +
-            (progressB.lastIncorrectAt
-              ? (Date.now() - progressB.lastIncorrectAt) / (1000 * 60 * 60)
-              : 0);
-
-          return mistakeScoreB - mistakeScoreA; // Higher score first
-        })
-        .slice(0, limit);
-    },
-    [progressMap]
-  );
-
   return {
     recordAnswer,
     markAsMastered,
     userStats,
     getProgress,
     progressMap,
-    getDueLexemes,
-    getMistakePool,
   };
 };
