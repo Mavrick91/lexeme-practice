@@ -824,4 +824,132 @@ describe("ColoredInput", () => {
       });
     });
   });
+
+  describe("ColoredInput - Click to reveal letters", () => {
+    const mockOnChange = jest.fn();
+    const mockOnSubmit = jest.fn();
+
+    const baseProps = {
+      value: "",
+      coloredLetters: [] as ColoredLetter[],
+      maxLength: 5,
+      onChange: mockOnChange,
+      onSubmit: mockOnSubmit,
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("reveals next correct letter when clicking the first placeholder (caret position)", () => {
+      // target: house, typed: 'h'
+      const target = "house";
+      const value = "h";
+      const coloredLetters: ColoredLetter[] = [{ letter: "h", color: "correct" }];
+
+      const { container } = render(
+        <ColoredInput
+          {...baseProps}
+          value={value}
+          coloredLetters={coloredLetters}
+          maxLength={target.length}
+          target={target}
+        />
+      );
+
+      const placeholders = container.querySelectorAll(".border-dashed");
+      expect(placeholders.length).toBeGreaterThan(0);
+
+      // Click first placeholder (index === caret position)
+      fireEvent.click(placeholders[0]);
+
+      // Should reveal 'o' -> "ho"
+      expect(mockOnChange).toHaveBeenCalledWith("ho");
+    });
+
+    it("reveals specific correct letter when clicking a typed tile with wrong letter", () => {
+      // target: hello, typed: 'hxllo' -> clicking 'x' (index 1) reveals 'o'
+      const target = "hello";
+      const value = "hxllo";
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "x", color: "absent" },
+        { letter: "l", color: "correct" },
+        { letter: "l", color: "correct" },
+        { letter: "o", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput
+          {...baseProps}
+          value={value}
+          coloredLetters={coloredLetters}
+          maxLength={target.length}
+          target={target}
+        />
+      );
+
+      // Click the 'x' tile
+      const wrongTile = screen.getByText("x");
+      fireEvent.click(wrongTile);
+
+      // Should correct to 'hello'
+      expect(mockOnChange).toHaveBeenCalledWith("hello");
+    });
+
+    it("reveals a space character when clicking placeholder at space position", () => {
+      // target: 'good morning', typed: 'good'
+      const target = "good morning";
+      const value = "good";
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "g", color: "correct" },
+        { letter: "o", color: "correct" },
+        { letter: "o", color: "correct" },
+        { letter: "d", color: "correct" },
+      ];
+
+      const { container } = render(
+        <ColoredInput
+          {...baseProps}
+          value={value}
+          coloredLetters={coloredLetters}
+          maxLength={target.length}
+          target={target}
+        />
+      );
+
+      const placeholders = container.querySelectorAll(".border-dashed");
+      expect(placeholders.length).toBeGreaterThan(0);
+
+      // Click first placeholder - should reveal a space next
+      fireEvent.click(placeholders[0]);
+
+      expect(mockOnChange).toHaveBeenCalledWith("good ");
+    });
+
+    it("does nothing when clicking an already correct letter tile", () => {
+      const target = "hi";
+      const value = "hi";
+      const coloredLetters: ColoredLetter[] = [
+        { letter: "h", color: "correct" },
+        { letter: "i", color: "correct" },
+      ];
+
+      render(
+        <ColoredInput
+          {...baseProps}
+          value={value}
+          coloredLetters={coloredLetters}
+          maxLength={target.length}
+          target={target}
+        />
+      );
+
+      const correctTile = screen.getByText("h");
+      fireEvent.click(correctTile);
+
+      // No change expected
+      expect(mockOnChange).not.toHaveBeenCalled();
+    });
+  });
 });

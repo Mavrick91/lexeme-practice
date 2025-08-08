@@ -233,6 +233,8 @@ export const ModernWordCard = ({
                   onChange={setUserAnswer}
                   onSubmit={checkAnswer}
                   isReverseMode={isReverseMode}
+                  // Pass target so users can click tiles to reveal letters
+                  target={targetWord}
                 />
 
                 <div className="flex justify-center gap-3">

@@ -10,11 +10,21 @@ type ColoredInputProps = {
   onSubmit: () => void;
   className?: string;
   isReverseMode?: boolean;
+  target?: string;
 };
 
 export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
   (
-    { value, coloredLetters, maxLength, onChange, onSubmit, className, isReverseMode = false },
+    {
+      value,
+      coloredLetters,
+      maxLength,
+      onChange,
+      onSubmit,
+      className,
+      isReverseMode = false,
+      target,
+    },
     ref
   ) => {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -22,6 +32,12 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
 
     // Expose the input ref to parent
     useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
+
+    const focusInput = () => {
+      if (inputRef.current) {
+        inputRef.current.focus({ preventScroll: true });
+      }
+    };
 
     // Auto-submit when all letters are correct
     useEffect(() => {
@@ -65,6 +81,32 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
       }
     };
 
+    const revealAtIndex = (index: number) => {
+      // Always focus the input so the user can continue typing immediately
+      focusInput();
+
+      // Require a valid target to reveal letters
+      if (typeof target !== "string" || target.length === 0) return;
+      if (index < 0 || index >= target.length) return;
+
+      const correctChar = target[index];
+
+      // Replace within existing value if index is within typed range
+      if (index < value.length) {
+        if (value[index] === correctChar) return; // no-op if already correct (but input stays focused)
+        const newValue = value.slice(0, index) + correctChar + value.slice(index + 1);
+        onChange(newValue);
+        return;
+      }
+
+      // Only allow appending the next correct letter at caret (avoid skipping positions)
+      if (index === value.length) {
+        const newValue = value + correctChar;
+        onChange(newValue);
+      }
+      // If index > value.length, do nothing (we don't fill gaps out of order)
+    };
+
     // Calculate how many placeholder tiles to show
     const placeholderCount = Math.max(0, maxLength - value.length);
     const showCaret = value.length < maxLength;
@@ -91,7 +133,7 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
             onKeyDown={handleKeyDown}
             maxLength={maxLength}
             aria-label="Type your answer"
-            className="absolute inset-0 h-full w-full cursor-text opacity-0"
+            className="pointer-events-none absolute inset-0 h-full w-full cursor-text opacity-0"
             autoCapitalize="none"
             autoComplete="off"
             autoCorrect="off"
@@ -105,6 +147,10 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
             {coloredLetters.map((coloredLetter, index) => (
               <span
                 key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  revealAtIndex(index);
+                }}
                 className={cn(
                   "inline-flex h-10 w-10 items-center justify-center rounded-md font-mono text-lg font-bold uppercase transition-all",
                   coloredLetter.color === "correct" && "bg-green-500 text-white shadow-sm",
@@ -113,6 +159,7 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
                   coloredLetter.color === "space" && "w-4 bg-transparent",
                   "animate-in fade-in-50 duration-200"
                 )}
+                title={target ? "Click to reveal this letter" : undefined}
               >
                 {coloredLetter.letter !== " " ? coloredLetter.letter : ""}
               </span>
@@ -124,12 +171,22 @@ export const ColoredInput = forwardRef<HTMLInputElement, ColoredInputProps>(
             )}
 
             {/* Placeholder tiles for remaining letters */}
-            {Array.from({ length: placeholderCount }).map((_, index) => (
-              <span
-                key={`placeholder-${index}`}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/30"
-              />
-            ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => {
+              const tileIndex = value.length + index;
+              return (
+                <span
+                  key={`placeholder-${index}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    revealAtIndex(tileIndex);
+                  }}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/30"
+                  title={
+                    target && tileIndex === value.length ? "Click to reveal next letter" : undefined
+                  }
+                />
+              );
+            })}
           </div>
         </div>
       </div>
