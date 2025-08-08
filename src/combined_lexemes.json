@@ -5,107 +5,168 @@
       "translations": ["explains", "explained", "explain", "explaining", "described"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f9a5d09153e152aac328124db5eb817f",
       "isNew": false
-    }, {
+    },
+    {
       "text": "mendapatkan",
-      "translations": ["obtain", "gaining", "find", "make", "recover", "get", "gets", "receive", "scored", "got", "gains", "have", "gain", "earned", "finds", "earn", "gained"],
+      "translations": [
+        "obtain",
+        "gaining",
+        "find",
+        "make",
+        "recover",
+        "get",
+        "gets",
+        "receive",
+        "scored",
+        "got",
+        "gains",
+        "have",
+        "gain",
+        "earned",
+        "finds",
+        "earn",
+        "gained"
+      ],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/5694557f288c7851d891ca0e66b443ba",
       "isNew": false
-    }, {
+    },
+    {
       "text": "menjadikan",
       "translations": ["made", "make", "makes"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/636385a1dd3e4b8a98de115a668c305f",
       "isNew": false
-    }, {
+    },
+    {
       "text": "mendatangkan",
       "translations": ["bring in", "bring"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/05e8867e4a58232f40baccb948032668",
       "isNew": false
-    }, {
+    },
+    {
       "text": "mendengarkan",
       "translations": ["listen to", "listen", "listens", "listened"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/b6b41b6347ba42f11865886d870265a5",
       "isNew": false
-    }, {
+    },
+    {
       "text": "mendirikan",
-      "translations": ["built", "founded", "building", "erected", "establish", "build", "established", "set up", "builds"],
+      "translations": [
+        "built",
+        "founded",
+        "building",
+        "erected",
+        "establish",
+        "build",
+        "established",
+        "set up",
+        "builds"
+      ],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/cec730aff369a2d68ba073be6431ecfd",
       "isNew": false
-    }, {
+    },
+    {
       "text": "menjatuhkan",
       "translations": ["drops", "dropped", "drop", "dropping"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/1fc6a13f47381e582916fa5aa992a916",
       "isNew": false
-    }, {
+    },
+    {
       "text": "membacakan",
       "translations": ["read out", "read", "reads", "reading"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/e4fce2be44d4b838e4ee111704472777",
       "isNew": false
-    }, {
+    },
+    {
       "text": "membicarakan",
       "translations": ["talking", "talked", "talk about", "talks"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/5da2d1544d18b048164720276181ce97",
       "isNew": false
-    }, {
+    },
+    {
       "text": "memberikan",
-      "translations": ["giving", "gave", "handing", "handed", "gives", "offer", "give", "given", "providing"],
+      "translations": [
+        "giving",
+        "gave",
+        "handing",
+        "handed",
+        "gives",
+        "offer",
+        "give",
+        "given",
+        "providing"
+      ],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/7087110e25f7ea889058caca4999237b",
       "isNew": false
-    }, {
+    },
+    {
       "text": "membawakan",
       "translations": ["bring"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/765837e76101f8d9d12e570f546f79b8",
       "isNew": false
-    }, {
+    },
+    {
       "text": "memasakkan",
       "translations": ["cook", "cooks"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/d17f89739fe00a3a0087a3768b917224",
       "isNew": false
-    }, {
+    },
+    {
       "text": "memasukkan",
       "translations": ["puts", "insert", "enter", "bring into"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/2c9126d706634db0cfb1df58ebd38bb2",
       "isNew": false
-    }, {
+    },
+    {
       "text": "melanjutkan",
       "translations": ["further", "continue", "continues", "continued", "continuing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/721d7646c048018e678204c3722cc257",
       "isNew": false
-    }, {
+    },
+    {
       "text": "melupakan",
       "translations": ["forgotten", "forget", "forgets", "forgetting"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/78f91cf84444289650860a42a295cfe0",
       "isNew": false
-    }, {
+    },
+    {
       "text": "melemparkan",
       "translations": ["throw", "throws"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/4af9d5be0105a648c324857a96728b3c",
       "isNew": false
-    }, {
+    },
+    {
       "text": "memainkan",
       "translations": ["playing", "play with", "play", "played", "plays"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/635ffd2b2a9f9b566597f18c6c9d150e",
       "isNew": false
-    }, {
+    },
+    {
       "text": "memunculkan",
       "translations": ["come up", "bring out"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/eb7c8a24caa535599e658f02fff582df",
       "isNew": false
-    }, {
+    },
+    {
       "text": "melakukan",
-      "translations": ["commit", "done", "make", "do", "did", "does", "had", "committed", "committing", "doing", "performs"],
+      "translations": [
+        "commit",
+        "done",
+        "make",
+        "do",
+        "did",
+        "does",
+        "had",
+        "committed",
+        "committing",
+        "doing",
+        "performs"
+      ],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f34cc72d5887319a4b3ea01a0688fe9f",
       "isNew": false
     },
     {
       "text": "lulus",
-      "translations": [
-        "passed",
-        "graduates",
-        "graduate",
-        "graduated",
-        "pass",
-        "graduating"
-      ],
+      "translations": ["passed", "graduates", "graduate", "graduated", "pass", "graduating"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/95bc127b10d1fa67cf97e7f35e4eacc0",
       "isNew": false
     },
@@ -123,12 +184,7 @@
     },
     {
       "text": "upacara",
-      "translations": [
-        "flag ceremony",
-        "ceremony",
-        "(verb) to have a ceremony",
-        "ceremonies"
-      ],
+      "translations": ["flag ceremony", "ceremony", "(verb) to have a ceremony", "ceremonies"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/2a3e44351109945eb95c0245eca20015",
       "isNew": false
     },
@@ -176,15 +232,7 @@
     },
     {
       "text": "halaman",
-      "translations": [
-        "pages",
-        "lawn",
-        "garden",
-        "schoolyard",
-        "yard",
-        "page",
-        "yards"
-      ],
+      "translations": ["pages", "lawn", "garden", "schoolyard", "yard", "page", "yards"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/7d39dfe32ff1031fc829add37bc91223",
       "isNew": false
     },
@@ -274,14 +322,7 @@
     },
     {
       "text": "pelajaran",
-      "translations": [
-        "lesson",
-        "subject",
-        "course",
-        "study",
-        "lessons",
-        "class"
-      ],
+      "translations": ["lesson", "subject", "course", "study", "lessons", "class"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/1c913154904e3eff5273c9340f5bd2dd",
       "isNew": false
     },
@@ -329,14 +370,7 @@
     },
     {
       "text": "tugas",
-      "translations": [
-        "duty",
-        "tasks",
-        "job",
-        "assignment",
-        "task",
-        "assignments"
-      ],
+      "translations": ["duty", "tasks", "job", "assignment", "task", "assignments"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/5c43d733e77654f6eb54093971cc7607",
       "isNew": false
     },
@@ -366,14 +400,7 @@
     },
     {
       "text": "terdapat",
-      "translations": [
-        "there are",
-        "there was",
-        "contains",
-        "there were",
-        "there is",
-        "is"
-      ],
+      "translations": ["there are", "there was", "contains", "there were", "there is", "is"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/d150168e6022b1e210c6a5bcc39c8395",
       "isNew": false
     },
@@ -409,15 +436,7 @@
     },
     {
       "text": "termasuk",
-      "translations": [
-        "is",
-        "includes",
-        "including",
-        "include",
-        "included",
-        "belong",
-        "covered"
-      ],
+      "translations": ["is", "includes", "including", "include", "included", "belong", "covered"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/41d0b2beade2378f6331391bce0cd156",
       "isNew": false
     },
@@ -441,26 +460,13 @@
     },
     {
       "text": "terjadi",
-      "translations": [
-        "happening",
-        "happens",
-        "happen",
-        "happened",
-        "occur",
-        "occurred"
-      ],
+      "translations": ["happening", "happens", "happen", "happened", "occur", "occurred"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/6cb95fcf8863d355afb127cb5f373157",
       "isNew": false
     },
     {
       "text": "terjatuh",
-      "translations": [
-        "fell",
-        "slipped",
-        "fall accidentally",
-        "slip",
-        "fell down"
-      ],
+      "translations": ["fell", "slipped", "fall accidentally", "slip", "fell down"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3097d3f41d7b3a8c5395fa844f094a4c",
       "isNew": false
     },
@@ -490,14 +496,7 @@
     },
     {
       "text": "tersebut",
-      "translations": [
-        "aforementioned",
-        "the",
-        "that",
-        "those",
-        "mentioned",
-        "aforesaid"
-      ],
+      "translations": ["aforementioned", "the", "that", "those", "mentioned", "aforesaid"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/ccf548a22a8a93792f80fb9d2d30cb4f",
       "isNew": false
     },
@@ -659,14 +658,7 @@
     },
     {
       "text": "malu",
-      "translations": [
-        "embarassed",
-        "embarrassed",
-        "ashamed",
-        "shy",
-        "shame",
-        "embarrassment"
-      ],
+      "translations": ["embarassed", "embarrassed", "ashamed", "shy", "shame", "embarrassment"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/87d096507323654c3f4565ae320afd4f",
       "isNew": false
     },
@@ -738,13 +730,7 @@
     },
     {
       "text": "menegangkan",
-      "translations": [
-        "full of suspense",
-        "suspense",
-        "thrilling",
-        "suspenseful",
-        "stressful"
-      ],
+      "translations": ["full of suspense", "suspense", "thrilling", "suspenseful", "stressful"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/64e6aebdf579b6dbba431cdb6d9c739f",
       "isNew": false
     },
@@ -798,24 +784,13 @@
     },
     {
       "text": "suasana",
-      "translations": [
-        "circumstances",
-        "atmosphere",
-        "circumstance",
-        "ambiance"
-      ],
+      "translations": ["circumstances", "atmosphere", "circumstance", "ambiance"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/82374291854a511d33c3b735f06d2bd3",
       "isNew": false
     },
     {
       "text": "mengenang",
-      "translations": [
-        "recall",
-        "reminiscing",
-        "remember",
-        "reminisce",
-        "reminisced"
-      ],
+      "translations": ["recall", "reminiscing", "remember", "reminisce", "reminisced"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/c38db818a379c0b5edbd800b8ebb300c",
       "isNew": false
     },
@@ -839,15 +814,7 @@
     },
     {
       "text": "aneh",
-      "translations": [
-        "peculiar",
-        "weird",
-        "bizarre",
-        "strange",
-        "strangely",
-        "oddly",
-        "odd"
-      ],
+      "translations": ["peculiar", "weird", "bizarre", "strange", "strangely", "oddly", "odd"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/18d097091d5a787194d208ac97dace3b",
       "isNew": false
     },
@@ -865,15 +832,7 @@
     },
     {
       "text": "senang",
-      "translations": [
-        "like",
-        "happy",
-        "joy",
-        "likes",
-        "nice",
-        "glad",
-        "pleased"
-      ],
+      "translations": ["like", "happy", "joy", "likes", "nice", "glad", "pleased"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/c36f3cdd1fd26c692a5a06a9e30e3639",
       "isNew": false
     },
@@ -927,14 +886,7 @@
     },
     {
       "text": "peralatan",
-      "translations": [
-        "equipments",
-        "appliance",
-        "utensils",
-        "tools",
-        "equipment",
-        "appliances"
-      ],
+      "translations": ["equipments", "appliance", "utensils", "tools", "equipment", "appliances"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/c444def07d8e1350d6eef88a2934edb2",
       "isNew": false
     },
@@ -1054,16 +1006,7 @@
     },
     {
       "text": "pemandangan",
-      "translations": [
-        "view",
-        "scenery",
-        "landscape",
-        "look",
-        "sights",
-        "scene",
-        "sight",
-        "views"
-      ],
+      "translations": ["view", "scenery", "landscape", "look", "sights", "scene", "sight", "views"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/ddb0a3e0aee14d6196323ac37e72022d",
       "isNew": false
     },
@@ -1147,15 +1090,7 @@
     },
     {
       "text": "perlu",
-      "translations": [
-        "necessarily",
-        "necessary",
-        "needs",
-        "need to",
-        "need",
-        "needed",
-        "needing"
-      ],
+      "translations": ["necessarily", "necessary", "needs", "need to", "need", "needed", "needing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/4afe86665fd99075575647d46d59d374",
       "isNew": false
     },
@@ -1192,13 +1127,7 @@
     },
     {
       "text": "sekitar",
-      "translations": [
-        "around",
-        "neighboring",
-        "about",
-        "roughly",
-        "surrounding"
-      ],
+      "translations": ["around", "neighboring", "about", "roughly", "surrounding"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/5abde03386549fe771fd394a4b120399",
       "isNew": false
     },
@@ -1216,31 +1145,13 @@
     },
     {
       "text": "harus",
-      "translations": [
-        "ve",
-        "has to",
-        "have to",
-        "d",
-        "need to",
-        "must",
-        "should",
-        "shall"
-      ],
+      "translations": ["ve", "has to", "have to", "d", "need to", "must", "should", "shall"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/0f0d9ad3fa6c0a9db4c1583700efcf67",
       "isNew": false
     },
     {
       "text": "sedang",
-      "translations": [
-        "is",
-        "am",
-        "currently",
-        "were",
-        "it",
-        "on",
-        "are",
-        "medium"
-      ],
+      "translations": ["is", "am", "currently", "were", "it", "on", "are", "medium"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/70f6e7d9b58a51d5db0e740f7c61232d",
       "isNew": false
     },
@@ -1294,14 +1205,7 @@
     },
     {
       "text": "dahulu",
-      "translations": [
-        "previously",
-        "(past marker)",
-        "before",
-        "prior",
-        "formerly",
-        "first"
-      ],
+      "translations": ["previously", "(past marker)", "before", "prior", "formerly", "first"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/0d91e149df97fea6036e2ab8c0c90b79",
       "isNew": false
     },
@@ -1331,16 +1235,7 @@
     },
     {
       "text": "lagi",
-      "translations": [
-        "yet",
-        "left",
-        "more",
-        "again",
-        "another",
-        "else",
-        "back",
-        "anymore"
-      ],
+      "translations": ["yet", "left", "more", "again", "another", "else", "back", "anymore"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/dc49d08821786c56d4caa51c97dc37a5",
       "isNew": false
     },
@@ -1676,15 +1571,7 @@
     },
     {
       "text": "membersihkan",
-      "translations": [
-        "cleans",
-        "cleared",
-        "wash",
-        "cleaning",
-        "clearing",
-        "clean",
-        "clears"
-      ],
+      "translations": ["cleans", "cleared", "wash", "cleaning", "clearing", "clean", "clears"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/a19f823f64345ce8a5f5cdec51967b3f",
       "isNew": false
     },
@@ -1882,15 +1769,7 @@
     },
     {
       "text": "pilih",
-      "translations": [
-        "pick",
-        "prefer",
-        "chose",
-        "choose",
-        "do prefer",
-        "select",
-        "selects"
-      ],
+      "translations": ["pick", "prefer", "chose", "choose", "do prefer", "select", "selects"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/e3a6bb5a58fd2781bc982136fff14f7d",
       "isNew": false
     },
@@ -1971,14 +1850,7 @@
     },
     {
       "text": "gambar",
-      "translations": [
-        "picture",
-        "image",
-        "pictures",
-        "draws",
-        "draw",
-        "drawing"
-      ],
+      "translations": ["picture", "image", "pictures", "draws", "draw", "drawing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/4256ac97f5f679467243a6bd193c2cf4",
       "isNew": false
     },
@@ -2295,16 +2167,7 @@
     },
     {
       "text": "dalam",
-      "translations": [
-        "depths",
-        "deep",
-        "on",
-        "to",
-        "of",
-        "in",
-        "depth",
-        "within"
-      ],
+      "translations": ["depths", "deep", "on", "to", "of", "in", "depth", "within"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/fad2c6bbc79670bbb08afb8cd9add442",
       "isNew": false
     },
@@ -2430,15 +2293,7 @@
     },
     {
       "text": "tujuan",
-      "translations": [
-        "goal",
-        "objective",
-        "goals",
-        "purpose",
-        "destination",
-        "aim",
-        "objectives"
-      ],
+      "translations": ["goal", "objective", "goals", "purpose", "destination", "aim", "objectives"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/8da3f05ca9c320501993440e6f9609e4",
       "isNew": false
     },
@@ -2656,14 +2511,7 @@
     },
     {
       "text": "mencium",
-      "translations": [
-        "smelled",
-        "smell",
-        "kiss",
-        "kissed",
-        "kisses",
-        "kissing"
-      ],
+      "translations": ["smelled", "smell", "kiss", "kissed", "kisses", "kissing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3aa0bd94a5c6e31de7dbf54a55d037be",
       "isNew": false
     },
@@ -2693,16 +2541,7 @@
     },
     {
       "text": "bau",
-      "translations": [
-        "smell",
-        "odor",
-        "scent",
-        "odour",
-        "scents",
-        "smells",
-        "smelly",
-        "smelling"
-      ],
+      "translations": ["smell", "odor", "scent", "odour", "scents", "smells", "smelly", "smelling"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/2126ab803d15a33852f161ad80b4082a",
       "isNew": false
     },
@@ -2774,13 +2613,7 @@
     },
     {
       "text": "dipilih",
-      "translations": [
-        "[be] picked",
-        "picked",
-        "chosen",
-        "[be] chosen",
-        "elected"
-      ],
+      "translations": ["[be] picked", "picked", "chosen", "[be] chosen", "elected"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/db95f45c40c856671cdfa7c505de6a49",
       "isNew": false
     },
@@ -2816,12 +2649,7 @@
     },
     {
       "text": "dinilai",
-      "translations": [
-        "[be] judged",
-        "[be] assessed",
-        "[be] evaluated",
-        "[be] rated"
-      ],
+      "translations": ["[be] judged", "[be] assessed", "[be] evaluated", "[be] rated"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/84405b35ad758c0453e3049172d92f0d",
       "isNew": false
     },
@@ -2935,14 +2763,7 @@
     },
     {
       "text": "dimulai",
-      "translations": [
-        "was begun",
-        "started",
-        "initiated",
-        "starts",
-        "begins",
-        "began"
-      ],
+      "translations": ["was begun", "started", "initiated", "starts", "begins", "began"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/babf8d553be49a7436b3298ffd0affa1",
       "isNew": false
     },
@@ -3026,13 +2847,7 @@
     },
     {
       "text": "hampir",
-      "translations": [
-        "nearly",
-        "almost",
-        "are almost",
-        "narrowly",
-        "practically"
-      ],
+      "translations": ["nearly", "almost", "are almost", "narrowly", "practically"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/827b41b846094f0fa3ebb6a65b9c3879",
       "isNew": false
     },
@@ -3062,15 +2877,7 @@
     },
     {
       "text": "mungkin",
-      "translations": [
-        "might",
-        "perhaps",
-        "may",
-        "maybe",
-        "possibly",
-        "possible",
-        "ve"
-      ],
+      "translations": ["might", "perhaps", "may", "maybe", "possibly", "possible", "ve"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/98bf074af59dacafe451c198cb33dbfd",
       "isNew": false
     },
@@ -3113,14 +2920,7 @@
     },
     {
       "text": "biasanya",
-      "translations": [
-        "usually",
-        "in general",
-        "use to",
-        "normally",
-        "as ever",
-        "typically"
-      ],
+      "translations": ["usually", "in general", "use to", "normally", "as ever", "typically"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/cea6161804b5b256cdc34ee9038b5b0e",
       "isNew": false
     },
@@ -3216,14 +3016,7 @@
     },
     {
       "text": "hujan",
-      "translations": [
-        "rained",
-        "rainy",
-        "raining",
-        "rains",
-        "it rained",
-        "rain"
-      ],
+      "translations": ["rained", "rainy", "raining", "rains", "it rained", "rain"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3a2dc86db5fa51d3ba7ede35a84c4384",
       "isNew": false
     },
@@ -3259,14 +3052,7 @@
     },
     {
       "text": "sore",
-      "translations": [
-        "afternoon",
-        "pm",
-        "afternoons",
-        "p.m.",
-        "evening",
-        "p.m"
-      ],
+      "translations": ["afternoon", "pm", "afternoons", "p.m.", "evening", "p.m"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/ba25fb64a71dc9ca590985aa8b189bd6",
       "isNew": false
     },
@@ -3290,15 +3076,7 @@
     },
     {
       "text": "jam",
-      "translations": [
-        "time",
-        "watch",
-        "clock",
-        "hour",
-        "hours",
-        "clocks",
-        "o'clock"
-      ],
+      "translations": ["time", "watch", "clock", "hour", "hours", "clocks", "o'clock"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/239a2865954c96694ecb3e50a18a3f29",
       "isNew": false
     },
@@ -3394,14 +3172,7 @@
     },
     {
       "text": "pekerja",
-      "translations": [
-        "workers",
-        "worker",
-        "working",
-        "laborer",
-        "employee",
-        "workers'"
-      ],
+      "translations": ["workers", "worker", "working", "laborer", "employee", "workers'"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/8976bdf6f5b12ccb1f90c23451631a46",
       "isNew": false
     },
@@ -3541,13 +3312,7 @@
     },
     {
       "text": "polisi",
-      "translations": [
-        "cops",
-        "policeman",
-        "police",
-        "the police",
-        "policemen"
-      ],
+      "translations": ["cops", "policeman", "police", "the police", "policemen"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/e8ea758a3242f66ba8601850d2188ea0",
       "isNew": false
     },
@@ -3607,14 +3372,7 @@
     },
     {
       "text": "dokter",
-      "translations": [
-        "doctors",
-        "medical",
-        "doctor",
-        "doctors'",
-        "a doctor",
-        "dr."
-      ],
+      "translations": ["doctors", "medical", "doctor", "doctors'", "a doctor", "dr."],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/96b60ecb51fe09f19e38af1684f0333f",
       "isNew": false
     },
@@ -3764,13 +3522,7 @@
     },
     {
       "text": "ubi",
-      "translations": [
-        "yam",
-        "sweet potatoes",
-        "yams",
-        "sweet potato",
-        "parsnip"
-      ],
+      "translations": ["yam", "sweet potatoes", "yams", "sweet potato", "parsnip"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/7b6191d6f2fe2b720f74cf8c48ccb4d0",
       "isNew": false
     },
@@ -3929,14 +3681,7 @@
     },
     {
       "text": "terung",
-      "translations": [
-        "eggplant",
-        "aubergine",
-        "brinjal",
-        "aubergines",
-        "eggplants",
-        "brinjals"
-      ],
+      "translations": ["eggplant", "aubergine", "brinjal", "aubergines", "eggplants", "brinjals"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/34a5e024f42d0c67408da3213eacb627",
       "isNew": false
     },
@@ -4056,12 +3801,7 @@
     },
     {
       "text": "mertua",
-      "translations": [
-        "parents-in-law",
-        "parent-in-law",
-        "mother-in-law",
-        "father-in-law"
-      ],
+      "translations": ["parents-in-law", "parent-in-law", "mother-in-law", "father-in-law"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/141d37d8835389dbea685f8358910afb",
       "isNew": false
     },
@@ -4115,13 +3855,7 @@
     },
     {
       "text": "saudara",
-      "translations": [
-        "brother",
-        "sibling",
-        "brothers",
-        "siblings",
-        "relatives"
-      ],
+      "translations": ["brother", "sibling", "brothers", "siblings", "relatives"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/342add2edf37f5bef76bc46ec8aea02c",
       "isNew": false
     },
@@ -4157,28 +3891,13 @@
     },
     {
       "text": "orang",
-      "translations": [
-        "people",
-        "everybody",
-        "man",
-        "someone",
-        "somebody",
-        "person",
-        "persons"
-      ],
+      "translations": ["people", "everybody", "man", "someone", "somebody", "person", "persons"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/a04d9be76a418c93f5b72a1ddb6c4f71",
       "isNew": false
     },
     {
       "text": "meninggal",
-      "translations": [
-        "pass away",
-        "died",
-        "die",
-        "dead",
-        "deceased",
-        "passed away"
-      ],
+      "translations": ["pass away", "died", "die", "dead", "deceased", "passed away"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/61f6625d77c8cd132ccf9bf0189a095b",
       "isNew": false
     },
@@ -4215,17 +3934,7 @@
     },
     {
       "text": "adalah",
-      "translations": [
-        "is",
-        "am",
-        "were",
-        "re",
-        "be",
-        "of",
-        "are",
-        "was",
-        "'s"
-      ],
+      "translations": ["is", "am", "were", "re", "be", "of", "are", "was", "'s"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/a9bf7f6b20d8e5cf3b2901577042defe",
       "isNew": false
     },
@@ -4255,11 +3964,7 @@
     },
     {
       "text": "adik",
-      "translations": [
-        "younger sibling",
-        "younger brother/sister",
-        "younger siblings"
-      ],
+      "translations": ["younger sibling", "younger brother/sister", "younger siblings"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/769cc2af0cbddfaa6fd3ad5853484e9d",
       "isNew": false
     },
@@ -4301,15 +4006,7 @@
     },
     {
       "text": "anak",
-      "translations": [
-        "kid",
-        "child",
-        "children",
-        "son",
-        "boys",
-        "daughter",
-        "kids"
-      ],
+      "translations": ["kid", "child", "children", "son", "boys", "daughter", "kids"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/aa77a52beaeb1c14b6f108913b3e700e",
       "isNew": false
     },
@@ -4333,15 +4030,7 @@
     },
     {
       "text": "lembut",
-      "translations": [
-        "soft",
-        "gentle",
-        "soft-hearted",
-        "fluffy",
-        "softly",
-        "tender",
-        "mild"
-      ],
+      "translations": ["soft", "gentle", "soft-hearted", "fluffy", "softly", "tender", "mild"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/95ce4e13be712eeebd01715313275699",
       "isNew": false
     },
@@ -4371,14 +4060,7 @@
     },
     {
       "text": "sesuai",
-      "translations": [
-        "appropriate",
-        "fits",
-        "fit",
-        "match",
-        "matches",
-        "suitable"
-      ],
+      "translations": ["appropriate", "fits", "fit", "match", "matches", "suitable"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/0ad6152604241c5c924d3878cc63a0b8",
       "isNew": false
     },
@@ -4402,15 +4084,7 @@
     },
     {
       "text": "sakit",
-      "translations": [
-        "unwell",
-        "sore",
-        "sick",
-        "ill",
-        "hurts",
-        "hurt",
-        "aching"
-      ],
+      "translations": ["unwell", "sore", "sick", "ill", "hurts", "hurt", "aching"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/fa6b790022efe5ee2f8397011626a4b0",
       "isNew": false
     },
@@ -4526,14 +4200,7 @@
     },
     {
       "text": "ramah",
-      "translations": [
-        "friendly",
-        "amiable",
-        "kind",
-        "outgoing",
-        "sociable",
-        "welcoming"
-      ],
+      "translations": ["friendly", "amiable", "kind", "outgoing", "sociable", "welcoming"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/5f9f2870c44f101a7102bab86542f8af",
       "isNew": false
     },
@@ -4557,15 +4224,7 @@
     },
     {
       "text": "baik",
-      "translations": [
-        "well",
-        "kind",
-        "fine",
-        "ok",
-        "nice",
-        "good",
-        "admirable"
-      ],
+      "translations": ["well", "kind", "fine", "ok", "nice", "good", "admirable"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f25b1608ad383e21c414cf4db667ec34",
       "isNew": false
     },
@@ -4649,14 +4308,7 @@
     },
     {
       "text": "menyala",
-      "translations": [
-        "is lit",
-        "alight",
-        "ignite",
-        "light",
-        "start",
-        "lights up"
-      ],
+      "translations": ["is lit", "alight", "ignite", "light", "start", "lights up"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/1ced286bdf962382b09d5f4f2da5bfb6",
       "isNew": false
     },
@@ -4668,15 +4320,7 @@
     },
     {
       "text": "mengejar",
-      "translations": [
-        "went after",
-        "chase",
-        "chasing",
-        "chases",
-        "runs after",
-        "after",
-        "chased"
-      ],
+      "translations": ["went after", "chase", "chasing", "chases", "runs after", "after", "chased"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f42c1bb7984e19a9bed40d5213abc2d3",
       "isNew": false
     },
@@ -4724,15 +4368,7 @@
     },
     {
       "text": "menyewa",
-      "translations": [
-        "rented",
-        "hiring",
-        "renting",
-        "hire",
-        "rents",
-        "rent",
-        "hired"
-      ],
+      "translations": ["rented", "hiring", "renting", "hire", "rents", "rent", "hired"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/9835de5059e19f3157fed18383953ded",
       "isNew": false
     },
@@ -4852,15 +4488,7 @@
     },
     {
       "text": "mengubah",
-      "translations": [
-        "turned",
-        "changed",
-        "change",
-        "transform",
-        "transforms",
-        "changes",
-        "turn"
-      ],
+      "translations": ["turned", "changed", "change", "transform", "transforms", "changes", "turn"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/847d4958941b2c0c44ec3f9026636d3c",
       "isNew": false
     },
@@ -5016,14 +4644,7 @@
     },
     {
       "text": "jumlah",
-      "translations": [
-        "number",
-        "total",
-        "sum",
-        "amount",
-        "quantity",
-        "total number"
-      ],
+      "translations": ["number", "total", "sum", "amount", "quantity", "total number"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/6ca7158d721824973315113fb6d4ff37",
       "isNew": false
     },
@@ -5113,13 +4734,7 @@
     },
     {
       "text": "mirip",
-      "translations": [
-        "similar",
-        "look like",
-        "looks like",
-        "alike",
-        "resemble"
-      ],
+      "translations": ["similar", "look like", "looks like", "alike", "resemble"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/0f94bdf102b52d59dd99d44f9decfc64",
       "isNew": false
     },
@@ -5131,15 +4746,7 @@
     },
     {
       "text": "biasa",
-      "translations": [
-        "normal",
-        "average",
-        "ordinary",
-        "common",
-        "usual",
-        "regular",
-        "typical"
-      ],
+      "translations": ["normal", "average", "ordinary", "common", "usual", "regular", "typical"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/4184554ccbe25a094db64564433374d1",
       "isNew": false
     },
@@ -5229,14 +4836,7 @@
     },
     {
       "text": "tua",
-      "translations": [
-        "are old",
-        "is old",
-        "were old",
-        "am old",
-        "old",
-        "elder"
-      ],
+      "translations": ["are old", "is old", "were old", "am old", "old", "elder"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3b59c64c1d9f2f10bb8d8f7d79a92928",
       "isNew": false
     },
@@ -5284,15 +4884,7 @@
     },
     {
       "text": "sedikit",
-      "translations": [
-        "slightly",
-        "little",
-        "few",
-        "a little bit",
-        "some",
-        "bit",
-        "slight"
-      ],
+      "translations": ["slightly", "little", "few", "a little bit", "some", "bit", "slight"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/2c0bf07eaed64dd73be03b55cd3f1bff",
       "isNew": false
     },
@@ -5421,14 +5013,7 @@
     },
     {
       "text": "memanggil",
-      "translations": [
-        "calling",
-        "calls",
-        "summon",
-        "call",
-        "called",
-        "summons"
-      ],
+      "translations": ["calling", "calls", "summon", "call", "called", "summons"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3073d465990bb7dffa26c69a3c4f5d34",
       "isNew": false
     },
@@ -5505,15 +5090,7 @@
     },
     {
       "text": "mencoba",
-      "translations": [
-        "try",
-        "attempted",
-        "tried",
-        "tries",
-        "try on",
-        "fitting",
-        "attempting"
-      ],
+      "translations": ["try", "attempted", "tried", "tries", "try on", "fitting", "attempting"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/671cdef0d99d25d49521979bcd09b5ba",
       "isNew": false
     },
@@ -5675,14 +5252,7 @@
     },
     {
       "text": "memulai",
-      "translations": [
-        "started",
-        "starting",
-        "begin",
-        "am starting",
-        "start",
-        "starts"
-      ],
+      "translations": ["started", "starting", "begin", "am starting", "start", "starts"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/c8143cc5d12e85b7a63f406936a3d842",
       "isNew": false
     },
@@ -5760,14 +5330,7 @@
     },
     {
       "text": "salah",
-      "translations": [
-        "fault",
-        "wrong",
-        "incorrect",
-        "mistake",
-        "false",
-        "mistaken"
-      ],
+      "translations": ["fault", "wrong", "incorrect", "mistake", "false", "mistaken"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/a118ca756503077ac5745931101b183e",
       "isNew": false
     },
@@ -5821,16 +5384,7 @@
     },
     {
       "text": "berharap",
-      "translations": [
-        "hoped",
-        "wishes",
-        "expects",
-        "expect",
-        "hope",
-        "wish",
-        "hoping",
-        "wishing"
-      ],
+      "translations": ["hoped", "wishes", "expects", "expect", "hope", "wish", "hoping", "wishing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/123b63594b681c0998f03b75861985ab",
       "isNew": false
     },
@@ -5887,14 +5441,7 @@
     },
     {
       "text": "berkembang",
-      "translations": [
-        "progressing",
-        "flourish",
-        "in progress",
-        "growing",
-        "thrive",
-        "grows"
-      ],
+      "translations": ["progressing", "flourish", "in progress", "growing", "thrive", "grows"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f7eacb81f777c574d4e3b1c8896ae340",
       "isNew": false
     },
@@ -5929,14 +5476,7 @@
     },
     {
       "text": "berubah",
-      "translations": [
-        "changed",
-        "change",
-        "turned",
-        "turns into",
-        "changes",
-        "changing"
-      ],
+      "translations": ["changed", "change", "turned", "turns into", "changes", "changing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/a6ee303d39cead68c6edce264aa6f27d",
       "isNew": false
     },
@@ -5972,16 +5512,7 @@
     },
     {
       "text": "berhenti",
-      "translations": [
-        "ends",
-        "stopped",
-        "quit",
-        "stops",
-        "stop",
-        "quits",
-        "stopping",
-        "quitting"
-      ],
+      "translations": ["ends", "stopped", "quit", "stops", "stop", "quits", "stopping", "quitting"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/9659c252dd8dad4a36b6a53bbfb8677e",
       "isNew": false
     },
@@ -5993,16 +5524,7 @@
     },
     {
       "text": "berjalan",
-      "translations": [
-        "walks",
-        "walking",
-        "go",
-        "walk",
-        "walked",
-        "went",
-        "doing",
-        "promenade"
-      ],
+      "translations": ["walks", "walking", "go", "walk", "walked", "went", "doing", "promenade"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/acdffcd5598a6c8aa5867a7c9b48100b",
       "isNew": false
     },
@@ -6252,30 +5774,13 @@
     },
     {
       "text": "tinggal",
-      "translations": [
-        "stay",
-        "live",
-        "stayed",
-        "living",
-        "lived",
-        "lives",
-        "stays",
-        "staying"
-      ],
+      "translations": ["stay", "live", "stayed", "living", "lived", "lives", "stays", "staying"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3464ed6fd6471ba1fa0f7cc2dc0e7d37",
       "isNew": false
     },
     {
       "text": "bisa",
-      "translations": [
-        "able",
-        "can",
-        "can't",
-        "please",
-        "have",
-        "could",
-        "to be able to"
-      ],
+      "translations": ["able", "can", "can't", "please", "have", "could", "to be able to"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/27fde9d3d3d41dacda1290461620b7f5",
       "isNew": false
     },
@@ -6315,14 +5820,7 @@
     },
     {
       "text": "tidur",
-      "translations": [
-        "falls asleep",
-        "sleeping",
-        "sleep",
-        "sleeps",
-        "asleep",
-        "slept"
-      ],
+      "translations": ["falls asleep", "sleeping", "sleep", "sleeps", "asleep", "slept"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f712466b95378656e80951c42789e475",
       "isNew": false
     },
@@ -6346,15 +5844,7 @@
     },
     {
       "text": "kembali",
-      "translations": [
-        "return",
-        "come back",
-        "again",
-        "back",
-        "returns",
-        "goes back",
-        "returning"
-      ],
+      "translations": ["return", "come back", "again", "back", "returns", "goes back", "returning"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/f28f013720fef0b61129a302d569bfad",
       "isNew": false
     },
@@ -6378,16 +5868,7 @@
     },
     {
       "text": "keluar",
-      "translations": [
-        "out",
-        "came out",
-        "go out",
-        "exits",
-        "comes",
-        "exit",
-        "outside",
-        "exited"
-      ],
+      "translations": ["out", "came out", "go out", "exits", "comes", "exit", "outside", "exited"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/6e2a34d51320a6921bea946b8819d865",
       "isNew": false
     },
@@ -6399,14 +5880,7 @@
     },
     {
       "text": "muncul",
-      "translations": [
-        "show up",
-        "appear",
-        "appears",
-        "appeared",
-        "come out",
-        "appearing"
-      ],
+      "translations": ["show up", "appear", "appears", "appeared", "come out", "appearing"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/bba33b64f5ee459e4c5d1a585a1529e2",
       "isNew": false
     },
@@ -6418,15 +5892,7 @@
     },
     {
       "text": "datang",
-      "translations": [
-        "arrives",
-        "arrive",
-        "comes",
-        "come",
-        "are coming",
-        "arrived",
-        "came"
-      ],
+      "translations": ["arrives", "arrive", "comes", "come", "are coming", "arrived", "came"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/0ec9d1027974d1e0779e7309816dbc54",
       "isNew": false
     },
@@ -6450,13 +5916,7 @@
     },
     {
       "text": "toilet",
-      "translations": [
-        "restroom",
-        "kamar kecil",
-        "bathroom",
-        "toilet",
-        "restrooms"
-      ],
+      "translations": ["restroom", "kamar kecil", "bathroom", "toilet", "restrooms"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/5efa3bc6e090f7f89bde74d620d35dea",
       "isNew": false
     },
@@ -6608,16 +6068,7 @@
     },
     {
       "text": "minta",
-      "translations": [
-        "ask for",
-        "ask",
-        "asking",
-        "request",
-        "have",
-        "order",
-        "asks",
-        "get"
-      ],
+      "translations": ["ask for", "ask", "asking", "request", "have", "order", "asks", "get"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3b367b631687dee3d8088ead3a0f53ba",
       "isNew": false
     },
@@ -6689,14 +6140,7 @@
     },
     {
       "text": "enak",
-      "translations": [
-        "delicious",
-        "good (food)",
-        "tasty",
-        "good",
-        "yum",
-        "yummy"
-      ],
+      "translations": ["delicious", "good (food)", "tasty", "good", "yum", "yummy"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/2421eaf0fad2e8410a56f6c336377cc8",
       "isNew": false
     },
@@ -6939,14 +6383,7 @@
     },
     {
       "text": "besar",
-      "translations": [
-        "grand",
-        "large",
-        "great",
-        "size",
-        "big",
-        "considerable"
-      ],
+      "translations": ["grand", "large", "great", "size", "big", "considerable"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/ceb842050e3aec646aafdef4d1ceb248",
       "isNew": false
     },
@@ -6988,15 +6425,7 @@
     },
     {
       "text": "ini",
-      "translations": [
-        "this",
-        "the",
-        "that",
-        "these",
-        "it",
-        "here is",
-        "here's"
-      ],
+      "translations": ["this", "the", "that", "these", "it", "here is", "here's"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/2234ad0f3660a46f6466caaedc0d3032",
       "isNew": false
     },
@@ -7032,14 +6461,7 @@
     },
     {
       "text": "menulis",
-      "translations": [
-        "writing",
-        "write",
-        "to write",
-        "wrote",
-        "writes",
-        "written"
-      ],
+      "translations": ["writing", "write", "to write", "wrote", "writes", "written"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/83fe6a9b9ba65dd7f219f8f2d72b44fb",
       "isNew": false
     },
@@ -7117,31 +6539,13 @@
     },
     {
       "text": "bukan",
-      "translations": [
-        "no",
-        "weren't",
-        "isn't",
-        "is not",
-        "are not",
-        "nothing",
-        "not",
-        "neither"
-      ],
+      "translations": ["no", "weren't", "isn't", "is not", "are not", "nothing", "not", "neither"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/3c98151241e4cff85e2d87a5963dc3ce",
       "isNew": false
     },
     {
       "text": "dari",
-      "translations": [
-        "of",
-        "from",
-        "with",
-        "off",
-        "than",
-        "at",
-        "by",
-        "out of"
-      ],
+      "translations": ["of", "from", "with", "off", "than", "at", "by", "out of"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/558d1099a2749dc21f812a0d26d7214e",
       "isNew": false
     },
@@ -7213,16 +6617,7 @@
     },
     {
       "text": "dia",
-      "translations": [
-        "she",
-        "her",
-        "he's",
-        "him",
-        "it",
-        "he",
-        "his",
-        "christopher"
-      ],
+      "translations": ["she", "her", "he's", "him", "it", "he", "his", "christopher"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/e82daeeaf9566ae2fb1ad509801c84ef",
       "isNew": false
     },
@@ -7252,30 +6647,13 @@
     },
     {
       "text": "punya",
-      "translations": [
-        "belongs",
-        "own",
-        "possess",
-        "had",
-        "belong",
-        "have",
-        "of",
-        "has",
-        "ve"
-      ],
+      "translations": ["belongs", "own", "possess", "had", "belong", "have", "of", "has", "ve"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/02d16314d588e5c17555d312c0e7b2fa",
       "isNew": false
     },
     {
       "text": "minum",
-      "translations": [
-        "to drink",
-        "drinks",
-        "drink",
-        "have a drink",
-        "drinking",
-        "drank"
-      ],
+      "translations": ["to drink", "drinks", "drink", "have a drink", "drinking", "drank"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/399de74eb8fdf9712502dd4342718d73",
       "isNew": false
     },
@@ -7299,15 +6677,7 @@
     },
     {
       "text": "suka",
-      "translations": [
-        "like",
-        "loves",
-        "likes",
-        "liked",
-        "love",
-        "fond",
-        "liking"
-      ],
+      "translations": ["like", "loves", "likes", "liked", "love", "fond", "liking"],
       "audioURL": "https://d1vq87e9lcf771.cloudfront.net/ade/1c630da23a7c994dbfacdf7785e7aae2",
       "isNew": false
     },

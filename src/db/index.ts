@@ -213,3 +213,20 @@ export const clearAllChatConversations = async (): Promise<void> => {
   const tx = db.transaction("chatConversations", "readwrite");
   await tx.store.clear();
 };
+
+// Provide a default export for environments that import the DB module as a default object
+export default {
+  getReadyDB,
+  getLexemeProgress,
+  putLexemeProgress,
+  getAllLexemeProgress,
+  getUserStats,
+  putUserStats,
+  getPracticeHistory,
+  addPracticeHistoryItem,
+  clearPracticeHistory,
+  getChatConversation,
+  saveChatConversation,
+  clearAllLexemeProgress,
+  clearAllChatConversations,
+};

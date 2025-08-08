@@ -35,11 +35,66 @@ import { toast } from "sonner";
 const mockedDb = dbModule as jest.Mocked<typeof dbModule>;
 const mockedToast = toast as jest.MockedFunction<typeof toast>;
 
+let mockMarkAsMastered = jest.fn();
+
+// Provide a fuller mock for useProgress so App can run without crashing
+let mockProgressMap = new Map<string, LexemeProgress>();
+const defaultProgress = (text: string): LexemeProgress => ({
+  text,
+  timesSeen: 0,
+  timesCorrect: 0,
+  lastPracticedAt: Date.now(),
+  recentIncorrectStreak: 0,
+  confusedWith: {},
+  easingLevel: 1,
+  consecutiveCorrectStreak: 0,
+  isMastered: false,
+});
+const mockGetProgress = (text: string) => mockProgressMap.get(text);
+const mockRecordAnswer = jest.fn(async (lexeme: { text: string }, isCorrect: boolean) => {
+  const prev = mockProgressMap.get(lexeme.text) ?? defaultProgress(lexeme.text);
+  const nextStreak = isCorrect ? prev.consecutiveCorrectStreak + 1 : 0;
+  const updated: LexemeProgress = isCorrect
+    ? {
+        ...prev,
+        timesSeen: prev.timesSeen + 1,
+        timesCorrect: prev.timesCorrect + 1,
+        consecutiveCorrectStreak: nextStreak,
+        isMastered: nextStreak >= 5,
+        lastPracticedAt: Date.now(),
+        recentIncorrectStreak: 0,
+        easingLevel: nextStreak >= 3 ? 2 : prev.easingLevel,
+        masteredAt: nextStreak >= 5 ? Date.now() : prev.masteredAt,
+      }
+    : {
+        ...prev,
+        timesSeen: prev.timesSeen + 1,
+        lastPracticedAt: Date.now(),
+        lastIncorrectAt: Date.now(),
+        recentIncorrectStreak: prev.recentIncorrectStreak + 1,
+        consecutiveCorrectStreak: 0,
+      };
+  mockProgressMap.set(lexeme.text, updated);
+  return updated;
+});
+
+jest.mock("./hooks/useProgress", () => ({
+  useProgress: () => ({
+    markAsMastered: mockMarkAsMastered,
+    recordAnswer: mockRecordAnswer,
+    getProgress: mockGetProgress,
+    progressMap: mockProgressMap,
+  }),
+}));
+
 describe("App - Mastered Words Filtering", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Clear localStorage before each test
     localStorage.clear();
+    // Reset progress map and handlers
+    mockProgressMap = new Map<string, LexemeProgress>();
+    mockRecordAnswer.mockClear();
 
     // Set up default mock implementations
     mockedDb.getUserStats.mockResolvedValue(undefined);
@@ -53,6 +108,84 @@ describe("App - Mastered Words Filtering", () => {
     mockedDb.clearPracticeHistory.mockResolvedValue();
     mockedDb.clearAllChatConversations.mockResolvedValue();
     mockedDb.clearAllLexemeProgress.mockResolvedValue();
+  });
+
+  it("mark as mastered button triggers action and toast", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+    });
+
+    const btn = await screen.findByRole("button", { name: /Mark as Mastered/i });
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(mockMarkAsMastered).toHaveBeenCalled();
+    });
+
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("clears history and shows success toast", async () => {
+    mockedDb.getPracticeHistory.mockResolvedValueOnce([
+      {
+        id: "1",
+        word: "test",
+        translation: ["t"],
+        isCorrect: true,
+        timestamp: Date.now(),
+        isReverseMode: false,
+      },
+    ]);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+    });
+
+    const clearBtn = await screen.findByTitle("Clear history");
+    fireEvent.click(clearBtn);
+
+    await waitFor(() => {
+      expect(mockedDb.clearPracticeHistory).toHaveBeenCalled();
+    });
+
+    expect(toast.success).toHaveBeenCalledWith("Practice history cleared");
+  });
+
+  it("shows error toast when clear history fails", async () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      mockedDb.getPracticeHistory.mockResolvedValueOnce([
+        {
+          id: "1",
+          word: "test",
+          translation: ["t"],
+          isCorrect: true,
+          timestamp: Date.now(),
+          isReverseMode: false,
+        },
+      ]);
+
+      mockedDb.clearPracticeHistory.mockRejectedValueOnce(new Error("fail"));
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(screen.queryByText("Loading lexemes...")).not.toBeInTheDocument();
+      });
+
+      const clearBtn = await screen.findByTitle("Clear history");
+      fireEvent.click(clearBtn);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Failed to clear practice history");
+      });
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it("should not display mastered words in practice", async () => {
@@ -74,6 +207,8 @@ describe("App - Mastered Words Filtering", () => {
 
     // Mock the database to return this progress
     mockedDb.getAllLexemeProgress.mockResolvedValue(progressData);
+    // Also reflect this in the mocked progress map used by the component
+    mockProgressMap = new Map(progressData.map((p) => [p.text, p] as const));
 
     render(<App />);
 
@@ -124,6 +259,8 @@ describe("App - Mastered Words Filtering", () => {
 
     // Mock the database to return this progress
     mockedDb.getAllLexemeProgress.mockResolvedValue(progressData);
+    // Also reflect this in the mocked progress map used by the component
+    mockProgressMap = new Map(progressData.map((p) => [p.text, p] as const));
 
     render(<App />);
 
@@ -247,6 +384,11 @@ describe("App - Mastered Words Filtering", () => {
     };
 
     mockedDb.getAllLexemeProgress.mockResolvedValue([almostMasteredProgress, masteredProgress]);
+    // Also reflect this in the mocked progress map used by the component
+    mockProgressMap = new Map([
+      [almostMasteredProgress.text, almostMasteredProgress],
+      [masteredProgress.text, masteredProgress],
+    ]);
 
     render(<App />);
 
