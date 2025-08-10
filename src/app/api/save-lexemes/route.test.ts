@@ -114,12 +114,12 @@ describe("save-lexemes API route", () => {
 
       const writtenData = JSON.parse((writeFile as jest.Mock).mock.calls[0][1]);
       expect(writtenData.learnedLexemes).toHaveLength(3);
-      
+
       // Check sorting
       expect(writtenData.learnedLexemes[0].text).toBe("adios");
       expect(writtenData.learnedLexemes[1].text).toBe("gracias");
       expect(writtenData.learnedLexemes[2].text).toBe("hola");
-      
+
       // Check that hola was updated
       const holaEntry = writtenData.learnedLexemes.find((l: Lexeme) => l.text === "hola");
       expect(holaEntry.translations).toEqual(["hello"]); // New translation
@@ -216,7 +216,7 @@ describe("save-lexemes API route", () => {
 
       const writtenData = JSON.parse((writeFile as jest.Mock).mock.calls[0][1]);
       expect(writtenData.learnedLexemes).toHaveLength(2);
-      
+
       // The last duplicate should win
       const holaEntry = writtenData.learnedLexemes.find((l: Lexeme) => l.text === "hola");
       expect(holaEntry.translations).toEqual(["hi"]);
@@ -341,7 +341,7 @@ describe("save-lexemes API route", () => {
     });
 
     it("should preserve all lexeme properties", async () => {
-      const lexemesWithExtraProps: any[] = [
+      const lexemesWithExtraProps: Array<Record<string, unknown>> = [
         {
           text: "test",
           translations: ["test"],

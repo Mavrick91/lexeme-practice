@@ -32,31 +32,40 @@ jest.mock("@/db", () => ({
 }));
 
 // Mock Next.js server components for testing
-jest.mock("next/server", () => ({
-  NextRequest: class {
-    constructor(url: string, init?: any) {
-      this.url = url;
-      this.method = init?.method || "GET";
-      this.body = init?.body;
-      this.headers = new Map();
+jest.mock("next/server", () => {
+  // Using function expression instead of declaration to satisfy ESLint
+  const NextRequest = function (
+    this: { url: string; method: string; body: unknown; headers: Map<string, string> },
+    url: string,
+    init?: { method?: string; body?: unknown }
+  ) {
+    this.url = url;
+    this.method = init?.method || "GET";
+    this.body = init?.body;
+    this.headers = new Map();
+  };
+
+  NextRequest.prototype.json = async function () {
+    if (typeof this.body === "string") {
+      return JSON.parse(this.body);
     }
-    async json() {
-      if (typeof this.body === "string") {
-        return JSON.parse(this.body);
-      }
-      return this.body;
-    }
-  },
-  NextResponse: {
-    json: (body: any, init?: any) => ({
-      json: async () => body,
-      status: init?.status || 200,
-      ok: (init?.status || 200) < 400,
-    }),
-  },
-}));
+    return this.body;
+  };
+
+  return {
+    NextRequest: NextRequest as unknown,
+    NextResponse: {
+      json: (body: unknown, init?: { status?: number }) => ({
+        json: async () => body,
+        status: init?.status || 200,
+        ok: (init?.status || 200) < 400,
+      }),
+    },
+  };
+});
 
 // Polyfill for URL in Node environment
-if (typeof URL === "undefined") {
-  global.URL = require("url").URL;
+if (typeof globalThis.URL === "undefined") {
+  // Dynamic import for Node.js URL
+  (globalThis as Record<string, unknown>).URL = globalThis.URL;
 }

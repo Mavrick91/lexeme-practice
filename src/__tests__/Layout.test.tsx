@@ -103,7 +103,7 @@ describe("Layout", () => {
 
     it("highlights the active Practice link", () => {
       mockUsePathname.mockReturnValue("/");
-      
+
       render(
         <Layout>
           <div>Content</div>
@@ -119,7 +119,7 @@ describe("Layout", () => {
 
     it("highlights the active Words link", () => {
       mockUsePathname.mockReturnValue("/words");
-      
+
       render(
         <Layout>
           <div>Content</div>
@@ -212,11 +212,7 @@ describe("Layout", () => {
       );
 
       const header = screen.getByText("Lexeme Master").closest("header");
-      expect(header).toHaveClass(
-        "border-b",
-        "bg-background/95",
-        "backdrop-blur"
-      );
+      expect(header).toHaveClass("border-b", "bg-background/95", "backdrop-blur");
     });
   });
 });

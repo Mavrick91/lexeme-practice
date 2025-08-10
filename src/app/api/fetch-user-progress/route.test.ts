@@ -1,5 +1,4 @@
 import { POST } from "./route";
-import { NextRequest } from "next/server";
 
 // Mock the constants
 jest.mock("@/lib/constants", () => ({
@@ -18,7 +17,7 @@ jest.mock("@/lib/constants", () => ({
 }));
 
 // Mock global fetch
-global.fetch = jest.fn();
+(globalThis as any).fetch = jest.fn();
 
 describe("fetch-user-progress API route", () => {
   beforeEach(() => {
@@ -75,14 +74,12 @@ describe("fetch-user-progress API route", () => {
       ],
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockBatchResponse,
     });
 
-    const request = new NextRequest("http://localhost:3000/api/fetch-user-progress", {
-      method: "POST",
-    });
+    // Request parameter is not used by POST function
 
     const response = await POST();
     const data = await response.json();
@@ -90,9 +87,9 @@ describe("fetch-user-progress API route", () => {
     expect(response.status).toBe(200);
     expect(data.responses).toHaveLength(1);
     expect(data.responses[0].body).toEqual(mockUserData);
-    
+
     // Verify fetch was called with batch endpoint
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       "https://test-api.duolingo.com/batch",
       expect.objectContaining({
         method: "POST",
@@ -121,7 +118,7 @@ describe("fetch-user-progress API route", () => {
       ],
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockBatchResponse,
     });
@@ -149,7 +146,7 @@ describe("fetch-user-progress API route", () => {
       ],
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockBatchResponse,
     });
@@ -163,7 +160,7 @@ describe("fetch-user-progress API route", () => {
 
   it("should keep invalid JSON as string", async () => {
     const invalidJson = "{ invalid json }";
-    
+
     const mockBatchResponse = {
       responses: [
         {
@@ -173,7 +170,7 @@ describe("fetch-user-progress API route", () => {
       ],
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockBatchResponse,
     });
@@ -186,7 +183,7 @@ describe("fetch-user-progress API route", () => {
   });
 
   it("should handle API errors gracefully", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 403,
     });
@@ -202,7 +199,7 @@ describe("fetch-user-progress API route", () => {
   });
 
   it("should handle network errors", async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Connection refused"));
+    (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error("Connection refused"));
 
     const response = await POST();
     const data = await response.json();
@@ -215,16 +212,14 @@ describe("fetch-user-progress API route", () => {
   });
 
   it("should include proper batch request structure", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ responses: [] }),
     });
 
     await POST();
 
-    const fetchBody = JSON.parse(
-      (global.fetch as jest.Mock).mock.calls[0][1].body
-    );
+    const fetchBody = JSON.parse((globalThis.fetch as jest.Mock).mock.calls[0][1].body);
 
     expect(fetchBody).toHaveProperty("requests");
     expect(fetchBody.requests).toHaveLength(1);
@@ -238,16 +233,14 @@ describe("fetch-user-progress API route", () => {
   });
 
   it("should include comprehensive field list in request", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ responses: [] }),
     });
 
     await POST();
 
-    const fetchBody = JSON.parse(
-      (global.fetch as jest.Mock).mock.calls[0][1].body
-    );
+    const fetchBody = JSON.parse((globalThis.fetch as jest.Mock).mock.calls[0][1].body);
 
     const requestUrl = fetchBody.requests[0].url;
     expect(requestUrl).toContain("fields=");
@@ -263,7 +256,7 @@ describe("fetch-user-progress API route", () => {
       responses: [],
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockBatchResponse,
     });
@@ -288,7 +281,7 @@ describe("fetch-user-progress API route", () => {
       ],
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockBatchResponse,
     });

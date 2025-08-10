@@ -19,7 +19,7 @@ jest.mock("next/navigation", () => ({
 }));
 
 // Mock fetch globally
-global.fetch = jest.fn();
+(globalThis as any).fetch = jest.fn();
 
 // Mock window.location.reload once at the top level
 delete (window as any).location;
@@ -46,7 +46,7 @@ describe("WordsTable", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (global.fetch as jest.Mock).mockClear();
+    (globalThis.fetch as jest.Mock).mockClear();
     if (window.location && window.location.reload) {
       (window.location.reload as jest.Mock).mockClear();
     }
@@ -136,7 +136,14 @@ describe("WordsTable", () => {
   });
 
   describe("Audio playback", () => {
-    let mockAudio: any;
+    let mockAudio: {
+      play: jest.Mock;
+      pause: jest.Mock;
+      paused: boolean;
+      src: string;
+      currentTime: number;
+      onended: (() => void) | null;
+    };
 
     beforeEach(() => {
       mockAudio = {
@@ -147,8 +154,8 @@ describe("WordsTable", () => {
         currentTime: 0,
         onended: null,
       };
-      
-      global.Audio = jest.fn(() => mockAudio) as any;
+
+      (globalThis as any).Audio = jest.fn(() => mockAudio);
     });
 
     it("should play audio when play button is clicked", async () => {
@@ -167,7 +174,7 @@ describe("WordsTable", () => {
       render(<WordsTable lexemes={mockLexemes} />);
 
       const playButton = screen.getByLabelText("Play audio for makan");
-      
+
       // First click to play
       fireEvent.click(playButton);
       await waitFor(() => {
@@ -177,7 +184,7 @@ describe("WordsTable", () => {
       // Second click to pause
       mockAudio.paused = false;
       fireEvent.click(playButton);
-      
+
       expect(mockAudio.pause).toHaveBeenCalled();
     });
 
@@ -241,7 +248,7 @@ describe("WordsTable", () => {
         message: "Successfully saved 4 lexemes (merged)",
       };
 
-      (global.fetch as jest.Mock)
+      (globalThis.fetch as jest.Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockProgressResponse,
@@ -265,7 +272,9 @@ describe("WordsTable", () => {
       });
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Successfully fetched all 1 lexemes from Duolingo!");
+        expect(toast.success).toHaveBeenCalledWith(
+          "Successfully fetched all 1 lexemes from Duolingo!"
+        );
       });
 
       await waitFor(() => {
@@ -274,7 +283,7 @@ describe("WordsTable", () => {
     });
 
     it("should handle sync errors gracefully", async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
+      (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
 
       render(<WordsTable lexemes={mockLexemes} />);
 
@@ -299,7 +308,7 @@ describe("WordsTable", () => {
         ],
       };
 
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => mockProgressResponse,
       });
@@ -315,7 +324,7 @@ describe("WordsTable", () => {
     });
 
     it("should disable sync button while syncing", async () => {
-      (global.fetch as jest.Mock).mockImplementation(
+      (globalThis.fetch as jest.Mock).mockImplementation(
         () => new Promise(() => {}) // Never resolves
       );
 
@@ -357,11 +366,13 @@ describe("WordsTable", () => {
       };
 
       const mockFirstBatch = {
-        learnedLexemes: Array(50).fill(null).map((_, i) => ({
-          text: `word${i}`,
-          translations: [`translation${i}`],
-          audioURL: `https://example.com/audio${i}.mp3`,
-        })),
+        learnedLexemes: Array(50)
+          .fill(null)
+          .map((_, i) => ({
+            text: `word${i}`,
+            translations: [`translation${i}`],
+            audioURL: `https://example.com/audio${i}.mp3`,
+          })),
         pagination: {
           totalLexemes: 75,
           nextStartIndex: 50,
@@ -369,18 +380,20 @@ describe("WordsTable", () => {
       };
 
       const mockSecondBatch = {
-        learnedLexemes: Array(25).fill(null).map((_, i) => ({
-          text: `word${i + 50}`,
-          translations: [`translation${i + 50}`],
-          audioURL: `https://example.com/audio${i + 50}.mp3`,
-        })),
+        learnedLexemes: Array(25)
+          .fill(null)
+          .map((_, i) => ({
+            text: `word${i + 50}`,
+            translations: [`translation${i + 50}`],
+            audioURL: `https://example.com/audio${i + 50}.mp3`,
+          })),
         pagination: {
           totalLexemes: 75,
           nextStartIndex: null,
         },
       };
 
-      (global.fetch as jest.Mock)
+      (globalThis.fetch as jest.Mock)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockProgressResponse,
@@ -404,11 +417,13 @@ describe("WordsTable", () => {
       fireEvent.click(syncButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Successfully fetched all 75 lexemes from Duolingo!");
+        expect(toast.success).toHaveBeenCalledWith(
+          "Successfully fetched all 75 lexemes from Duolingo!"
+        );
       });
 
       // Verify that fetch was called for both batches
-      expect(global.fetch).toHaveBeenCalledTimes(4); // progress + 2 lexeme batches + save
+      expect(globalThis.fetch).toHaveBeenCalledTimes(4); // progress + 2 lexeme batches + save
     });
   });
 });

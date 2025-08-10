@@ -18,7 +18,7 @@ export const WordsTable = ({ lexemes }: WordsTableProps) => {
   const [current, setCurrent] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<globalThis.HTMLAudioElement | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -106,47 +106,52 @@ export const WordsTable = ({ lexemes }: WordsTableProps) => {
       const skillMap = new Map<string, { finishedSessions: number; finishedLevels: number }>();
 
       // Iterate through sections -> units -> levels to extract all skill IDs
-      pathSectioned.forEach((section: any) => {
-        if (section.units && Array.isArray(section.units)) {
-          section.units.forEach((unit: any) => {
-            if (unit.levels && Array.isArray(unit.levels)) {
-              unit.levels.forEach((level: any) => {
-                const skillId = level.pathLevelMetadata?.skillId;
-                const finishedSessions = level.finishedSessions || 0;
-                const state = level.state;
+      pathSectioned.forEach(
+        (section: { units?: Array<{ levels?: Array<Record<string, unknown>> }> }) => {
+          if (section.units && Array.isArray(section.units)) {
+            section.units.forEach((unit: { levels?: Array<Record<string, unknown>> }) => {
+              if (unit.levels && Array.isArray(unit.levels)) {
+                unit.levels.forEach((level: Record<string, any>) => {
+                  const skillId = level.pathLevelMetadata?.skillId;
+                  const finishedSessions = level.finishedSessions || 0;
+                  const state = level.state;
 
-                if (skillId) {
-                  // Include ALL skills that are accessible or have any progress
-                  if (
-                    state === "completed" ||
-                    state === "started" ||
-                    state === "unlocked" ||
-                    finishedSessions >= 0
-                  ) {
-                    if (!skillMap.has(skillId)) {
-                      skillMap.set(skillId, { finishedSessions: 0, finishedLevels: 0 });
-                    }
+                  if (skillId) {
+                    // Include ALL skills that are accessible or have any progress
+                    if (
+                      state === "completed" ||
+                      state === "started" ||
+                      state === "unlocked" ||
+                      finishedSessions >= 0
+                    ) {
+                      if (!skillMap.has(skillId)) {
+                        skillMap.set(skillId, { finishedSessions: 0, finishedLevels: 0 });
+                      }
 
-                    const current = skillMap.get(skillId)!;
-                    current.finishedSessions = Math.max(current.finishedSessions, finishedSessions);
+                      const current = skillMap.get(skillId)!;
+                      current.finishedSessions = Math.max(
+                        current.finishedSessions,
+                        finishedSessions
+                      );
 
-                    // Count completed levels
-                    if (state === "completed") {
-                      current.finishedLevels += 1;
+                      // Count completed levels
+                      if (state === "completed") {
+                        current.finishedLevels += 1;
+                      }
                     }
                   }
-                }
-              });
-            }
-          });
+                });
+              }
+            });
+          }
         }
-      });
+      );
 
       // Also check the legacy skills array if it exists
       const legacySkills = userData.currentCourse?.skills || [];
       if (legacySkills.length > 0) {
         const flattenedSkills = legacySkills.flat();
-        flattenedSkills.forEach((skill: any) => {
+        flattenedSkills.forEach((skill: Record<string, any>) => {
           if (skill.id && ((skill.finishedLevels ?? 0) > 0 || (skill.finishedLessons ?? 0) > 0)) {
             if (!skillMap.has(skill.id)) {
               skillMap.set(skill.id, {

@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import WordsPage from "./page";
-import type { LexemesData } from "@/types";
 
 // Mock the data import
 jest.mock("@/combined_lexemes.json", () => ({
@@ -31,10 +30,8 @@ jest.mock("@/components/Layout", () => ({
 }));
 
 jest.mock("@/components/WordsTable", () => ({
-  WordsTable: ({ lexemes }: { lexemes: any[] }) => (
-    <div data-testid="words-table">
-      Words Table with {lexemes.length} lexemes
-    </div>
+  WordsTable: ({ lexemes }: { lexemes: unknown[] }) => (
+    <div data-testid="words-table">Words Table with {lexemes.length} lexemes</div>
   ),
 }));
 
@@ -54,7 +51,9 @@ describe("WordsPage", () => {
 
     expect(screen.getByTestId("layout")).toBeInTheDocument();
     expect(screen.getByText("All Words")).toBeInTheDocument();
-    expect(screen.getByText("Search Indonesian lexemes, view English translations, and play audio.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Search Indonesian lexemes, view English translations, and play audio.")
+    ).toBeInTheDocument();
   });
 
   it("should render the WordsTable component", () => {
@@ -79,7 +78,7 @@ describe("WordsPage", () => {
   it("should apply correct container styles", () => {
     render(<WordsPage />);
 
-    const container = screen.getByText("All Words").closest('.container');
+    const container = screen.getByText("All Words").closest(".container");
     expect(container).toHaveClass("py-6");
   });
 

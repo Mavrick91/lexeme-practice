@@ -24,7 +24,7 @@ jest.mock("@/lib/constants", () => ({
 }));
 
 // Mock global fetch
-global.fetch = jest.fn();
+(globalThis as any).fetch = jest.fn();
 
 describe("fetch-lexemes API route", () => {
   beforeEach(() => {
@@ -55,7 +55,7 @@ describe("fetch-lexemes API route", () => {
       },
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockLexemesResponse,
     });
@@ -80,9 +80,9 @@ describe("fetch-lexemes API route", () => {
 
     expect(response.status).toBe(200);
     expect(data).toEqual(mockLexemesResponse);
-    
+
     // Verify fetch was called with correct parameters
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.stringContaining("https://test-api.duolingo.com"),
       expect.objectContaining({
         method: "POST",
@@ -106,7 +106,7 @@ describe("fetch-lexemes API route", () => {
       },
     };
 
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     });
@@ -136,14 +136,14 @@ describe("fetch-lexemes API route", () => {
     expect(data).toEqual(mockResponse);
 
     // Verify URL parameters
-    const fetchCall = (global.fetch as jest.Mock).mock.calls[0][0];
+    const fetchCall = (globalThis.fetch as jest.Mock).mock.calls[0][0];
     expect(fetchCall).toContain("startIndex=50");
     expect(fetchCall).toContain("limit=75");
     expect(fetchCall).toContain("sortBy=LEARNED_DATE");
   });
 
   it("should cap limit to maxLimit", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ learnedLexemes: [] }),
     });
@@ -160,12 +160,12 @@ describe("fetch-lexemes API route", () => {
 
     await POST(request);
 
-    const fetchCall = (global.fetch as jest.Mock).mock.calls[0][0];
+    const fetchCall = (globalThis.fetch as jest.Mock).mock.calls[0][0];
     expect(fetchCall).toContain("limit=100"); // Should be capped at maxLimit
   });
 
   it("should handle API errors gracefully", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
       status: 401,
     });
@@ -190,7 +190,7 @@ describe("fetch-lexemes API route", () => {
   });
 
   it("should handle network errors", async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network timeout"));
+    (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error("Network timeout"));
 
     const requestBody: FetchLexemesRequest = {
       progressedSkills: [],
@@ -212,7 +212,7 @@ describe("fetch-lexemes API route", () => {
   });
 
   it("should include proper headers in the request", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ learnedLexemes: [] }),
     });
@@ -228,7 +228,7 @@ describe("fetch-lexemes API route", () => {
 
     await POST(request);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({

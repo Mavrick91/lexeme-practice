@@ -25,7 +25,7 @@ jest.mock("next/navigation", () => ({
 
 // Store fetch mock for assertions
 const fetchMock = jest.fn();
-global.fetch = fetchMock;
+(globalThis as any).fetch = fetchMock;
 
 // Mock window.location.reload
 delete (window as any).location;
@@ -93,7 +93,11 @@ describe("Duolingo Sync Integration", () => {
       const mockLexemesBatch1 = {
         learnedLexemes: [
           { text: "halo", translations: ["hello"], audioURL: "https://example.com/halo.mp3" },
-          { text: "selamat", translations: ["congratulations", "safe"], audioURL: "https://example.com/selamat.mp3" },
+          {
+            text: "selamat",
+            translations: ["congratulations", "safe"],
+            audioURL: "https://example.com/selamat.mp3",
+          },
         ],
         pagination: {
           totalLexemes: 4,
@@ -103,8 +107,16 @@ describe("Duolingo Sync Integration", () => {
 
       const mockLexemesBatch2 = {
         learnedLexemes: [
-          { text: "terima kasih", translations: ["thank you"], audioURL: "https://example.com/terima.mp3" },
-          { text: "sama-sama", translations: ["you're welcome"], audioURL: "https://example.com/sama.mp3" },
+          {
+            text: "terima kasih",
+            translations: ["thank you"],
+            audioURL: "https://example.com/terima.mp3",
+          },
+          {
+            text: "sama-sama",
+            translations: ["you're welcome"],
+            audioURL: "https://example.com/sama.mp3",
+          },
         ],
         pagination: {
           totalLexemes: 4,
@@ -173,7 +185,9 @@ describe("Duolingo Sync Integration", () => {
       });
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Successfully fetched all 4 lexemes from Duolingo!");
+        expect(toast.success).toHaveBeenCalledWith(
+          "Successfully fetched all 4 lexemes from Duolingo!"
+        );
       });
 
       await waitFor(() => {
@@ -189,9 +203,12 @@ describe("Duolingo Sync Integration", () => {
       });
 
       // Wait for reload to be called
-      await waitFor(() => {
-        expect(reloadMock).toHaveBeenCalled();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          expect(reloadMock).toHaveBeenCalled();
+        },
+        { timeout: 2000 }
+      );
 
       // Verify all API calls were made
       expect(fetchMock).toHaveBeenCalledTimes(4);
@@ -324,9 +341,7 @@ describe("Duolingo Sync Integration", () => {
       };
 
       const mockLexemes = {
-        learnedLexemes: [
-          { text: "test", translations: ["test"], audioURL: "test.mp3" },
-        ],
+        learnedLexemes: [{ text: "test", translations: ["test"], audioURL: "test.mp3" }],
         pagination: { totalLexemes: 1, nextStartIndex: null },
       };
 
@@ -422,9 +437,9 @@ describe("Duolingo Sync Integration", () => {
   describe("UI state during sync", () => {
     it("should disable button and show correct text during different phases", async () => {
       // Setup a slow response to observe state changes
-      let progressResolve: any;
-      let lexemeResolve: any;
-      let saveResolve: any;
+      let progressResolve: ((value: any) => void) | undefined;
+      let lexemeResolve: ((value: any) => void) | undefined;
+      let saveResolve: ((value: any) => void) | undefined;
 
       const progressPromise = new Promise((resolve) => {
         progressResolve = resolve;
@@ -456,7 +471,7 @@ describe("Duolingo Sync Integration", () => {
       });
 
       // Resolve progress fetch
-      progressResolve({
+      progressResolve?.({
         ok: true,
         json: async () => ({
           responses: [
@@ -491,7 +506,7 @@ describe("Duolingo Sync Integration", () => {
       });
 
       // Resolve lexemes fetch
-      lexemeResolve({
+      lexemeResolve?.({
         ok: true,
         json: async () => ({
           learnedLexemes: [{ text: "test", translations: ["test"], audioURL: "test.mp3" }],
@@ -505,15 +520,18 @@ describe("Duolingo Sync Integration", () => {
       });
 
       // Resolve save
-      saveResolve({
+      saveResolve?.({
         ok: true,
         json: async () => ({ success: true, count: 1, message: "Saved" }),
       });
 
       // Wait for completion
-      await waitFor(() => {
-        expect(reloadMock).toHaveBeenCalled();
-      }, { timeout: 2000 });
+      await waitFor(
+        () => {
+          expect(reloadMock).toHaveBeenCalled();
+        },
+        { timeout: 2000 }
+      );
     });
   });
 });

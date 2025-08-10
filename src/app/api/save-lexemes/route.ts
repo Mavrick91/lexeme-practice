@@ -51,8 +51,10 @@ export const POST = async (request: NextRequest) => {
         });
 
         finalLexemes = Array.from(lexemeMap.values());
-      } catch (error) {
+      } catch {
         // File doesn't exist or is invalid, use only new lexemes
+        // Using console.log for development debugging
+        // eslint-disable-next-line no-console
         console.log("No existing lexemes file found, creating new one");
       }
     }
@@ -62,7 +64,7 @@ export const POST = async (request: NextRequest) => {
 
     // Write to file
     const dataToSave = {
-      learnedLexemes: finalLexemes
+      learnedLexemes: finalLexemes,
     };
 
     await writeFile(filePath, JSON.stringify(dataToSave, null, 2), "utf-8");
