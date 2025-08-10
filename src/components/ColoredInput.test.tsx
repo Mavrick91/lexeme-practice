@@ -469,15 +469,6 @@ describe("ColoredInput", () => {
   });
 
   describe("Auto-submit functionality", () => {
-    beforeEach(() => {
-      jest.useFakeTimers();
-    });
-
-    afterEach(() => {
-      jest.runOnlyPendingTimers();
-      jest.useRealTimers();
-    });
-
     it("auto-submits when all letters are correct", () => {
       const coloredLetters: ColoredLetter[] = [
         { letter: "h", color: "correct" },
@@ -496,13 +487,7 @@ describe("ColoredInput", () => {
         />
       );
 
-      // Should not submit immediately
-      expect(mockOnSubmit).not.toHaveBeenCalled();
-
-      // Fast-forward time by 300ms
-      jest.advanceTimersByTime(300);
-
-      // Should have auto-submitted
+      // Should auto-submit immediately
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
@@ -524,9 +509,6 @@ describe("ColoredInput", () => {
         />
       );
 
-      // Fast-forward time
-      jest.advanceTimersByTime(500);
-
       // Should not have submitted
       expect(mockOnSubmit).not.toHaveBeenCalled();
     });
@@ -541,9 +523,6 @@ describe("ColoredInput", () => {
       render(
         <ColoredInput {...defaultProps} value="hel" coloredLetters={coloredLetters} maxLength={5} />
       );
-
-      // Fast-forward time
-      jest.advanceTimersByTime(500);
 
       // Should not have submitted
       expect(mockOnSubmit).not.toHaveBeenCalled();
@@ -567,14 +546,11 @@ describe("ColoredInput", () => {
         />
       );
 
-      // Fast-forward time
-      jest.advanceTimersByTime(300);
-
-      // Should have auto-submitted (spaces are considered correct)
+      // Should have auto-submitted immediately (spaces are considered correct)
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
-    it("cancels auto-submit if component unmounts", () => {
+    it("does not crash when unmounting after auto-submit", () => {
       const coloredLetters: ColoredLetter[] = [
         { letter: "h", color: "correct" },
         { letter: "i", color: "correct" },
@@ -584,14 +560,11 @@ describe("ColoredInput", () => {
         <ColoredInput {...defaultProps} value="hi" coloredLetters={coloredLetters} maxLength={2} />
       );
 
-      // Unmount before timer completes
-      unmount();
+      // Should have auto-submitted immediately
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1);
 
-      // Fast-forward time
-      jest.advanceTimersByTime(500);
-
-      // Should not have submitted
-      expect(mockOnSubmit).not.toHaveBeenCalled();
+      // Unmounting should not cause any errors
+      expect(() => unmount()).not.toThrow();
     });
 
     it("triggers auto-submit when typing completes the word correctly", () => {
@@ -610,7 +583,6 @@ describe("ColoredInput", () => {
       );
 
       // Should not submit yet (incomplete)
-      jest.advanceTimersByTime(500);
       expect(mockOnSubmit).not.toHaveBeenCalled();
 
       // Complete the word
@@ -629,10 +601,7 @@ describe("ColoredInput", () => {
         />
       );
 
-      // Fast-forward time
-      jest.advanceTimersByTime(300);
-
-      // Should have auto-submitted
+      // Should have auto-submitted immediately
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
@@ -654,14 +623,11 @@ describe("ColoredInput", () => {
         />
       );
 
-      // Fast-forward time
-      jest.advanceTimersByTime(500);
-
       // Should not have submitted
       expect(mockOnSubmit).not.toHaveBeenCalled();
     });
 
-    it("resets timer when colored letters change", () => {
+    it("submits immediately when letters become all correct", () => {
       const { rerender } = render(
         <ColoredInput
           {...defaultProps}
@@ -677,8 +643,8 @@ describe("ColoredInput", () => {
         />
       );
 
-      // Advance time but not enough to trigger
-      jest.advanceTimersByTime(200);
+      // Should not submit (not all correct)
+      expect(mockOnSubmit).not.toHaveBeenCalled();
 
       // Update to all correct
       rerender(
@@ -696,15 +662,11 @@ describe("ColoredInput", () => {
         />
       );
 
-      // The timer should restart from the update
-      jest.advanceTimersByTime(200);
-      expect(mockOnSubmit).not.toHaveBeenCalled();
-
-      jest.advanceTimersByTime(100);
+      // Should submit immediately
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
 
-    it("allows manual submit with Enter even before auto-submit timer", () => {
+    it("allows manual submit with Enter even when auto-submit would trigger", () => {
       const coloredLetters: ColoredLetter[] = [
         { letter: "h", color: "correct" },
         { letter: "i", color: "correct" },
@@ -714,18 +676,18 @@ describe("ColoredInput", () => {
         <ColoredInput {...defaultProps} value="hi" coloredLetters={coloredLetters} maxLength={2} />
       );
 
-      const input = screen.getByRole("textbox", { name: /type your answer/i });
-
-      // Press Enter immediately
-      fireEvent.keyDown(input, { key: "Enter" });
-
-      // Should have submitted immediately
+      // Should have auto-submitted
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
 
-      // Fast-forward time
-      jest.advanceTimersByTime(500);
+      // Clear the mock
+      mockOnSubmit.mockClear();
 
-      // Should still only have been called once
+      const input = screen.getByRole("textbox", { name: /type your answer/i });
+
+      // Press Enter manually
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      // Should submit again via manual Enter
       expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     });
   });
