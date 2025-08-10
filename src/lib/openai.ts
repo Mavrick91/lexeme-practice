@@ -1,7 +1,7 @@
 import { OPENAI_CONFIG } from "@/config/openai";
 import type { ChatMessage } from "@/types/chat";
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
 type CompletionOptions = {
   model?: string;

@@ -1,11 +1,6 @@
-# React + TypeScript + Vite
+# Lexeme Practice - Next.js Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A language learning application built with Next.js 15, React 19, and TypeScript for practicing Indonesian-English vocabulary with spaced repetition and AI-powered mnemonics.
 
 ## Expanding the ESLint configuration
 

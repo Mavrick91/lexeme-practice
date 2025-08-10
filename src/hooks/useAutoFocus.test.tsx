@@ -7,10 +7,10 @@ const cancelRafOrig = globalThis.cancelAnimationFrame;
 
 beforeEach(() => {
   // Make RAF immediate to stabilize tests
-  globalThis.requestAnimationFrame = (cb: any) => {
+  globalThis.requestAnimationFrame = ((cb: Parameters<typeof requestAnimationFrame>[0]) => {
     cb(0);
-    return 1 as any;
-  };
+    return 1;
+  }) as typeof requestAnimationFrame;
   globalThis.cancelAnimationFrame = jest.fn();
 });
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { Layout } from "./components/Layout";
 import { ModernWordCard } from "./components/ModernWordCard";
@@ -8,7 +10,6 @@ import { toast, Toaster } from "sonner";
 import { useProgress } from "./hooks/useProgress";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
-import { ThemeProvider } from "./contexts/ThemeContext";
 import {
   getPracticeHistory,
   addPracticeHistoryItem,
@@ -19,16 +20,17 @@ import {
 } from "./db";
 import { tryCatch } from "./lib/tryCatch";
 
-// Queue constants removed – we now pick one random word at a time
-
 const AppContent = () => {
   const [currentLexeme, setCurrentLexeme] = useState<Lexeme | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [practiceHistory, setPracticeHistory] = useState<PracticeHistoryItem[]>([]);
   const [isReverseMode, setIsReverseMode] = useState<boolean>(() => {
     // Load reverse mode preference from localStorage
-    const saved = localStorage.getItem("reverseMode");
-    return saved === "true";
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("reverseMode");
+      return saved === "true";
+    }
+    return false;
   });
   const [progressLoaded, setProgressLoaded] = useState(false);
 
@@ -322,12 +324,4 @@ const AppContent = () => {
   );
 };
 
-const App = () => {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
-  );
-};
-
-export default App;
+export default AppContent;

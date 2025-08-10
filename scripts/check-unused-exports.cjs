@@ -7,7 +7,7 @@ const path = require('path');
 // Run ts-unused-exports and capture output, suppressing stdout
 let output;
 try {
-  output = execSync('npx ts-unused-exports tsconfig.app.json', { 
+  output = execSync('npx ts-unused-exports tsconfig.json', { 
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe'] // Capture stdout and stderr
   });
@@ -59,6 +59,12 @@ const knownDynamicImports = [
 for (const item of unusedExports) {
   // Skip files in /components/ui folder
   if (item.filePath.includes('/components/ui/')) {
+    ignoredFromUI.push(item);
+    continue;
+  }
+  
+  // Skip Next.js generated files and config
+  if (item.filePath.includes('.next/') || item.filePath.endsWith('next.config.ts')) {
     ignoredFromUI.push(item);
     continue;
   }

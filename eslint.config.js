@@ -15,7 +15,7 @@ export default [
       "node_modules/**",
       "*.config.js",
       "*.config.ts",
-      "vite.config.ts",
+      "next.config.ts",
       "postcss.config.js",
       "tailwind.config.js",
     ],
