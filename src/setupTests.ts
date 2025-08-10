@@ -30,3 +30,33 @@ jest.mock("@/db", () => ({
   getChatConversation: jest.fn().mockResolvedValue(null),
   saveChatConversation: jest.fn().mockResolvedValue(undefined),
 }));
+
+// Mock Next.js server components for testing
+jest.mock("next/server", () => ({
+  NextRequest: class {
+    constructor(url: string, init?: any) {
+      this.url = url;
+      this.method = init?.method || "GET";
+      this.body = init?.body;
+      this.headers = new Map();
+    }
+    async json() {
+      if (typeof this.body === "string") {
+        return JSON.parse(this.body);
+      }
+      return this.body;
+    }
+  },
+  NextResponse: {
+    json: (body: any, init?: any) => ({
+      json: async () => body,
+      status: init?.status || 200,
+      ok: (init?.status || 200) < 400,
+    }),
+  },
+}));
+
+// Polyfill for URL in Node environment
+if (typeof URL === "undefined") {
+  global.URL = require("url").URL;
+}
