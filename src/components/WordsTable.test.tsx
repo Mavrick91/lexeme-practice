@@ -21,9 +21,13 @@ jest.mock("next/navigation", () => ({
 // Mock fetch globally
 (globalThis as any).fetch = jest.fn();
 
-// Mock window.location.reload once at the top level
-delete (window as any).location;
-window.location = { reload: jest.fn() } as any;
+// Mock window.location.reload properly
+if (!window.location || typeof window.location.reload !== "function") {
+  Object.defineProperty(window, "location", {
+    writable: true,
+    value: { reload: jest.fn() },
+  });
+}
 
 describe("WordsTable", () => {
   const mockLexemes: Lexeme[] = [
@@ -47,7 +51,12 @@ describe("WordsTable", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (globalThis.fetch as jest.Mock).mockClear();
-    if (window.location && window.location.reload) {
+    // Ensure window.location.reload is a mock
+    if (
+      window.location &&
+      window.location.reload &&
+      typeof (window.location.reload as any).mockClear === "function"
+    ) {
       (window.location.reload as jest.Mock).mockClear();
     }
   });

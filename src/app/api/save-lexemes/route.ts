@@ -52,11 +52,23 @@ export const POST = async (request: NextRequest) => {
 
         finalLexemes = Array.from(lexemeMap.values());
       } catch {
-        // File doesn't exist or is invalid, use only new lexemes
+        // File doesn't exist or is invalid, deduplicate input lexemes
+        const lexemeMap = new Map<string, Lexeme>();
+        lexemes.forEach((lexeme) => {
+          lexemeMap.set(lexeme.text, lexeme);
+        });
+        finalLexemes = Array.from(lexemeMap.values());
         // Using console.log for development debugging
         // eslint-disable-next-line no-console
         console.log("No existing lexemes file found, creating new one");
       }
+    } else {
+      // When not merging, still deduplicate the input array
+      const lexemeMap = new Map<string, Lexeme>();
+      lexemes.forEach((lexeme) => {
+        lexemeMap.set(lexeme.text, lexeme);
+      });
+      finalLexemes = Array.from(lexemeMap.values());
     }
 
     // Sort lexemes alphabetically by text

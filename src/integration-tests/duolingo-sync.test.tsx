@@ -27,9 +27,13 @@ jest.mock("next/navigation", () => ({
 const fetchMock = jest.fn();
 (globalThis as any).fetch = fetchMock;
 
-// Mock window.location.reload
-delete (window as any).location;
-window.location = { reload: jest.fn() } as any;
+// Mock window.location.reload properly
+if (!window.location || typeof window.location.reload !== "function") {
+  Object.defineProperty(window, "location", {
+    writable: true,
+    value: { reload: jest.fn() },
+  });
+}
 const reloadMock = window.location.reload as jest.Mock;
 
 describe("Duolingo Sync Integration", () => {
@@ -44,7 +48,9 @@ describe("Duolingo Sync Integration", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     fetchMock.mockClear();
-    reloadMock.mockClear();
+    if (reloadMock && typeof reloadMock.mockClear === 'function') {
+      reloadMock.mockClear();
+    }
   });
 
   describe("Complete successful sync flow", () => {
