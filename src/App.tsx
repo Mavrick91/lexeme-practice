@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Layout } from "./components/Layout";
 import { ModernWordCard } from "./components/ModernWordCard";
+import { FlashCard } from "./components/FlashCard";
 import { PracticeHistory } from "./components/PracticeHistory";
 import { DashboardSidebar } from "./components/DashboardSidebar";
 import { MobileStatsSheet } from "./components/MobileStatsSheet";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { useProgress } from "./hooks/useProgress";
+import { useFlashCard } from "./hooks/useFlashCard";
 import type { LexemesData, Lexeme, PracticeHistoryItem } from "./types";
 import lexemesData from "./combined_lexemes.json";
 import {
@@ -32,7 +35,16 @@ const AppContent = () => {
     }
     return false;
   });
+  const [isFlashCardMode, setIsFlashCardMode] = useState<boolean>(() => {
+    // Load flash card mode preference from localStorage
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("flashCardMode");
+      return saved === "true";
+    }
+    return false;
+  });
   const [progressLoaded, setProgressLoaded] = useState(false);
+  const [feedbackAnimation, setFeedbackAnimation] = useState<"correct" | "incorrect" | null>(null);
 
   const { recordAnswer, markAsMastered, getProgress, progressMap } = useProgress();
 
@@ -41,6 +53,15 @@ const AppContent = () => {
     const newMode = !isReverseMode;
     setIsReverseMode(newMode);
     localStorage.setItem("reverseMode", String(newMode));
+  };
+
+  // Handle flash card mode toggle with localStorage persistence
+  const handleToggleFlashCardMode = () => {
+    const newMode = !isFlashCardMode;
+    setIsFlashCardMode(newMode);
+    localStorage.setItem("flashCardMode", String(newMode));
+    // Reset flash card state when toggling
+    flashCardControls.resetCard();
   };
 
   // Function to pick a random lexeme (excluding mastered words)
@@ -130,6 +151,8 @@ const AppContent = () => {
     setCurrentLexeme(next);
   };
 
+  // Moved after handler definitions
+
   const handleMarkCorrect = async (lexeme: Lexeme) => {
     // Add to practice history
     const historyItem: PracticeHistoryItem = {
@@ -157,10 +180,20 @@ const AppContent = () => {
     // Check if the word just became mastered
     if (updatedProgress.isMastered && updatedProgress.consecutiveCorrectStreak === 5) {
       // Show celebration toast only for newly mastered words
-      toast.success(`🎉 "${lexeme.text}" MASTERED!`, {
-        description: "This word won't appear in practice anymore.",
-        duration: 4000,
-      });
+      toast.success(
+        <div className="flex items-center gap-3">
+          <span className="animate-bounce text-2xl">🎉</span>
+          <div>
+            <div className="font-bold">"${lexeme.text}" MASTERED!</div>
+            <div className="text-sm opacity-90">This word won't appear in practice anymore.</div>
+          </div>
+        </div>,
+        {
+          duration: 5000,
+          className:
+            "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-300 dark:border-green-700",
+        }
+      );
 
       // Return indication that word was just mastered
       return { justMastered: true };
@@ -249,6 +282,31 @@ const AppContent = () => {
     window.location.reload();
   };
 
+  const flashCardControls = useFlashCard({
+    isEnabled: isFlashCardMode,
+    onMarkCorrect: currentLexeme
+      ? async () => {
+          setFeedbackAnimation("correct");
+          setTimeout(async () => {
+            await handleMarkCorrect(currentLexeme);
+            await handleNext();
+            setFeedbackAnimation(null);
+          }, 600);
+        }
+      : undefined,
+
+    onMarkIncorrect: currentLexeme
+      ? async () => {
+          setFeedbackAnimation("incorrect");
+          setTimeout(async () => {
+            await handleMarkIncorrect(currentLexeme, undefined);
+            await handleNext();
+            setFeedbackAnimation(null);
+          }, 600);
+        }
+      : undefined,
+  });
+
   if (isLoading || !currentLexeme) {
     return <div className="mt-16 text-center text-xl text-gray-600">Loading lexemes...</div>;
   }
@@ -279,8 +337,8 @@ const AppContent = () => {
                 </div>
               )}
 
-              {/* Practice Mode Toggle */}
-              <div className="flex justify-center">
+              {/* Practice Mode Toggles */}
+              <div className="flex justify-center gap-3">
                 <button
                   onClick={handleToggleReverseMode}
                   className="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
@@ -291,18 +349,54 @@ const AppContent = () => {
                   </span>
                   <span className="text-xs text-muted-foreground">(click to switch)</span>
                 </button>
+
+                <button
+                  onClick={handleToggleFlashCardMode}
+                  className="flex items-center gap-2 rounded-lg border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  <span className="text-muted-foreground">Card Type:</span>
+                  <span className="font-semibold">
+                    {isFlashCardMode ? "Flash Cards" : "Writing Practice"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">(click to switch)</span>
+                </button>
               </div>
 
-              {/* Main Card */}
-              <ModernWordCard
-                lexeme={currentLexeme}
-                isReverseMode={isReverseMode}
-                onCorrect={() => handleMarkCorrect(currentLexeme)}
-                onIncorrect={(userAnswer) => handleMarkIncorrect(currentLexeme, userAnswer)}
-                onNext={handleNext}
-                onMarkAsMastered={() => handleMarkAsMastered(currentLexeme)}
-                progress={getProgress(currentLexeme.text)}
-              />
+              {/* Main Card - Conditional Rendering */}
+              {isFlashCardMode ? (
+                <FlashCard
+                  lexeme={currentLexeme}
+                  isReverseMode={isReverseMode}
+                  isFlipped={flashCardControls.isFlipped}
+                  isAnimating={flashCardControls.isAnimating}
+                  onFlip={flashCardControls.flip}
+                  onCorrect={async () => {
+                    await handleMarkCorrect(currentLexeme);
+                    flashCardControls.resetCard();
+                    await handleNext();
+                  }}
+                  onIncorrect={async () => {
+                    await handleMarkIncorrect(currentLexeme, undefined);
+                    flashCardControls.resetCard();
+                    await handleNext();
+                  }}
+                  onMarkAsMastered={() => handleMarkAsMastered(currentLexeme)}
+                  progress={getProgress(currentLexeme.text)}
+                  showKeyboardHints={true}
+                  feedbackAnimation={feedbackAnimation}
+                  onAnimationComplete={() => setFeedbackAnimation(null)}
+                />
+              ) : (
+                <ModernWordCard
+                  lexeme={currentLexeme}
+                  isReverseMode={isReverseMode}
+                  onCorrect={() => handleMarkCorrect(currentLexeme)}
+                  onIncorrect={(userAnswer) => handleMarkIncorrect(currentLexeme, userAnswer)}
+                  onNext={() => handleNext()}
+                  onMarkAsMastered={() => handleMarkAsMastered(currentLexeme)}
+                  progress={getProgress(currentLexeme.text)}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -319,7 +413,20 @@ const AppContent = () => {
         progressMap={progressMap}
       />
 
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          classNames: {
+            toast: "bg-background border-border shadow-lg",
+            title: "text-foreground",
+            description: "text-muted-foreground",
+            success: "bg-background border-green-200 dark:border-green-800",
+            error: "bg-background border-red-200 dark:border-red-800",
+            warning: "bg-background border-yellow-200 dark:border-yellow-800",
+            info: "bg-background border-blue-200 dark:border-blue-800",
+          },
+        }}
+      />
     </Layout>
   );
 };

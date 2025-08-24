@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  @keyframes zoom-in-150 {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.5);
+    }
+  }
+
+  .animate-zoom-in-150 {
+    animation: zoom-in-150 0.6s ease-out forwards;
+  }
+
+  @keyframes success-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-success-pulse {
+    animation: success-pulse 0.3s ease-in-out;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
